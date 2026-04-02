@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  sender
+  driver
+  both
+  admin
+}
+
+enum VerificationStatus {
+  unverified
+  pending
+  verified
+  rejected
+}
+
+enum DeliveryStatus {
+  pending
+  matched
+  accepted
+  picked_up
+  in_transit
+  delivered
+  cancelled
+  expired
+}
+
+enum PackageSize {
+  S
+  M
+  L
+}
+
+enum RouteType {
+  one_time
+  recurring
+}
+
+model User {
+  id                 String             @id @default(uuid())
+  email              String             @unique
+  passwordHash       String
+  firstName          String
+  lastName           String
+  role               UserRole
+  phone              String?
+  avatarUrl          String?
+  bio                String?
+  verificationStatus VerificationStatus @default(unverified)
+  averageRating      Float?
+  totalRatings       Int                @default(0)
+  totalDeliveries    Int                @default(0)
+  co2Saved           Float              @default(0)
+  language           String             @default("en")
+  refreshToken       String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  sentDeliveries     DeliveryRequest[] @relation("SenderDeliveries")
+  drivenDeliveries   DeliveryRequest[] @relation("DriverDeliveries")
+  routes             DriverRoute[]
+  sentMessages       Message[]
+  ratingsGiven       Rating[]          @relation("RatingsGiven")
+  ratingsReceived    Rating[]          @relation("RatingsReceived")
+
+  @@map("users")
+}
+
+model DeliveryRequest {
+  id                  String         @id @default(uuid())
+  senderId            String
+  sender              User           @relation("SenderDeliveries", fields: [senderId], references: [id])
+  driverId            String?
+  driver              User?          @relation("DriverDeliveries", fields: [driverId], references: [id])
+  pickupLabel         String
+  pickupPoint         Unsupported("geometry(Point, 4326)")
+  deliveryLabel       String
+  deliveryPoint       Unsupported("geometry(Point, 4326)")
+  packageSize         PackageSize
+  packageWeight       Float?
+  packageDescription  String?
+  declaredValue       Float?
+  budgetCHF           Float
+  platformFeeCHF      Float?
+  deliveryWindowStart DateTime
+  deliveryWindowEnd   DateTime
+  status              DeliveryStatus @default(pending)
+  pickupCode          String?
+  deliveryCode        String?
+  co2SavedKg          Float?
+  cancelledBy         String?
+  cancelReason        String?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  messages Message[]
+  ratings  Rating[]
+
+  @@index([senderId])
+  @@index([driverId])
+  @@index([status])
+  @@map("delivery_requests")
+}
+
+model DriverRoute {
+  id                 String    @id @default(uuid())
+  driverId           String
+  driver             User      @relation(fields: [driverId], references: [id])
+  originAddress      String
+  originPoint        Unsupported("geometry(Point, 4326)")
+  destinationAddress String
+  destinationPoint   Unsupported("geometry(Point, 4326)")
+  routeType          RouteType
+  departureTime      DateTime
+  recurringDays      String[]
+  availableSize      PackageSize
+  maxDetourMinutes   Int       @default(15)
+  isActive           Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([driverId])
+  @@index([isActive])
+  @@map("driver_routes")
+}
+
+model Message {
+  id                String          @id @default(uuid())
+  deliveryRequestId String
+  deliveryRequest   DeliveryRequest @relation(fields: [deliveryRequestId], references: [id])
+  senderId          String
+  sender            User            @relation(fields: [senderId], references: [id])
+  content           String
+  readAt            DateTime?
+  createdAt         DateTime        @default(now())
+
+  @@index([deliveryRequestId])
+  @@index([senderId])
+  @@map("messages")
+}
+
+model Rating {
+  id                String          @id @default(uuid())
+  deliveryRequestId String
+  deliveryRequest   DeliveryRequest @relation(fields: [deliveryRequestId], references: [id])
+  fromUserId        String
+  fromUser          User            @relation("RatingsGiven", fields: [fromUserId], references: [id])
+  toUserId          String
+  toUser            User            @relation("RatingsReceived", fields: [toUserId], references: [id])
+  score             Int
+  comment           String?
+  createdAt         DateTime        @default(now())
+
+  @@unique([deliveryRequestId, fromUserId])
+  @@index([toUserId])
+  @@map("ratings")
+}

@@ -1,0 +1,15 @@
+{
+  "name": "peerdeliver",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "shared:build": "npm run build -w @peerdeliver/shared",
+    "server": "npm run dev -w @peerdeliver/server",
+    "app": "npm run start -w @peerdeliver/app"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "PeerDeliver",
+    "slug": "peerdeliver",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "scheme": "peerdeliver",
+    "platforms": ["ios", "android", "web"],
+    "ios": {
+      "bundleIdentifier": "com.peerdeliver.app"
+    },
+    "android": {
+      "package": "com.peerdeliver.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#1B7340"
+      }
+    },
+    "extra": {
+      "apiUrl": "https://waitingly-semiperceptive-jeanne.ngrok-free.dev"
+    }
+  }
+}
