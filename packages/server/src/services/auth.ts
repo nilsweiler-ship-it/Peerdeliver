@@ -20,6 +20,9 @@ export async function register(input: RegisterInput) {
       role: input.role,
       phone: input.phone,
       language: input.language ?? 'en',
+      licensePlate: input.licensePlate,
+      carModel: input.carModel,
+      maxLoadKg: input.maxLoadKg,
     },
   });
 

@@ -11,6 +11,10 @@ export interface User {
   phone?: string;
   avatarUrl?: string;
   bio?: string;
+  licensePlate?: string;
+  carModel?: string;
+  maxLoadKg?: number;
+  shareLocation?: boolean;
   verificationStatus: VerificationStatus;
   averageRating?: number;
   totalRatings: number;

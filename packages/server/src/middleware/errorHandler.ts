@@ -11,7 +11,7 @@ export class AppError extends Error {
 }
 
 export function errorHandler(err: Error & { type?: string }, _req: Request, res: Response, _next: NextFunction): void {
-  console.error('[Error]', err.message);
+  console.error('[Error]', err.message, err.stack);
 
   if (err instanceof AppError) {
     res.status(err.statusCode).json({ success: false, error: err.message });
@@ -24,5 +24,6 @@ export function errorHandler(err: Error & { type?: string }, _req: Request, res:
     return;
   }
 
-  res.status(500).json({ success: false, error: 'Internal server error' });
+  const detail = process.env.NODE_ENV !== 'production' ? err.message : 'Internal server error';
+  res.status(500).json({ success: false, error: detail });
 }

@@ -22,7 +22,7 @@ export function AvailableDeliveriesScreen() {
   const handleAccept = async (delivery: DeliveryRequest) => {
     try {
       await assignDelivery.mutateAsync(delivery.id);
-      Alert.alert(t('driver.acceptSuccess'));
+      Alert.alert(t('driver.requestSuccess'));
       setSelectedDelivery(null);
     } catch {
       Alert.alert(t('common.error'));
@@ -89,8 +89,18 @@ export function AvailableDeliveriesScreen() {
                 </Text>
               </View>
             )}
+            {(selectedDelivery as any).sender && (
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>{t('driver.senderRating')}</Text>
+                <Text style={styles.detailValue}>
+                  {(selectedDelivery as any).sender.averageRating
+                    ? `${(selectedDelivery as any).sender.averageRating.toFixed(1)} (${(selectedDelivery as any).sender.totalRatings})`
+                    : 'N/A'}
+                </Text>
+              </View>
+            )}
             <Button
-              title={t('driver.acceptDelivery')}
+              title={t('driver.requestDelivery')}
               onPress={() => handleAccept(selectedDelivery)}
               loading={assignDelivery.isPending}
               style={{ marginTop: spacing.md }}

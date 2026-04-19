@@ -8,6 +8,9 @@ export const registerSchema = z.object({
   role: z.enum(['sender', 'driver', 'both']),
   phone: z.string().optional(),
   language: z.enum(['en', 'de', 'fr']).default('en'),
+  licensePlate: z.string().max(10).optional(),
+  carModel: z.string().max(100).optional(),
+  maxLoadKg: z.number().positive().optional(),
 });
 
 export const loginSchema = z.object({

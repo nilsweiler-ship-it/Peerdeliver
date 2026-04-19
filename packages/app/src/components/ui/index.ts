@@ -6,3 +6,5 @@ export { Badge, getStatusVariant } from './Badge';
 export { EmptyState } from './EmptyState';
 export { Modal } from './Modal';
 export { Avatar } from './Avatar';
+export { AddressAutocomplete } from './AddressAutocomplete';
+export type { AddressSelection } from './AddressAutocomplete';

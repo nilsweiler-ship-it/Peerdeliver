@@ -4,6 +4,7 @@ export type PackageSize = 'S' | 'M' | 'L';
 
 export type DeliveryStatus =
   | 'pending'
+  | 'requested'
   | 'matched'
   | 'accepted'
   | 'picked_up'

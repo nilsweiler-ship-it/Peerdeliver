@@ -1,5 +1,6 @@
 export const DELIVERY_STATUS = {
   PENDING: 'pending',
+  REQUESTED: 'requested',
   MATCHED: 'matched',
   ACCEPTED: 'accepted',
   PICKED_UP: 'picked_up',
@@ -10,7 +11,8 @@ export const DELIVERY_STATUS = {
 } as const;
 
 export const DELIVERY_STATUS_TRANSITIONS: Record<string, string[]> = {
-  pending: ['matched', 'cancelled', 'expired'],
+  pending: ['requested', 'cancelled', 'expired'],
+  requested: ['matched', 'cancelled'],
   matched: ['accepted', 'cancelled'],
   accepted: ['picked_up', 'cancelled'],
   picked_up: ['in_transit', 'cancelled'],

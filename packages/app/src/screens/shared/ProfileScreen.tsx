@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, Switch } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
 import { useLogout } from '../../queries/auth';
@@ -82,6 +82,29 @@ export function ProfileScreen() {
         ))}
       </View>
 
+      {/* Location sharing toggle — drivers only */}
+      {(user?.role === 'driver' || user?.role === 'both') && (
+        <View style={styles.locationRow}>
+          <View>
+            <Text style={styles.locationLabel}>{t('profile.shareLocation')}</Text>
+            <Text style={styles.locationHint}>{t('profile.shareLocationHint')}</Text>
+          </View>
+          <Switch
+            value={user?.shareLocation !== false}
+            onValueChange={async (val) => {
+              try {
+                await api.patch('/users/profile', { shareLocation: val });
+                setUser({ ...user!, shareLocation: val });
+              } catch {
+                Alert.alert(t('common.error'));
+              }
+            }}
+            trackColor={{ true: colors.primary, false: colors.border }}
+            thumbColor={colors.card}
+          />
+        </View>
+      )}
+
       <Button
         title={t('auth.logout')}
         onPress={() => logout.mutate()}
@@ -131,5 +154,24 @@ const styles = StyleSheet.create({
   },
   roleOptionTextActive: {
     color: colors.primary,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.lg,
+  },
+  locationLabel: {
+    ...typography.body,
+    color: colors.text,
+    fontWeight: '600',
+  },
+  locationHint: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
   },
 });

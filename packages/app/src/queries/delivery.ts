@@ -77,3 +77,66 @@ export function useAssignDelivery() {
     },
   });
 }
+
+export function useConfirmDelivery() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.patch<ApiResponse<DeliveryRequest>>(`/deliveries/${id}/confirm`);
+      return data.data!;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deliveries'] });
+    },
+  });
+}
+
+export function useRejectDriver() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.patch<ApiResponse<DeliveryRequest>>(`/deliveries/${id}/reject`);
+      return data.data!;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deliveries'] });
+    },
+  });
+}
+
+export function useVerifyPickup() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, code }: { id: string; code: string }) => {
+      const { data } = await api.post<ApiResponse<DeliveryRequest>>(`/deliveries/${id}/verify-pickup`, { code });
+      return data.data!;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deliveries'] });
+    },
+  });
+}
+
+export function useVerifyDelivery() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, code }: { id: string; code: string }) => {
+      const { data } = await api.post<ApiResponse<DeliveryRequest>>(`/deliveries/${id}/verify-delivery`, { code });
+      return data.data!;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deliveries'] });
+    },
+  });
+}
+
+export function useDriverInfo(deliveryId: string) {
+  return useQuery({
+    queryKey: ['deliveries', deliveryId, 'driver'],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<any>>(`/deliveries/${deliveryId}/driver`);
+      return data.data!;
+    },
+    enabled: !!deliveryId,
+  });
+}

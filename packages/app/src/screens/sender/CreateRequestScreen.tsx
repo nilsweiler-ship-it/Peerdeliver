@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useTranslation } from 'react-i18next';
-import { Button, Input, Card } from '../../components/ui';
+import { Button, Input, Card, AddressAutocomplete } from '../../components/ui';
+import type { AddressSelection } from '../../components/ui';
 import { useCreateDelivery } from '../../queries/delivery';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { PackageSize, CreateDeliveryInput } from '@peerdeliver/shared';
@@ -34,8 +35,8 @@ export function CreateRequestScreen({ navigation }: any) {
   const [declaredValue, setDeclaredValue] = useState('');
 
   // Step 1: Addresses
-  const [pickupAddress, setPickupAddress] = useState('');
-  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [pickupAddress, setPickupAddress] = useState<AddressSelection | null>(null);
+  const [deliveryAddress, setDeliveryAddress] = useState<AddressSelection | null>(null);
 
   // Step 2: Budget & Schedule
   const [budget, setBudget] = useState(15);
@@ -49,8 +50,8 @@ export function CreateRequestScreen({ navigation }: any) {
     if (step === 0) {
       if (!description.trim()) newErrors.description = t('common.error');
     } else if (step === 1) {
-      if (!pickupAddress.trim()) newErrors.pickupAddress = t('common.error');
-      if (!deliveryAddress.trim()) newErrors.deliveryAddress = t('common.error');
+      if (!pickupAddress) newErrors.pickupAddress = t('common.error');
+      if (!deliveryAddress) newErrors.deliveryAddress = t('common.error');
     } else if (step === 2) {
       if (budget <= 0) newErrors.budget = t('common.error');
     }
@@ -70,20 +71,15 @@ export function CreateRequestScreen({ navigation }: any) {
   };
 
   const handleSubmit = async () => {
-    // Use Zurich coordinates as default since we don't have a map picker yet
+    if (!pickupAddress || !deliveryAddress) return;
+
     const now = new Date();
     const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     const dayAfter = new Date(now.getTime() + 48 * 60 * 60 * 1000);
 
     const input: CreateDeliveryInput = {
-      pickupAddress: {
-        label: pickupAddress,
-        point: { lat: 47.3769, lng: 8.5417 }, // Default Zurich
-      },
-      deliveryAddress: {
-        label: deliveryAddress,
-        point: { lat: 46.9481, lng: 7.4474 }, // Default Bern
-      },
+      pickupAddress,
+      deliveryAddress,
       packageSize,
       packageDescription: description,
       packageWeight: weight ? parseFloat(weight) : undefined,
@@ -97,8 +93,9 @@ export function CreateRequestScreen({ navigation }: any) {
       await createDelivery.mutateAsync(input);
       Alert.alert(t('sender.createSuccess'));
       navigation.navigate('MyShipments');
-    } catch {
-      Alert.alert(t('common.error'));
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.message || t('common.error');
+      Alert.alert(t('common.error'), msg);
     }
   };
 
@@ -113,7 +110,7 @@ export function CreateRequestScreen({ navigation }: any) {
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* Progress indicator */}
         <View style={styles.progress}>
           {stepTitles.map((title, idx) => (
@@ -185,18 +182,16 @@ export function CreateRequestScreen({ navigation }: any) {
         {/* Step 1: Addresses */}
         {step === 1 && (
           <Card style={styles.stepCard}>
-            <Input
+            <AddressAutocomplete
               label={t('sender.pickupAddress')}
-              value={pickupAddress}
-              onChangeText={setPickupAddress}
+              onSelect={setPickupAddress}
               placeholder={t('sender.fromLocation')}
               error={errors.pickupAddress}
             />
 
-            <Input
+            <AddressAutocomplete
               label={t('sender.deliveryAddress')}
-              value={deliveryAddress}
-              onChangeText={setDeliveryAddress}
+              onSelect={setDeliveryAddress}
               placeholder={t('sender.toLocation')}
               error={errors.deliveryAddress}
             />

@@ -7,7 +7,11 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "scheme": "peerdeliver",
-    "platforms": ["ios", "android", "web"],
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "ios": {
       "bundleIdentifier": "com.peerdeliver.app"
     },

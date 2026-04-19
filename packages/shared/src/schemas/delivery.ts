@@ -24,6 +24,7 @@ export const createDeliverySchema = z.object({
 
 export const updateDeliveryStatusSchema = z.object({
   status: z.enum([
+    'requested',
     'matched',
     'accepted',
     'picked_up',

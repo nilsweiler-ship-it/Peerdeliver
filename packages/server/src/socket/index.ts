@@ -7,6 +7,12 @@ import type { AuthPayload } from '../middleware/auth';
 import { setupChatHandlers } from './chatHandler';
 import { setupTrackingHandlers } from './trackingHandler';
 
+let ioInstance: Server | null = null;
+
+export function getIO(): Server | null {
+  return ioInstance;
+}
+
 export function setupSocket(httpServer: HttpServer) {
   const io = new Server(httpServer, {
     cors: { origin: '*', methods: ['GET', 'POST'] },
@@ -25,6 +31,8 @@ export function setupSocket(httpServer: HttpServer) {
       next(new Error('Invalid token'));
     }
   });
+
+  ioInstance = io;
 
   io.on(SOCKET_EVENTS.CONNECTION, (socket) => {
     const { userId } = socket.data.user;

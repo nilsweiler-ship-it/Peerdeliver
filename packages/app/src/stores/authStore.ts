@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Platform } from 'react-native';
-import type { User, AuthTokens } from '@peerdeliver/shared';
+import type { User, AuthTokens, ApiResponse } from '@peerdeliver/shared';
+import { api } from '../services/api';
 
 // expo-secure-store doesn't work on web — fall back to localStorage
 const storage = Platform.OS === 'web'
@@ -22,7 +23,7 @@ interface AuthState {
   loadTokens: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   tokens: null,
   isAuthenticated: false,
@@ -47,12 +48,18 @@ export const useAuthStore = create<AuthState>((set) => ({
       const accessToken = await storage.getItemAsync('accessToken');
       const refreshToken = await storage.getItemAsync('refreshToken');
       if (accessToken && refreshToken) {
-        set({ tokens: { accessToken, refreshToken }, isAuthenticated: true, isLoading: false });
+        set({ tokens: { accessToken, refreshToken } });
+        // Fetch user profile to restore the full auth state
+        const { data } = await api.get<ApiResponse<User>>('/users/profile');
+        set({ user: data.data!, isAuthenticated: true, isLoading: false });
       } else {
         set({ isLoading: false });
       }
     } catch {
-      set({ isLoading: false });
+      // Token is expired/invalid — clear and show login
+      await storage.deleteItemAsync('accessToken');
+      await storage.deleteItemAsync('refreshToken');
+      set({ tokens: null, isAuthenticated: false, isLoading: false });
     }
   },
 }));

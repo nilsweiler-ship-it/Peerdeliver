@@ -80,16 +80,8 @@ export function ChatScreen({ route, navigation }: any) {
   const handleSend = useCallback(
     (content: string) => {
       sendMessage.mutate(content);
-
-      // Also emit via socket for real-time delivery
-      if (socket) {
-        socket.emit(SOCKET_EVENTS.CHAT_MESSAGE, {
-          deliveryRequestId: deliveryId,
-          content,
-        });
-      }
     },
-    [sendMessage, socket, deliveryId],
+    [sendMessage],
   );
 
   const handleTyping = useCallback(() => {

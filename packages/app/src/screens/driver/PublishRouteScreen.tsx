@@ -10,7 +10,8 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Button, Input, Card } from '../../components/ui';
+import { Button, Input, Card, AddressAutocomplete } from '../../components/ui';
+import type { AddressSelection } from '../../components/ui';
 import { useCreateRoute } from '../../queries/route';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { PackageSize, RouteType, DayOfWeek, CreateRouteInput } from '@peerdeliver/shared';
@@ -23,35 +24,20 @@ const SIZES: { key: PackageSize; label: string }[] = [
 
 const DAYS: DayOfWeek[] = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
-// Simple geocoding for Swiss cities
-const SWISS_CITIES: Record<string, { lat: number; lng: number }> = {
-  zurich: { lat: 47.3769, lng: 8.5417 },
-  zürich: { lat: 47.3769, lng: 8.5417 },
-  bern: { lat: 46.9481, lng: 7.4474 },
-  basel: { lat: 47.5596, lng: 7.5886 },
-  geneva: { lat: 46.2044, lng: 6.1432 },
-  genève: { lat: 46.2044, lng: 6.1432 },
-  genf: { lat: 46.2044, lng: 6.1432 },
-  lausanne: { lat: 46.5197, lng: 6.6323 },
-  lucerne: { lat: 47.0502, lng: 8.3093 },
-  luzern: { lat: 47.0502, lng: 8.3093 },
-  winterthur: { lat: 47.5001, lng: 8.724 },
-  lugano: { lat: 46.0037, lng: 8.9511 },
-};
-
-function geocodeCity(name: string): { lat: number; lng: number } | null {
-  const key = name.toLowerCase().trim().replace(/[. ]/g, '_');
-  return SWISS_CITIES[key] || null;
-}
+const HOURS = Array.from({ length: 24 }, (_, i) => {
+  const h = i.toString().padStart(2, '0');
+  return { value: i, label: `${h}:00` };
+});
 
 export function PublishRouteScreen({ navigation }: any) {
   const { t } = useTranslation();
   const createRoute = useCreateRoute();
 
-  const [originAddress, setOriginAddress] = useState('');
-  const [destinationAddress, setDestinationAddress] = useState('');
+  const [origin, setOrigin] = useState<AddressSelection | null>(null);
+  const [destination, setDestination] = useState<AddressSelection | null>(null);
   const [routeType, setRouteType] = useState<RouteType>('one_time');
   const [recurringDays, setRecurringDays] = useState<DayOfWeek[]>([]);
+  const [departureHour, setDepartureHour] = useState(8);
   const [availableSize, setAvailableSize] = useState<PackageSize>('M');
   const [maxDetour, setMaxDetour] = useState('15');
   const [notes, setNotes] = useState('');
@@ -65,33 +51,27 @@ export function PublishRouteScreen({ navigation }: any) {
 
   const handleSubmit = async () => {
     const newErrors: Record<string, string> = {};
-    if (!originAddress.trim()) newErrors.origin = t('common.error');
-    if (!destinationAddress.trim()) newErrors.destination = t('common.error');
+    if (!origin) newErrors.origin = t('common.error');
+    if (!destination) newErrors.destination = t('common.error');
     if (routeType === 'recurring' && recurringDays.length === 0) newErrors.days = t('common.error');
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
 
-    const originCoords = geocodeCity(originAddress);
-    const destCoords = geocodeCity(destinationAddress);
-
-    if (!originCoords || !destCoords) {
-      Alert.alert(
-        t('common.error'),
-        'Could not find location. Try: Zurich, Bern, Basel, Geneva, Lausanne, Lucerne, Lugano',
-      );
-      return;
-    }
-
-    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    // Build departure time: tomorrow at selected hour for one_time,
+    // or next occurrence of first selected day for recurring
+    const now = new Date();
+    const departure = new Date(now);
+    departure.setDate(departure.getDate() + 1);
+    departure.setHours(departureHour, 0, 0, 0);
 
     const input: CreateRouteInput = {
-      originAddress,
-      originPoint: originCoords,
-      destinationAddress,
-      destinationPoint: destCoords,
+      originAddress: origin!.label,
+      originPoint: origin!.point,
+      destinationAddress: destination!.label,
+      destinationPoint: destination!.point,
       routeType,
-      departureTime: tomorrow.toISOString(),
+      departureTime: departure.toISOString(),
       recurringDays: routeType === 'recurring' ? recurringDays : undefined,
       availableSize,
       maxDetourMinutes: parseInt(maxDetour) || 15,
@@ -101,8 +81,9 @@ export function PublishRouteScreen({ navigation }: any) {
       await createRoute.mutateAsync(input);
       Alert.alert(t('driver.publishSuccess'));
       navigation.navigate('MyRoutes');
-    } catch {
-      Alert.alert(t('common.error'));
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.message || t('common.error');
+      Alert.alert(t('common.error'), msg);
     }
   };
 
@@ -111,21 +92,23 @@ export function PublishRouteScreen({ navigation }: any) {
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Addresses */}
         <Card style={styles.section}>
-          <Input
+          <AddressAutocomplete
             label={t('driver.originAddress')}
-            value={originAddress}
-            onChangeText={setOriginAddress}
-            placeholder="e.g. Zurich"
+            onSelect={setOrigin}
+            placeholder={t('sender.fromLocation')}
             error={errors.origin}
           />
-          <Input
+          <AddressAutocomplete
             label={t('driver.destinationAddress')}
-            value={destinationAddress}
-            onChangeText={setDestinationAddress}
-            placeholder="e.g. Bern"
+            onSelect={setDestination}
+            placeholder={t('sender.toLocation')}
             error={errors.destination}
           />
         </Card>
@@ -176,6 +159,33 @@ export function PublishRouteScreen({ navigation }: any) {
               {errors.days && <Text style={styles.errorText}>{errors.days}</Text>}
             </View>
           )}
+        </Card>
+
+        {/* Departure time */}
+        <Card style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('driver.departureTime')}</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.timeScroll}
+          >
+            {HOURS.map((h) => (
+              <TouchableOpacity
+                key={h.value}
+                style={[styles.timeChip, departureHour === h.value && styles.timeChipSelected]}
+                onPress={() => setDepartureHour(h.value)}
+              >
+                <Text
+                  style={[
+                    styles.timeChipText,
+                    departureHour === h.value && styles.timeChipTextSelected,
+                  ]}
+                >
+                  {h.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </Card>
 
         {/* Capacity & Detour */}
@@ -275,6 +285,30 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   dayChipTextSelected: {
+    color: colors.textInverse,
+  },
+  timeScroll: {
+    marginHorizontal: -spacing.sm,
+  },
+  timeChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginHorizontal: spacing.xs,
+  },
+  timeChipSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  timeChipText: {
+    ...typography.bodySmall,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  timeChipTextSelected: {
     color: colors.textInverse,
   },
   sizeRow: { flexDirection: 'row', gap: spacing.sm },

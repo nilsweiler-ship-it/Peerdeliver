@@ -13,13 +13,15 @@ export async function getProfile(req: Request, res: Response, next: NextFunction
 
 export async function updateProfile(req: Request, res: Response, next: NextFunction) {
   try {
-    const { firstName, lastName, phone, bio, language } = req.body;
+    const { firstName, lastName, phone, bio, language, role, shareLocation } = req.body;
     const user = await userService.updateProfile(req.user!.userId, {
       ...(firstName !== undefined && { firstName }),
       ...(lastName !== undefined && { lastName }),
       ...(phone !== undefined && { phone }),
       ...(bio !== undefined && { bio }),
       ...(language !== undefined && { language }),
+      ...(role !== undefined && { role }),
+      ...(shareLocation !== undefined && { shareLocation }),
     });
     success(res, user);
   } catch (err) {

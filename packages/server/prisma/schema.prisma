@@ -23,6 +23,7 @@ enum VerificationStatus {
 
 enum DeliveryStatus {
   pending
+  requested
   matched
   accepted
   picked_up
@@ -53,6 +54,10 @@ model User {
   phone              String?
   avatarUrl          String?
   bio                String?
+  licensePlate       String?
+  carModel           String?
+  maxLoadKg          Float?
+  shareLocation      Boolean            @default(true)
   verificationStatus VerificationStatus @default(unverified)
   averageRating      Float?
   totalRatings       Int                @default(0)
