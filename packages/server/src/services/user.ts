@@ -10,7 +10,21 @@ export async function getUserById(userId: string) {
   return safeUser;
 }
 
-export async function updateProfile(userId: string, data: { firstName?: string; lastName?: string; phone?: string; bio?: string; language?: string; role?: string }) {
+export async function updateProfile(
+  userId: string,
+  data: {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    bio?: string;
+    language?: string;
+    role?: string;
+    shareLocation?: boolean;
+    licensePlate?: string | null;
+    carModel?: string | null;
+    maxLoadKg?: number | null;
+  },
+) {
   const user = await prisma.user.update({
     where: { id: userId },
     data,

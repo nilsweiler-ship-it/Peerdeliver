@@ -12,9 +12,7 @@ set -euo pipefail
 
 API="${API:-http://localhost:3001}"
 SENDER_EMAIL="${SENDER_EMAIL:-sender@test.com}"
-# Rotate driver email per-day so a fresh driver is registered with vehicle fields
-# (PATCH /users/profile does NOT accept carModel/licensePlate/maxLoadKg — registration only).
-DRIVER_EMAIL="${DRIVER_EMAIL:-driver-e2e-$(date +%Y%m%d)@test.com}"
+DRIVER_EMAIL="${DRIVER_EMAIL:-driver@test.com}"
 PASSWORD="${PASSWORD:-Test1234}"
 
 # --- colors ---
@@ -89,6 +87,16 @@ SENDER_TOKEN=$(login_or_register "$SENDER_EMAIL" "sender")
 info "sender token: ${SENDER_TOKEN:0:24}…"
 DRIVER_TOKEN=$(login_or_register "$DRIVER_EMAIL" "driver")
 info "driver token: ${DRIVER_TOKEN:0:24}…"
+
+# Ensure the driver has vehicle fields populated (exercises the widened
+# PATCH /users/profile — harmless on freshly-registered drivers).
+step "Upserting vehicle profile via PATCH /users/profile"
+RESP=$(curl -s -X PATCH "$API/api/users/profile" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $DRIVER_TOKEN" \
+  -d '{"licensePlate":"ZH123456","carModel":"VW Golf","maxLoadKg":380}')
+CAR=$(echo "$RESP" | python3 -c 'import sys,json;print(json.load(sys.stdin)["data"]["carModel"])' 2>/dev/null || true)
+[ "$CAR" = "VW Golf" ] && ok "vehicle profile set" || { echo "$RESP"; fail "PATCH profile did not persist carModel"; }
 
 # Delivery window: tomorrow to day-after (ISO-8601, UTC)
 WIN_START=$(date -u -d '+1 day 10:00' +%Y-%m-%dT%H:%M:%S.000Z)

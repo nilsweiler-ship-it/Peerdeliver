@@ -13,7 +13,7 @@ export async function getProfile(req: Request, res: Response, next: NextFunction
 
 export async function updateProfile(req: Request, res: Response, next: NextFunction) {
   try {
-    const { firstName, lastName, phone, bio, language, role, shareLocation } = req.body;
+    const { firstName, lastName, phone, bio, language, role, shareLocation, licensePlate, carModel, maxLoadKg } = req.body;
     const user = await userService.updateProfile(req.user!.userId, {
       ...(firstName !== undefined && { firstName }),
       ...(lastName !== undefined && { lastName }),
@@ -22,6 +22,9 @@ export async function updateProfile(req: Request, res: Response, next: NextFunct
       ...(language !== undefined && { language }),
       ...(role !== undefined && { role }),
       ...(shareLocation !== undefined && { shareLocation }),
+      ...(licensePlate !== undefined && { licensePlate }),
+      ...(carModel !== undefined && { carModel }),
+      ...(maxLoadKg !== undefined && { maxLoadKg }),
     });
     success(res, user);
   } catch (err) {
