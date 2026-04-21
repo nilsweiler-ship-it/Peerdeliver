@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useTranslation } from 'react-i18next';
+import { useStripe } from '@stripe/stripe-react-native';
 import { Button, Input, Card, AddressAutocomplete } from '../../components/ui';
 import type { AddressSelection } from '../../components/ui';
 import { useCreateDelivery } from '../../queries/delivery';
@@ -26,6 +27,7 @@ const SIZES: { key: PackageSize; labelKey: string }[] = [
 export function CreateRequestScreen({ navigation }: any) {
   const { t } = useTranslation();
   const createDelivery = useCreateDelivery();
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [step, setStep] = useState(0);
 
   // Step 0: Package details
@@ -90,7 +92,31 @@ export function CreateRequestScreen({ navigation }: any) {
     };
 
     try {
-      await createDelivery.mutateAsync(input);
+      const delivery = await createDelivery.mutateAsync(input);
+
+      // If the server returned a Stripe clientSecret, present the Payment Sheet.
+      // Without Stripe configured, clientSecret is null — we skip straight to success.
+      const clientSecret = (delivery as any)?.clientSecret as string | null | undefined;
+      if (clientSecret) {
+        const initResult = await initPaymentSheet({
+          paymentIntentClientSecret: clientSecret,
+          merchantDisplayName: 'PeerDeliver',
+          allowsDelayedPaymentMethods: false,
+        });
+        if (initResult.error) {
+          Alert.alert(t('common.error'), initResult.error.message);
+          return;
+        }
+        const sheetResult = await presentPaymentSheet();
+        if (sheetResult.error) {
+          // User cancelled or payment failed — delivery is still created but unpaid.
+          // They can retry from MyShipments (future: payment retry CTA).
+          Alert.alert(t('common.error'), sheetResult.error.message);
+          navigation.navigate('MyShipments');
+          return;
+        }
+      }
+
       Alert.alert(t('sender.createSuccess'));
       navigation.navigate('MyShipments');
     } catch (err: any) {
@@ -220,6 +246,18 @@ export function CreateRequestScreen({ navigation }: any) {
                 <Text style={styles.sliderRangeText}>CHF 200</Text>
               </View>
               {errors.budget && <Text style={styles.sliderError}>{errors.budget}</Text>}
+              <View style={styles.breakdown}>
+                <View style={styles.breakdownRow}>
+                  <Text style={styles.breakdownLabel}>Platform fee (10%)</Text>
+                  <Text style={styles.breakdownValue}>CHF {(budget * 0.1).toFixed(2)}</Text>
+                </View>
+                <View style={styles.breakdownRow}>
+                  <Text style={styles.breakdownLabel}>Driver receives</Text>
+                  <Text style={[styles.breakdownValue, styles.breakdownValueHighlight]}>
+                    CHF {(budget * 0.9).toFixed(2)}
+                  </Text>
+                </View>
+              </View>
             </View>
 
             <Input
@@ -368,6 +406,30 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     color: colors.error,
     marginTop: spacing.xs,
+  },
+  breakdown: {
+    marginTop: spacing.md,
+    padding: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    gap: spacing.xs,
+  },
+  breakdownRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  breakdownLabel: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+  },
+  breakdownValue: {
+    ...typography.bodySmall,
+    color: colors.text,
+    fontWeight: '500',
+  },
+  breakdownValueHighlight: {
+    color: colors.primary,
+    fontWeight: '700',
   },
   buttons: {
     flexDirection: 'row',

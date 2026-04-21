@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity, Switch } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '../../stores/authStore';
 import { useLogout } from '../../queries/auth';
 import { Button, Card } from '../../components/ui';
@@ -16,10 +17,12 @@ const ROLE_OPTIONS: { key: UserRole; labelKey: string }[] = [
 
 export function ProfileScreen() {
   const { t } = useTranslation();
+  const navigation = useNavigation<any>();
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const logout = useLogout();
   const [updatingRole, setUpdatingRole] = useState(false);
+  const isDriver = user?.role === 'driver' || user?.role === 'both';
 
   const handleRoleChange = async (newRole: UserRole) => {
     if (newRole === user?.role) return;
@@ -105,6 +108,25 @@ export function ProfileScreen() {
         </View>
       )}
 
+      {isDriver && (
+        <View style={styles.driverLinks}>
+          <TouchableOpacity
+            style={styles.linkRow}
+            onPress={() => navigation.navigate('DriverStack', { screen: 'Earnings' })}
+          >
+            <Text style={styles.linkLabel}>Earnings</Text>
+            <Text style={styles.linkChevron}>›</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.linkRow}
+            onPress={() => navigation.navigate('DriverStack', { screen: 'PayoutOnboarding' })}
+          >
+            <Text style={styles.linkLabel}>Payout setup</Text>
+            <Text style={styles.linkChevron}>›</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <Button
         title={t('auth.logout')}
         onPress={() => logout.mutate()}
@@ -173,5 +195,27 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textSecondary,
     marginTop: spacing.xs,
+  },
+  driverLinks: {
+    marginBottom: spacing.lg,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.surface,
+  },
+  linkRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  linkLabel: {
+    ...typography.body,
+    color: colors.text,
+    fontWeight: '500',
+  },
+  linkChevron: {
+    ...typography.body,
+    color: colors.textLight,
   },
 });

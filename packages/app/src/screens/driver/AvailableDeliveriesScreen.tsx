@@ -1,15 +1,18 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, Alert, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Alert, RefreshControl, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNearbyDeliveries, useAssignDelivery } from '../../queries/delivery';
+import { useConnectStatus } from '../../queries/payment';
 import { DeliveryCard } from '../../components/delivery/DeliveryCard';
 import { EmptyState, LoadingSpinner, Modal, Button } from '../../components/ui';
-import { colors, spacing, typography } from '../../theme';
+import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { DeliveryRequest } from '@peerdeliver/shared';
 import { PACKAGE_SIZES } from '@peerdeliver/shared';
 
-export function AvailableDeliveriesScreen() {
+export function AvailableDeliveriesScreen({ navigation }: any) {
   const { t } = useTranslation();
+  const { data: connect } = useConnectStatus();
+  const onboarded = connect?.onboarded && connect?.payoutsEnabled;
   // Default to Zurich center for demo — in production, use driver's first route origin
   const { data: deliveries, isLoading, refetch, isRefetching } = useNearbyDeliveries({
     lat: 47.3769,
@@ -40,6 +43,17 @@ export function AvailableDeliveriesScreen() {
 
   return (
     <View style={styles.container}>
+      {connect && !onboarded && (
+        <TouchableOpacity
+          style={styles.onboardingBanner}
+          onPress={() => navigation.navigate('PayoutOnboarding')}
+        >
+          <Text style={styles.bannerTitle}>Complete payout setup</Text>
+          <Text style={styles.bannerBody}>
+            You need a Stripe-connected bank account before accepting deliveries. Tap to set up.
+          </Text>
+        </TouchableOpacity>
+      )}
       <FlatList
         data={deliveries}
         renderItem={renderItem}
@@ -114,6 +128,24 @@ export function AvailableDeliveriesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  onboardingBanner: {
+    margin: spacing.md,
+    padding: spacing.md,
+    backgroundColor: '#FFF8E1',
+    borderWidth: 1,
+    borderColor: colors.warning,
+    borderRadius: borderRadius.lg,
+  },
+  bannerTitle: {
+    ...typography.bodySmall,
+    color: colors.text,
+    fontWeight: '700',
+    marginBottom: spacing.xs,
+  },
+  bannerBody: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
   list: { padding: spacing.md, flexGrow: 1 },
   detail: { gap: spacing.sm },
   detailRow: {
