@@ -6,12 +6,17 @@ import { env } from './config';
 import { errorHandler, apiLimiter } from './middleware';
 import routes from './routes';
 import { setupSocket } from './socket';
+import { stripeWebhook } from './controllers/webhook';
 
 const app = express();
 const httpServer = createServer(app);
 
 app.set('trust proxy', 1);
 app.use(cors());
+
+// Stripe webhook needs raw body — mount BEFORE express.json().
+app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), stripeWebhook);
+
 app.use(express.json());
 app.use(apiLimiter);
 

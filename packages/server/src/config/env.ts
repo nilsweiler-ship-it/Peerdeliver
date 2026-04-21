@@ -6,6 +6,11 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(10),
   PORT: z.coerce.number().default(3001),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  STRIPE_PLATFORM_COUNTRY: z.string().default('CH'),
+  PLATFORM_FEE_PERCENT: z.coerce.number().default(10),
 });
 
 export const env = envSchema.parse(process.env);

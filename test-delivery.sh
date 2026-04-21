@@ -98,6 +98,22 @@ RESP=$(curl -s -X PATCH "$API/api/users/profile" \
 CAR=$(echo "$RESP" | python3 -c 'import sys,json;print(json.load(sys.stdin)["data"]["carModel"])' 2>/dev/null || true)
 [ "$CAR" = "VW Golf" ] && ok "vehicle profile set" || { echo "$RESP"; fail "PATCH profile did not persist carModel"; }
 
+# If the server has Stripe keys configured, the assign endpoint will reject any driver
+# that hasn't completed Connect onboarding. Hit the dev-only shortcut once so the rest
+# of the E2E can still run automatically. In Stripe-disabled mode this call 404s and
+# we skip — the gate won't fire without STRIPE_SECRET_KEY anyway.
+step "Onboarding driver for payouts (dev shortcut)"
+RESP=$(curl -s -X POST "$API/api/payments/connect/dev-complete" \
+  -H "Authorization: Bearer $DRIVER_TOKEN")
+PAYOUTS=$(echo "$RESP" | python3 -c 'import sys,json;print(json.load(sys.stdin)["data"]["payoutsEnabled"])' 2>/dev/null || true)
+if [ "$PAYOUTS" = "True" ]; then
+  ok "driver payouts enabled"
+elif echo "$RESP" | grep -q '"Not found"'; then
+  info "Stripe not configured on server — skipping onboarding step"
+else
+  echo "$RESP"; fail "dev onboarding failed"
+fi
+
 # Delivery window: tomorrow to day-after (ISO-8601, UTC)
 WIN_START=$(date -u -d '+1 day 10:00' +%Y-%m-%dT%H:%M:%S.000Z)
 WIN_END=$(date -u -d '+2 days 10:00' +%Y-%m-%dT%H:%M:%S.000Z)
@@ -123,9 +139,18 @@ CREATE_RESP=$(curl -s -X POST "$API/api/deliveries" \
 
 DELIVERY_ID=$(echo "$CREATE_RESP" | python3 -c 'import sys,json;print(json.load(sys.stdin)["data"]["id"])' 2>/dev/null || true)
 STATUS=$(echo "$CREATE_RESP" | python3 -c 'import sys,json;print(json.load(sys.stdin)["data"]["status"])' 2>/dev/null || true)
+PAY_STATUS=$(echo "$CREATE_RESP" | python3 -c 'import sys,json;print(json.load(sys.stdin)["data"].get("paymentStatus") or "")' 2>/dev/null || true)
+PI_ID=$(echo "$CREATE_RESP" | python3 -c 'import sys,json;print(json.load(sys.stdin)["data"].get("stripePaymentIntentId") or "")' 2>/dev/null || true)
+CLIENT_SECRET=$(echo "$CREATE_RESP" | python3 -c 'import sys,json;print(json.load(sys.stdin)["data"].get("clientSecret") or "")' 2>/dev/null || true)
 [ -n "$DELIVERY_ID" ] || { echo "$CREATE_RESP"; fail "Could not create delivery"; }
 info "delivery id: $DELIVERY_ID"
 assert_status "$STATUS" "pending" "create"
+if [ -n "$PI_ID" ]; then
+  ok "PaymentIntent created: ${PI_ID:0:20}…  (paymentStatus=$PAY_STATUS)"
+  [ -n "$CLIENT_SECRET" ] && ok "clientSecret returned (${CLIENT_SECRET:0:20}…)" || fail "clientSecret missing"
+else
+  info "no PaymentIntent (Stripe disabled) — skipping payment assertions"
+fi
 
 # ========== 3. Driver requests (pending → requested) ==========
 step "Driver requests delivery"
@@ -201,6 +226,24 @@ RESP=$(curl -s -X POST "$API/api/deliveries/$DELIVERY_ID/verify-delivery" \
   -d "{\"code\":\"$DELIVERY_CODE\"}")
 STATUS=$(echo "$RESP" | python3 -c 'import sys,json;print(json.load(sys.stdin)["data"]["status"])')
 assert_status "$STATUS" "delivered" "verify delivery"
+
+# Payment split assertions — only when the sender actually paid.
+# In this E2E we don't drive the Payment Sheet, so paymentStatus stays 'unpaid' and
+# captureAndPayoutOnDelivered is a no-op. We just confirm that on Stripe-configured mode
+# the fields are still exposed.
+if [ -n "$PI_ID" ]; then
+  PAY_STATUS=$(echo "$RESP" | python3 -c 'import sys,json;print(json.load(sys.stdin)["data"].get("paymentStatus") or "")')
+  info "paymentStatus after delivered: $PAY_STATUS"
+  if [ "$PAY_STATUS" = "captured" ]; then
+    PFEE=$(echo "$RESP" | python3 -c 'import sys,json;print(json.load(sys.stdin)["data"].get("platformFeeCHF") or "")')
+    PAYOUT=$(echo "$RESP" | python3 -c 'import sys,json;print(json.load(sys.stdin)["data"].get("driverPayoutCHF") or "")')
+    info "platformFeeCHF=$PFEE  driverPayoutCHF=$PAYOUT"
+    [ "$PFEE" = "1.5" ] && ok "10% fee correct" || fail "expected 1.5, got $PFEE"
+    [ "$PAYOUT" = "13.5" ] && ok "driver payout correct" || fail "expected 13.5, got $PAYOUT"
+  else
+    ok "paymentStatus=$PAY_STATUS (sender didn't complete PaymentSheet — expected in bash-only E2E)"
+  fi
+fi
 
 # ========== 9. Negative checks ==========
 step "Negative: re-confirm on delivered → 400"

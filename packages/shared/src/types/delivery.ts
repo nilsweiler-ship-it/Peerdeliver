@@ -13,6 +13,14 @@ export type DeliveryStatus =
   | 'cancelled'
   | 'expired';
 
+export type PaymentStatus =
+  | 'unpaid'
+  | 'authorised'
+  | 'captured'
+  | 'refunded'
+  | 'voided'
+  | 'failed';
+
 export interface GeoPoint {
   lat: number;
   lng: number;
@@ -45,6 +53,12 @@ export interface DeliveryRequest {
   co2SavedKg?: number;
   cancelledBy?: string;
   cancelReason?: string;
+  paymentStatus?: PaymentStatus;
+  driverPayoutCHF?: number;
+  refundedCHF?: number;
+  refundedAt?: string;
+  stripePaymentIntentId?: string;
+  clientSecret?: string | null;
   createdAt: string;
   updatedAt: string;
 }

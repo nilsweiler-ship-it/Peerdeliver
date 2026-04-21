@@ -22,7 +22,8 @@
       }
     },
     "extra": {
-      "apiUrl": "https://waitingly-semiperceptive-jeanne.ngrok-free.dev"
+      "apiUrl": "https://waitingly-semiperceptive-jeanne.ngrok-free.dev",
+      "stripePublishableKey": "pk_test_51TL4Ba9s4LgD9mOsxagKSRktI7POkxxVd6Hr6im4PkuGNILKqBncrjiHbm7ZhiD1juPe1wtYDzYBLeKf4S3czI8000blE8bnox"
     }
   }
 }

@@ -4,3 +4,4 @@ export * as deliveryService from './delivery';
 export * as routeService from './route';
 export * as chatService from './chat';
 export * as tokenService from './token';
+export * as paymentService from './payment';
