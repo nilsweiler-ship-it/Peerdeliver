@@ -1,4 +1,4 @@
-export type UserRole = 'sender' | 'driver' | 'both' | 'admin';
+export type UserRole = 'sender' | 'driver' | 'both' | 'recipient' | 'admin';
 
 export type VerificationStatus = 'unverified' | 'pending' | 'verified' | 'rejected';
 

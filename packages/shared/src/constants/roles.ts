@@ -2,6 +2,7 @@ export const ROLES = {
   SENDER: 'sender',
   DRIVER: 'driver',
   BOTH: 'both',
+  RECIPIENT: 'recipient',
   ADMIN: 'admin',
 } as const;
 

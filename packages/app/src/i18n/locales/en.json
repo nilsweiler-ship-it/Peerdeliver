@@ -36,6 +36,7 @@
     "roleSender": "Send packages",
     "roleDriver": "Deliver packages",
     "roleBoth": "Send & deliver",
+    "roleRecipient": "Receive packages",
     "vehicleInfo": "Vehicle Information",
     "licensePlate": "License Plate",
     "carModel": "Car Model",
@@ -46,7 +47,8 @@
     "shipments": "Shipments",
     "routes": "Routes",
     "chat": "Chat",
-    "profile": "Profile"
+    "profile": "Profile",
+    "incoming": "Incoming"
   },
   "sender": {
     "createRequest": "Create Delivery Request",
@@ -65,6 +67,9 @@
     "weightEstimate": "Weight Estimate (kg)",
     "pickupAddress": "Pickup Address",
     "deliveryAddress": "Delivery Address",
+    "recipientEmail": "Recipient Email",
+    "recipientEmailPlaceholder": "recipient@example.com",
+    "recipientEmailHint": "Optional — they'll see the delivery and confirmation code",
     "preferredDate": "Preferred Date",
     "preferredTime": "Preferred Time",
     "specialInstructions": "Special Instructions",
@@ -143,6 +148,16 @@
     "destinationAddress": "Destination City / Address",
     "departureDate": "Departure Date",
     "priceRange": "Price Range (CHF)"
+  },
+  "recipient": {
+    "incomingDeliveries": "Incoming Deliveries",
+    "noIncoming": "No incoming deliveries",
+    "noIncomingMessage": "Deliveries addressed to you will appear here",
+    "from": "From",
+    "sender": "Sender",
+    "deliveryCodeTitle": "Delivery Code",
+    "deliveryCodeHint": "Show this code to the driver to confirm you received the package",
+    "codeAvailableWhenInTransit": "Your delivery code will appear here once the package is on its way"
   },
   "chat": {
     "typeMessage": "Type a message...",

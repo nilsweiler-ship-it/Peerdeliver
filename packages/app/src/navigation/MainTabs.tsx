@@ -4,6 +4,7 @@ import { useAuthStore } from '../stores/authStore';
 import { HomeScreen } from '../screens/shared/HomeScreen';
 import { SenderStack } from './SenderStack';
 import { DriverStack } from './DriverStack';
+import { RecipientStack } from './RecipientStack';
 import { ChatStack } from './ChatStack';
 import { ProfileScreen } from '../screens/shared/ProfileScreen';
 import { colors } from '../theme';
@@ -17,6 +18,7 @@ export function MainTabs() {
 
   const showSender = role === 'sender' || role === 'both';
   const showDriver = role === 'driver' || role === 'both';
+  const showRecipient = role === 'recipient';
 
   return (
     <Tab.Navigator
@@ -39,6 +41,13 @@ export function MainTabs() {
           name="DriverStack"
           component={DriverStack}
           options={{ title: t('tabs.routes') }}
+        />
+      )}
+      {showRecipient && (
+        <Tab.Screen
+          name="RecipientStack"
+          component={RecipientStack}
+          options={{ title: t('tabs.incoming') }}
         />
       )}
       <Tab.Screen

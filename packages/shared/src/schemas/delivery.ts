@@ -13,6 +13,7 @@ const addressSchema = z.object({
 export const createDeliverySchema = z.object({
   pickupAddress: addressSchema,
   deliveryAddress: addressSchema,
+  recipientEmail: z.string().email().optional(),
   packageSize: z.enum(['S', 'M', 'L']),
   packageWeight: z.number().positive().optional(),
   packageDescription: z.string().max(500).optional(),

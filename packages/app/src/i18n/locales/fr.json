@@ -35,14 +35,16 @@
     "selectRole": "Je veux...",
     "roleSender": "Envoyer des colis",
     "roleDriver": "Livrer des colis",
-    "roleBoth": "Envoyer & livrer"
+    "roleBoth": "Envoyer & livrer",
+    "roleRecipient": "Recevoir des colis"
   },
   "tabs": {
     "home": "Accueil",
     "shipments": "Envois",
     "routes": "Itinéraires",
     "chat": "Chat",
-    "profile": "Profil"
+    "profile": "Profil",
+    "incoming": "Entrants"
   },
   "sender": {
     "createRequest": "Créer une demande de livraison",
@@ -61,6 +63,9 @@
     "weightEstimate": "Estimation du poids (kg)",
     "pickupAddress": "Adresse de ramassage",
     "deliveryAddress": "Adresse de livraison",
+    "recipientEmail": "E-mail du destinataire",
+    "recipientEmailPlaceholder": "destinataire@example.com",
+    "recipientEmailHint": "Facultatif — le destinataire verra la livraison et le code de confirmation",
     "preferredDate": "Date souhaitée",
     "preferredTime": "Heure souhaitée",
     "specialInstructions": "Instructions spéciales",
@@ -109,6 +114,16 @@
     "destinationAddress": "Ville / adresse de destination",
     "departureDate": "Date de départ",
     "priceRange": "Fourchette de prix (CHF)"
+  },
+  "recipient": {
+    "incomingDeliveries": "Livraisons entrantes",
+    "noIncoming": "Aucune livraison entrante",
+    "noIncomingMessage": "Les livraisons qui vous sont adressées apparaîtront ici",
+    "from": "De",
+    "sender": "Expéditeur",
+    "deliveryCodeTitle": "Code de livraison",
+    "deliveryCodeHint": "Montrez ce code au chauffeur pour confirmer la réception du colis",
+    "codeAvailableWhenInTransit": "Votre code de livraison apparaîtra ici une fois le colis en route"
   },
   "chat": {
     "typeMessage": "Écrire un message...",

@@ -239,21 +239,13 @@ export function MyShipmentsScreen({ navigation }: any) {
               <DriverTracker deliveryId={selectedDelivery.id} />
             )}
 
-            {/* Show pickup code for sender when driver is on the way */}
+            {/* Senders only see the pickup code — the delivery code is held by the
+                recipient, who shows it to the driver to confirm receipt. */}
             {selectedDelivery.status === 'accepted' && selectedDelivery.pickupCode && (
               <View style={styles.codeCard}>
                 <Text style={styles.codeTitle}>{t('sender.pickupCodeTitle')}</Text>
                 <Text style={styles.codeValue}>{selectedDelivery.pickupCode}</Text>
                 <Text style={styles.codeHint}>{t('sender.pickupCodeHint')}</Text>
-              </View>
-            )}
-
-            {/* Show delivery code for sender when package is in transit */}
-            {selectedDelivery.status === 'in_transit' && selectedDelivery.deliveryCode && (
-              <View style={styles.codeCard}>
-                <Text style={styles.codeTitle}>{t('sender.deliveryCodeTitle')}</Text>
-                <Text style={styles.codeValue}>{selectedDelivery.deliveryCode}</Text>
-                <Text style={styles.codeHint}>{t('sender.deliveryCodeHint')}</Text>
               </View>
             )}
           </View>

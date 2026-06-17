@@ -5,7 +5,7 @@ import { Button, Input } from '../../components/ui';
 import { useRegister } from '../../queries/auth';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 
-type RegisterRole = 'sender' | 'driver' | 'both';
+type RegisterRole = 'sender' | 'driver' | 'both' | 'recipient';
 
 // Common car models with estimated max load in kg
 const CAR_SUGGESTIONS: { model: string; maxLoadKg: number }[] = [
@@ -106,12 +106,20 @@ export function RegisterScreen({ navigation }: any) {
             style={styles.roleButton}
           />
         </View>
-        <Button
-          title={t('auth.roleBoth')}
-          onPress={() => setRole('both')}
-          variant={role === 'both' ? 'primary' : 'outline'}
-          style={styles.bothButton}
-        />
+        <View style={styles.roleRow}>
+          <Button
+            title={t('auth.roleBoth')}
+            onPress={() => setRole('both')}
+            variant={role === 'both' ? 'primary' : 'outline'}
+            style={styles.roleButton}
+          />
+          <Button
+            title={t('auth.roleRecipient')}
+            onPress={() => setRole('recipient')}
+            variant={role === 'recipient' ? 'primary' : 'outline'}
+            style={styles.roleButton}
+          />
+        </View>
 
         {isDriver && (
           <View style={styles.vehicleSection}>

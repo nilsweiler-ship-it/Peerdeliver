@@ -35,14 +35,16 @@
     "selectRole": "Ich möchte...",
     "roleSender": "Pakete senden",
     "roleDriver": "Pakete liefern",
-    "roleBoth": "Senden & liefern"
+    "roleBoth": "Senden & liefern",
+    "roleRecipient": "Pakete empfangen"
   },
   "tabs": {
     "home": "Home",
     "shipments": "Sendungen",
     "routes": "Routen",
     "chat": "Chat",
-    "profile": "Profil"
+    "profile": "Profil",
+    "incoming": "Eingehend"
   },
   "sender": {
     "createRequest": "Lieferanfrage erstellen",
@@ -61,6 +63,9 @@
     "weightEstimate": "Gewichtsschätzung (kg)",
     "pickupAddress": "Abholadresse",
     "deliveryAddress": "Lieferadresse",
+    "recipientEmail": "E-Mail des Empfängers",
+    "recipientEmailPlaceholder": "empfaenger@example.com",
+    "recipientEmailHint": "Optional — der Empfänger sieht die Lieferung und den Bestätigungscode",
     "preferredDate": "Gewünschtes Datum",
     "preferredTime": "Gewünschte Zeit",
     "specialInstructions": "Besondere Anweisungen",
@@ -109,6 +114,16 @@
     "destinationAddress": "Ziel-Stadt / Adresse",
     "departureDate": "Abfahrtsdatum",
     "priceRange": "Preisspanne (CHF)"
+  },
+  "recipient": {
+    "incomingDeliveries": "Eingehende Lieferungen",
+    "noIncoming": "Keine eingehenden Lieferungen",
+    "noIncomingMessage": "An Sie adressierte Lieferungen erscheinen hier",
+    "from": "Von",
+    "sender": "Absender",
+    "deliveryCodeTitle": "Liefercode",
+    "deliveryCodeHint": "Zeigen Sie diesen Code dem Fahrer, um den Empfang zu bestätigen",
+    "codeAvailableWhenInTransit": "Ihr Liefercode erscheint hier, sobald das Paket unterwegs ist"
   },
   "chat": {
     "typeMessage": "Nachricht eingeben...",

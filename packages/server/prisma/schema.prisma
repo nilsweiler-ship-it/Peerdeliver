@@ -11,6 +11,7 @@ enum UserRole {
   sender
   driver
   both
+  recipient
   admin
 }
 
@@ -82,6 +83,7 @@ model User {
 
   sentDeliveries     DeliveryRequest[] @relation("SenderDeliveries")
   drivenDeliveries   DeliveryRequest[] @relation("DriverDeliveries")
+  receivedDeliveries DeliveryRequest[] @relation("RecipientDeliveries")
   routes             DriverRoute[]
   sentMessages       Message[]
   ratingsGiven       Rating[]          @relation("RatingsGiven")
@@ -96,6 +98,9 @@ model DeliveryRequest {
   sender              User           @relation("SenderDeliveries", fields: [senderId], references: [id])
   driverId            String?
   driver              User?          @relation("DriverDeliveries", fields: [driverId], references: [id])
+  recipientId         String?
+  recipient           User?          @relation("RecipientDeliveries", fields: [recipientId], references: [id])
+  recipientEmail      String?
   pickupLabel         String
   pickupPoint         Unsupported("geometry(Point, 4326)")
   deliveryLabel       String
@@ -128,6 +133,7 @@ model DeliveryRequest {
 
   @@index([senderId])
   @@index([driverId])
+  @@index([recipientId])
   @@index([status])
   @@map("delivery_requests")
 }

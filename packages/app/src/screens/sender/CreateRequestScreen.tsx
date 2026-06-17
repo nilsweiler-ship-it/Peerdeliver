@@ -39,6 +39,7 @@ export function CreateRequestScreen({ navigation }: any) {
   // Step 1: Addresses
   const [pickupAddress, setPickupAddress] = useState<AddressSelection | null>(null);
   const [deliveryAddress, setDeliveryAddress] = useState<AddressSelection | null>(null);
+  const [recipientEmail, setRecipientEmail] = useState('');
 
   // Step 2: Budget & Schedule
   const [budget, setBudget] = useState(15);
@@ -54,6 +55,9 @@ export function CreateRequestScreen({ navigation }: any) {
     } else if (step === 1) {
       if (!pickupAddress) newErrors.pickupAddress = t('common.error');
       if (!deliveryAddress) newErrors.deliveryAddress = t('common.error');
+      if (recipientEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail.trim())) {
+        newErrors.recipientEmail = t('common.error');
+      }
     } else if (step === 2) {
       if (budget <= 0) newErrors.budget = t('common.error');
     }
@@ -89,6 +93,7 @@ export function CreateRequestScreen({ navigation }: any) {
       budgetCHF: budget,
       deliveryWindowStart: tomorrow.toISOString(),
       deliveryWindowEnd: dayAfter.toISOString(),
+      ...(recipientEmail.trim() && { recipientEmail: recipientEmail.trim() }),
     };
 
     try {
@@ -221,6 +226,17 @@ export function CreateRequestScreen({ navigation }: any) {
               placeholder={t('sender.toLocation')}
               error={errors.deliveryAddress}
             />
+
+            <Input
+              label={t('sender.recipientEmail')}
+              value={recipientEmail}
+              onChangeText={setRecipientEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              placeholder={t('sender.recipientEmailPlaceholder')}
+              error={errors.recipientEmail}
+            />
+            <Text style={styles.fieldHint}>{t('sender.recipientEmailHint')}</Text>
           </Card>
         )}
 
@@ -345,6 +361,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...typography.h3,
     color: colors.text,
+  },
+  fieldHint: {
+    ...typography.caption,
+    color: colors.textLight,
+    marginTop: -spacing.xs,
   },
   sizeRow: {
     flexDirection: 'row',

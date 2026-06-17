@@ -7,7 +7,7 @@ import * as paymentService from './payment';
 
 // All scalar columns (excluding raw geometry) with ST_AsGeoJSON for coordinates
 const DELIVERY_COLS = `
-  dr.id, dr."senderId", dr."driverId",
+  dr.id, dr."senderId", dr."driverId", dr."recipientId", dr."recipientEmail",
   dr."pickupLabel", dr."deliveryLabel",
   ST_AsGeoJSON(dr."pickupPoint") AS "pickupGeoJSON",
   ST_AsGeoJSON(dr."deliveryPoint") AS "deliveryGeoJSON",
@@ -25,6 +25,8 @@ interface RawDeliveryRow {
   id: string;
   senderId: string;
   driverId?: string;
+  recipientId?: string;
+  recipientEmail?: string;
   pickupLabel: string;
   pickupGeoJSON: string;
   deliveryLabel: string;
@@ -73,14 +75,29 @@ export async function createDelivery(senderId: string, input: CreateDeliveryInpu
   const pickupCode = generateCode();
   const deliveryCode = generateCode();
 
+  // Resolve the recipient email to a registered user when one exists, so the
+  // delivery shows up in their incoming list immediately. The email is also
+  // stored verbatim so a recipient who registers later can still be matched.
+  const recipientEmail = input.recipientEmail?.toLowerCase() ?? null;
+  let recipientId: string | null = null;
+  if (recipientEmail) {
+    const recipient = await prisma.user.findUnique({
+      where: { email: recipientEmail },
+      select: { id: true },
+    });
+    recipientId = recipient?.id ?? null;
+  }
+
   const inserted: { id: string }[] = await prisma.$queryRaw`
     INSERT INTO delivery_requests (
-      id, "senderId", "pickupLabel", "pickupPoint", "deliveryLabel", "deliveryPoint",
+      id, "senderId", "recipientId", "recipientEmail",
+      "pickupLabel", "pickupPoint", "deliveryLabel", "deliveryPoint",
       "packageSize", "packageWeight", "packageDescription", "declaredValue",
       "budgetCHF", "deliveryWindowStart", "deliveryWindowEnd",
       status, "pickupCode", "deliveryCode", "createdAt", "updatedAt"
     ) VALUES (
-      gen_random_uuid()::text, ${senderId}, ${input.pickupAddress.label},
+      gen_random_uuid()::text, ${senderId}, ${recipientId}, ${recipientEmail},
+      ${input.pickupAddress.label},
       ST_SetSRID(ST_MakePoint(${input.pickupAddress.point.lng}, ${input.pickupAddress.point.lat}), 4326),
       ${input.deliveryAddress.label},
       ST_SetSRID(ST_MakePoint(${input.deliveryAddress.point.lng}, ${input.deliveryAddress.point.lat}), 4326),
@@ -116,6 +133,19 @@ export async function getDeliveriesByDriver(driverId: string) {
   const rows: RawDeliveryRow[] = await prisma.$queryRawUnsafe(
     `SELECT ${DELIVERY_COLS} FROM delivery_requests dr WHERE dr."driverId" = $1 ORDER BY dr."createdAt" DESC`,
     driverId,
+  );
+  return rows.map(transformDelivery);
+}
+
+export async function getDeliveriesByRecipient(recipientId: string, email: string) {
+  // Match on the linked recipientId (set when the recipient was registered at
+  // creation time) or on the raw email (recipient registered after creation).
+  const rows: RawDeliveryRow[] = await prisma.$queryRawUnsafe(
+    `SELECT ${DELIVERY_COLS} FROM delivery_requests dr
+       WHERE dr."recipientId" = $1 OR LOWER(dr."recipientEmail") = LOWER($2)
+       ORDER BY dr."createdAt" DESC`,
+    recipientId,
+    email,
   );
   return rows.map(transformDelivery);
 }

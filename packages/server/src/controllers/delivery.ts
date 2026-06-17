@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { deliveryService } from '../services';
+import { deliveryService, userService } from '../services';
 import { success, error } from '../utils';
 
 export async function create(req: Request, res: Response, next: NextFunction) {
@@ -28,6 +28,9 @@ export async function getMine(req: Request, res: Response, next: NextFunction) {
         .filter((d) => { if (seen.has(d.id)) return false; seen.add(d.id); return true; });
     } else if (role === 'driver') {
       deliveries = await deliveryService.getDeliveriesByDriver(userId);
+    } else if (role === 'recipient') {
+      const { email } = await userService.getUserById(userId);
+      deliveries = await deliveryService.getDeliveriesByRecipient(userId, email);
     } else {
       deliveries = await deliveryService.getDeliveriesBySender(userId);
     }

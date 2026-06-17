@@ -37,6 +37,8 @@ export interface DeliveryRequest {
   sender?: PublicUser;
   driverId?: string;
   driver?: PublicUser;
+  recipientId?: string;
+  recipientEmail?: string;
   pickupAddress: Address;
   deliveryAddress: Address;
   packageSize: PackageSize;

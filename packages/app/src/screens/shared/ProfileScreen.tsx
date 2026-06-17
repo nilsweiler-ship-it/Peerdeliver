@@ -13,6 +13,7 @@ const ROLE_OPTIONS: { key: UserRole; labelKey: string }[] = [
   { key: 'sender', labelKey: 'auth.roleSender' },
   { key: 'driver', labelKey: 'auth.roleDriver' },
   { key: 'both', labelKey: 'auth.roleBoth' },
+  { key: 'recipient', labelKey: 'auth.roleRecipient' },
 ];
 
 export function ProfileScreen() {
@@ -43,6 +44,7 @@ export function ProfileScreen() {
       case 'sender': return t('auth.roleSender');
       case 'driver': return t('auth.roleDriver');
       case 'both': return t('auth.roleBoth');
+      case 'recipient': return t('auth.roleRecipient');
       default: return role;
     }
   };
