@@ -9,11 +9,13 @@ import {
   Platform,
   TouchableOpacity,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
+import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { useStripe } from '@stripe/stripe-react-native';
 import { Button, Input, Card, AddressAutocomplete } from '../../components/ui';
 import type { AddressSelection } from '../../components/ui';
+import { Stepper, BackChip, Pill, RouteLine } from '../../components/brand';
 import { useCreateDelivery } from '../../queries/delivery';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { PackageSize, CreateDeliveryInput } from '@peerdeliver/shared';
@@ -24,10 +26,12 @@ const SIZES: { key: PackageSize; labelKey: string }[] = [
   { key: 'L', labelKey: 'sender.sizeLarge' },
 ];
 
+const SELECTED_FILL = '#ECF1EC';
+
 export function CreateRequestScreen({ navigation }: any) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const createDelivery = useCreateDelivery();
-  const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [step, setStep] = useState(0);
 
   // Step 0: Package details
@@ -98,89 +102,67 @@ export function CreateRequestScreen({ navigation }: any) {
 
     try {
       const delivery = await createDelivery.mutateAsync(input);
-
-      // If the server returned a Stripe clientSecret, present the Payment Sheet.
-      // Without Stripe configured, clientSecret is null — we skip straight to success.
-      const clientSecret = (delivery as any)?.clientSecret as string | null | undefined;
-      if (clientSecret) {
-        const initResult = await initPaymentSheet({
-          paymentIntentClientSecret: clientSecret,
-          merchantDisplayName: 'PeerDeliver',
-          allowsDelayedPaymentMethods: false,
-        });
-        if (initResult.error) {
-          Alert.alert(t('common.error'), initResult.error.message);
-          return;
-        }
-        const sheetResult = await presentPaymentSheet();
-        if (sheetResult.error) {
-          // User cancelled or payment failed — delivery is still created but unpaid.
-          // They can retry from MyShipments (future: payment retry CTA).
-          Alert.alert(t('common.error'), sheetResult.error.message);
-          navigation.navigate('MyShipments');
-          return;
-        }
-      }
-
-      Alert.alert(t('sender.createSuccess'));
-      navigation.navigate('MyShipments');
+      // Collect payment via the TWINT flow. The delivery is created 'unpaid';
+      // the Twint screen confirms payment, then sends the sender to MyShipments.
+      navigation.navigate('TwintPayment', {
+        deliveryId: delivery.id,
+        amountCHF: budget,
+        summary: description.trim() || t('sender.delivery'),
+      });
     } catch (err: any) {
       const msg = err?.response?.data?.error || err?.message || t('common.error');
       Alert.alert(t('common.error'), msg);
     }
   };
 
-  const stepTitles = [
-    t('sender.packageDetails'),
-    t('sender.addresses'),
-    t('sender.budgetAndSchedule'),
-  ];
-
   return (
     <KeyboardAvoidingView
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {/* Progress indicator */}
-        <View style={styles.progress}>
-          {stepTitles.map((title, idx) => (
-            <View key={title} style={styles.progressStep}>
-              <View style={[styles.progressDot, idx <= step && styles.progressDotActive]}>
-                <Text style={[styles.progressNum, idx <= step && styles.progressNumActive]}>
-                  {idx + 1}
-                </Text>
-              </View>
-              <Text style={[styles.progressLabel, idx === step && styles.progressLabelActive]}>
-                {title}
-              </Text>
-            </View>
-          ))}
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.md }]}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <BackChip onPress={() => (step > 0 ? handleBack() : navigation.goBack())} />
+          <Text style={styles.title}>{t('sender.createRequest')}</Text>
+          <Pill label={`${step + 1} / 3`} mono tone="sunken" />
         </View>
 
-        <Text style={styles.stepIndicator}>
-          {t('common.step', { current: step + 1, total: 3 })}
-        </Text>
+        {/* Stepper */}
+        <Stepper steps={['Package', 'Address', 'Budget']} current={step + 1} />
 
         {/* Step 0: Package Details */}
         {step === 0 && (
           <Card style={styles.stepCard}>
             <Text style={styles.sectionTitle}>{t('sender.packageSize')}</Text>
             <View style={styles.sizeRow}>
-              {SIZES.map((s) => (
-                <TouchableOpacity
-                  key={s.key}
-                  style={[styles.sizeOption, packageSize === s.key && styles.sizeSelected]}
-                  onPress={() => setPackageSize(s.key)}
-                >
-                  <Text style={[styles.sizeLabel, packageSize === s.key && styles.sizeLabelSelected]}>
-                    {s.key}
-                  </Text>
-                  <Text style={[styles.sizeDesc, packageSize === s.key && styles.sizeDescSelected]}>
-                    {t(s.labelKey)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {SIZES.map((s) => {
+                const selected = packageSize === s.key;
+                return (
+                  <TouchableOpacity
+                    key={s.key}
+                    activeOpacity={0.85}
+                    style={[styles.sizeOption, selected && styles.sizeSelected]}
+                    onPress={() => setPackageSize(s.key)}
+                  >
+                    <Feather
+                      name="package"
+                      size={22}
+                      color={selected ? colors.primary : colors.textLight}
+                    />
+                    <Text style={[styles.sizeLabel, selected && styles.sizeLabelSelected]}>
+                      {s.key}
+                    </Text>
+                    <Text style={[styles.sizeDesc, selected && styles.sizeDescSelected]}>
+                      {t(s.labelKey)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
 
             <Input
@@ -192,21 +174,28 @@ export function CreateRequestScreen({ navigation }: any) {
               error={errors.description}
             />
 
-            <Input
-              label={t('sender.weightEstimate')}
-              value={weight}
-              onChangeText={setWeight}
-              keyboardType="numeric"
-              placeholder="0"
-            />
-
-            <Input
-              label={t('sender.declaredValue')}
-              value={declaredValue}
-              onChangeText={setDeclaredValue}
-              keyboardType="numeric"
-              placeholder="0"
-            />
+            <View style={styles.fieldRow}>
+              <View style={styles.fieldHalf}>
+                <Input
+                  label={t('sender.weightEstimate')}
+                  value={weight}
+                  onChangeText={setWeight}
+                  keyboardType="numeric"
+                  placeholder="0"
+                  style={styles.monoInput}
+                />
+              </View>
+              <View style={styles.fieldHalf}>
+                <Input
+                  label={t('sender.declaredValue')}
+                  value={declaredValue}
+                  onChangeText={setDeclaredValue}
+                  keyboardType="numeric"
+                  placeholder="0"
+                  style={styles.monoInput}
+                />
+              </View>
+            </View>
           </Card>
         )}
 
@@ -237,6 +226,12 @@ export function CreateRequestScreen({ navigation }: any) {
               error={errors.recipientEmail}
             />
             <Text style={styles.fieldHint}>{t('sender.recipientEmailHint')}</Text>
+
+            {pickupAddress && deliveryAddress && (
+              <View style={styles.routePreview}>
+                <RouteLine from={pickupAddress.label} to={deliveryAddress.label} />
+              </View>
+            )}
           </Card>
         )}
 
@@ -292,7 +287,7 @@ export function CreateRequestScreen({ navigation }: any) {
             <Button title={t('common.back')} onPress={handleBack} variant="outline" style={styles.backButton} />
           )}
           <Button
-            title={step === 2 ? t('sender.createRequest') : t('common.next')}
+            title={step === 2 ? t('sender.createRequest') : `${t('common.next')}  →`}
             onPress={handleNext}
             loading={createDelivery.isPending}
             style={styles.nextButton}
@@ -306,53 +301,18 @@ export function CreateRequestScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  progress: {
+  content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg },
+  header: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.lg,
+    gap: spacing.sm,
   },
-  progressStep: {
+  title: {
+    ...typography.h2,
+    color: colors.text,
     flex: 1,
-    alignItems: 'center',
-  },
-  progressDot: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-    borderWidth: 2,
-    borderColor: colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  progressDotActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  progressNum: {
-    ...typography.bodySmall,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
-  progressNumActive: {
-    color: colors.textInverse,
-  },
-  progressLabel: {
-    ...typography.caption,
-    color: colors.textLight,
-    marginTop: spacing.xs,
-    textAlign: 'center',
-  },
-  progressLabelActive: {
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  stepIndicator: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: spacing.md,
+    marginLeft: spacing.sm,
   },
   stepCard: {
     padding: spacing.lg,
@@ -367,24 +327,36 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     marginTop: -spacing.xs,
   },
+  fieldRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  fieldHalf: {
+    flex: 1,
+  },
+  monoInput: {
+    fontFamily: typography.figure.fontFamily,
+  },
   sizeRow: {
     flexDirection: 'row',
     gap: spacing.sm,
   },
   sizeOption: {
     flex: 1,
-    padding: spacing.md,
+    paddingVertical: spacing.md,
     borderRadius: borderRadius.lg,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: colors.border,
+    backgroundColor: colors.surface,
     alignItems: 'center',
+    gap: spacing.xs,
   },
   sizeSelected: {
     borderColor: colors.primary,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: SELECTED_FILL,
   },
   sizeLabel: {
-    ...typography.h2,
+    ...typography.h3,
     color: colors.textSecondary,
   },
   sizeLabelSelected: {
@@ -394,19 +366,24 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textLight,
     textAlign: 'center',
-    marginTop: spacing.xs,
   },
   sizeDescSelected: {
     color: colors.primaryDark,
   },
+  routePreview: {
+    marginTop: spacing.xs,
+    padding: spacing.md,
+    backgroundColor: colors.surfaceSunken,
+    borderRadius: borderRadius.lg,
+  },
   sliderLabel: {
     ...typography.bodySmall,
     color: colors.textSecondary,
-    fontWeight: '600',
+    fontFamily: typography.bodyStrong.fontFamily,
     marginBottom: spacing.xs,
   },
   sliderValue: {
-    ...typography.h2,
+    ...typography.figureLg,
     color: colors.primary,
     textAlign: 'center',
     marginBottom: spacing.sm,
@@ -421,6 +398,7 @@ const styles = StyleSheet.create({
   },
   sliderRangeText: {
     ...typography.caption,
+    fontFamily: typography.figure.fontFamily,
     color: colors.textLight,
   },
   sliderError: {
@@ -431,31 +409,30 @@ const styles = StyleSheet.create({
   breakdown: {
     marginTop: spacing.md,
     padding: spacing.md,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSunken,
     borderRadius: borderRadius.lg,
     gap: spacing.xs,
   },
   breakdownRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
   breakdownLabel: {
     ...typography.bodySmall,
     color: colors.textSecondary,
   },
   breakdownValue: {
-    ...typography.bodySmall,
+    ...typography.figure,
+    fontSize: 15,
     color: colors.text,
-    fontWeight: '500',
   },
   breakdownValueHighlight: {
     color: colors.primary,
-    fontWeight: '700',
   },
   buttons: {
     flexDirection: 'row',
     gap: spacing.md,
-    marginTop: spacing.lg,
   },
   backButton: {
     flex: 1,

@@ -1,27 +1,54 @@
 import React from 'react';
+import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import Constants from 'expo-constants';
-import { StripeProvider } from '@stripe/stripe-react-native';
+import { useFonts } from 'expo-font';
+import {
+  BricolageGrotesque_600SemiBold,
+  BricolageGrotesque_700Bold,
+} from '@expo-google-fonts/bricolage-grotesque';
+import {
+  HankenGrotesk_400Regular,
+  HankenGrotesk_500Medium,
+  HankenGrotesk_600SemiBold,
+  HankenGrotesk_700Bold,
+} from '@expo-google-fonts/hanken-grotesk';
+import {
+  JetBrainsMono_500Medium,
+  JetBrainsMono_700Bold,
+} from '@expo-google-fonts/jetbrains-mono';
 import { QueryProvider } from './src/providers/QueryProvider';
 import { SocketProvider } from './src/providers/SocketProvider';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { colors } from './src/theme';
 import './src/i18n';
 
-const stripePublishableKey =
-  (Constants.expoConfig?.extra?.stripePublishableKey as string | undefined) || '';
-
 export default function App() {
+  const [fontsLoaded, fontError] = useFonts({
+    BricolageGrotesque_600SemiBold,
+    BricolageGrotesque_700Bold,
+    HankenGrotesk_400Regular,
+    HankenGrotesk_500Medium,
+    HankenGrotesk_600SemiBold,
+    HankenGrotesk_700Bold,
+    JetBrainsMono_500Medium,
+    JetBrainsMono_700Bold,
+  });
+
+  // Proceed once fonts resolve — but never block the whole app on a font error
+  // (e.g. on web a failed font fetch would otherwise hang on a blank screen).
+  if (!fontsLoaded && !fontError) {
+    return <View style={{ flex: 1, backgroundColor: colors.background }} />;
+  }
+
   return (
     <SafeAreaProvider>
-      <StripeProvider publishableKey={stripePublishableKey} merchantIdentifier="merchant.com.peerdeliver.app">
-        <QueryProvider>
-          <SocketProvider>
-            <StatusBar style="dark" />
-            <RootNavigator />
-          </SocketProvider>
-        </QueryProvider>
-      </StripeProvider>
+      <QueryProvider>
+        <SocketProvider>
+          <StatusBar style="dark" />
+          <RootNavigator />
+        </SocketProvider>
+      </QueryProvider>
     </SafeAreaProvider>
   );
 }

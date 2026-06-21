@@ -9,9 +9,11 @@ import {
   Platform,
   TouchableOpacity,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Button, Input, Card, AddressAutocomplete } from '../../components/ui';
 import type { AddressSelection } from '../../components/ui';
+import { BackChip, RouteLine, SegmentedControl, DayPicker } from '../../components/brand';
 import { useCreateRoute } from '../../queries/route';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { PackageSize, RouteType, DayOfWeek, CreateRouteInput } from '@peerdeliver/shared';
@@ -22,15 +24,22 @@ const SIZES: { key: PackageSize; label: string }[] = [
   { key: 'L', label: 'Large' },
 ];
 
-const DAYS: DayOfWeek[] = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+// DayPicker uses lowercase keys; the API/state stays uppercase DayOfWeek.
+const DAY_ORDER: DayOfWeek[] = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+const toLower = (days: DayOfWeek[]) => days.map((d) => d.toLowerCase());
+const toUpper = (days: string[]) =>
+  DAY_ORDER.filter((d) => days.includes(d.toLowerCase()));
 
 const HOURS = Array.from({ length: 24 }, (_, i) => {
   const h = i.toString().padStart(2, '0');
   return { value: i, label: `${h}:00` };
 });
 
+const SELECTED_FILL = '#ECF1EC';
+
 export function PublishRouteScreen({ navigation }: any) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const createRoute = useCreateRoute();
 
   const [origin, setOrigin] = useState<AddressSelection | null>(null);
@@ -42,12 +51,6 @@ export function PublishRouteScreen({ navigation }: any) {
   const [maxDetour, setMaxDetour] = useState('15');
   const [notes, setNotes] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const toggleDay = (day: DayOfWeek) => {
-    setRecurringDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day],
-    );
-  };
 
   const handleSubmit = async () => {
     const newErrors: Record<string, string> = {};
@@ -94,10 +97,16 @@ export function PublishRouteScreen({ navigation }: any) {
     >
       <ScrollView
         style={styles.container}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.md }]}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Addresses */}
+        {/* Header */}
+        <View style={styles.header}>
+          <BackChip onPress={() => navigation.goBack()} />
+          <Text style={styles.title}>{t('driver.publishRoute')}</Text>
+        </View>
+
+        {/* Addresses — RouteLine motif framing the two autocomplete fields */}
         <Card style={styles.section}>
           <AddressAutocomplete
             label={t('driver.originAddress')}
@@ -111,51 +120,33 @@ export function PublishRouteScreen({ navigation }: any) {
             placeholder={t('sender.toLocation')}
             error={errors.destination}
           />
+
+          {origin && destination && (
+            <View style={styles.routePreview}>
+              <RouteLine from={origin.label} to={destination.label} />
+            </View>
+          )}
         </Card>
 
         {/* Route type */}
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>{t('driver.routeType')}</Text>
-          <View style={styles.typeRow}>
-            <TouchableOpacity
-              style={[styles.typeOption, routeType === 'one_time' && styles.typeSelected]}
-              onPress={() => setRouteType('one_time')}
-            >
-              <Text style={[styles.typeText, routeType === 'one_time' && styles.typeTextSelected]}>
-                {t('driver.oneTime')}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.typeOption, routeType === 'recurring' && styles.typeSelected]}
-              onPress={() => setRouteType('recurring')}
-            >
-              <Text style={[styles.typeText, routeType === 'recurring' && styles.typeTextSelected]}>
-                {t('driver.recurring')}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <SegmentedControl
+            segments={[
+              { key: 'one_time', label: t('driver.oneTime') },
+              { key: 'recurring', label: t('driver.recurring') },
+            ]}
+            value={routeType}
+            onChange={(key) => setRouteType(key as RouteType)}
+          />
 
           {routeType === 'recurring' && (
             <View>
               <Text style={styles.label}>{t('driver.recurringDays')}</Text>
-              <View style={styles.daysRow}>
-                {DAYS.map((day) => (
-                  <TouchableOpacity
-                    key={day}
-                    style={[styles.dayChip, recurringDays.includes(day) && styles.dayChipSelected]}
-                    onPress={() => toggleDay(day)}
-                  >
-                    <Text
-                      style={[
-                        styles.dayChipText,
-                        recurringDays.includes(day) && styles.dayChipTextSelected,
-                      ]}
-                    >
-                      {day}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              <DayPicker
+                value={toLower(recurringDays)}
+                onChange={(days) => setRecurringDays(toUpper(days))}
+              />
               {errors.days && <Text style={styles.errorText}>{errors.days}</Text>}
             </View>
           )}
@@ -169,22 +160,21 @@ export function PublishRouteScreen({ navigation }: any) {
             showsHorizontalScrollIndicator={false}
             style={styles.timeScroll}
           >
-            {HOURS.map((h) => (
-              <TouchableOpacity
-                key={h.value}
-                style={[styles.timeChip, departureHour === h.value && styles.timeChipSelected]}
-                onPress={() => setDepartureHour(h.value)}
-              >
-                <Text
-                  style={[
-                    styles.timeChipText,
-                    departureHour === h.value && styles.timeChipTextSelected,
-                  ]}
+            {HOURS.map((h) => {
+              const selected = departureHour === h.value;
+              return (
+                <TouchableOpacity
+                  key={h.value}
+                  activeOpacity={0.85}
+                  style={[styles.timeChip, selected && styles.timeChipSelected]}
+                  onPress={() => setDepartureHour(h.value)}
                 >
-                  {h.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text style={[styles.timeChipText, selected && styles.timeChipTextSelected]}>
+                    {h.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </Card>
 
@@ -192,32 +182,33 @@ export function PublishRouteScreen({ navigation }: any) {
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>{t('driver.availableSpace')}</Text>
           <View style={styles.sizeRow}>
-            {SIZES.map((s) => (
-              <TouchableOpacity
-                key={s.key}
-                style={[styles.sizeOption, availableSize === s.key && styles.sizeSelected]}
-                onPress={() => setAvailableSize(s.key)}
-              >
-                <Text
-                  style={[styles.sizeLabel, availableSize === s.key && styles.sizeLabelSelected]}
+            {SIZES.map((s) => {
+              const selected = availableSize === s.key;
+              return (
+                <TouchableOpacity
+                  key={s.key}
+                  activeOpacity={0.85}
+                  style={[styles.sizeOption, selected && styles.sizeSelected]}
+                  onPress={() => setAvailableSize(s.key)}
                 >
-                  {s.key}
-                </Text>
-                <Text
-                  style={[styles.sizeDesc, availableSize === s.key && styles.sizeDescSelected]}
-                >
-                  {s.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text style={[styles.sizeLabel, selected && styles.sizeLabelSelected]}>
+                    {s.key}
+                  </Text>
+                  <Text style={[styles.sizeDesc, selected && styles.sizeDescSelected]}>
+                    {s.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
           <Input
-            label={t('driver.maxDetour')}
+            label={`${t('driver.maxDetour')} (min)`}
             value={maxDetour}
             onChangeText={setMaxDetour}
             keyboardType="numeric"
             placeholder="15"
+            style={styles.monoInput}
           />
 
           <Input
@@ -230,7 +221,7 @@ export function PublishRouteScreen({ navigation }: any) {
         </Card>
 
         <Button
-          title={t('driver.publishRoute')}
+          title={`${t('driver.publishRoute')}  →`}
           onPress={handleSubmit}
           loading={createRoute.isPending}
           style={styles.submitButton}
@@ -244,48 +235,28 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  title: {
+    ...typography.h2,
+    color: colors.text,
+    marginLeft: spacing.sm,
+  },
   section: { padding: spacing.lg, gap: spacing.md },
   sectionTitle: { ...typography.h3, color: colors.text },
-  label: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.xs },
-  typeRow: { flexDirection: 'row', gap: spacing.sm },
-  typeOption: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
+  label: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.sm },
+  routePreview: {
+    marginTop: spacing.xs,
+    padding: spacing.md,
+    backgroundColor: colors.surfaceSunken,
     borderRadius: borderRadius.lg,
-    borderWidth: 2,
-    borderColor: colors.border,
   },
-  typeSelected: {
-    borderColor: colors.primary,
-    backgroundColor: '#E8F5E9',
-  },
-  typeText: { ...typography.button, color: colors.textSecondary },
-  typeTextSelected: { color: colors.primary },
-  daysRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  dayChip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  dayChipSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  dayChipText: {
-    ...typography.caption,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
-  dayChipTextSelected: {
-    color: colors.textInverse,
+  monoInput: {
+    fontFamily: typography.figure.fontFamily,
   },
   timeScroll: {
     marginHorizontal: -spacing.sm,
@@ -300,34 +271,36 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.xs,
   },
   timeChipSelected: {
-    backgroundColor: colors.primary,
+    backgroundColor: SELECTED_FILL,
     borderColor: colors.primary,
   },
   timeChipText: {
     ...typography.bodySmall,
-    fontWeight: '600',
     color: colors.textSecondary,
   },
   timeChipTextSelected: {
-    color: colors.textInverse,
+    ...typography.figure,
+    fontSize: 14,
+    color: colors.primary,
   },
   sizeRow: { flexDirection: 'row', gap: spacing.sm },
   sizeOption: {
     flex: 1,
     padding: spacing.md,
     borderRadius: borderRadius.lg,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: colors.border,
+    backgroundColor: colors.surface,
     alignItems: 'center',
   },
   sizeSelected: {
     borderColor: colors.primary,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: SELECTED_FILL,
   },
-  sizeLabel: { ...typography.h2, color: colors.textSecondary },
+  sizeLabel: { ...typography.h3, color: colors.textSecondary },
   sizeLabelSelected: { color: colors.primary },
   sizeDesc: { ...typography.caption, color: colors.textLight, marginTop: spacing.xs },
   sizeDescSelected: { color: colors.primaryDark },
   errorText: { ...typography.caption, color: colors.error, marginTop: spacing.xs },
-  submitButton: { marginTop: spacing.md },
+  submitButton: { marginTop: spacing.xs },
 });

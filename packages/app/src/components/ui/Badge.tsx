@@ -11,11 +11,11 @@ interface BadgeProps {
 }
 
 const variantColors: Record<BadgeVariant, { bg: string; text: string }> = {
-  success: { bg: '#D1FAE5', text: '#065F46' },
-  warning: { bg: '#FEF3C7', text: '#92400E' },
-  error: { bg: '#FEE2E2', text: '#991B1B' },
-  info: { bg: '#DBEAFE', text: '#1E40AF' },
-  neutral: { bg: colors.surface, text: colors.textSecondary },
+  success: { bg: '#E7EDE7', text: '#1F6F49' },
+  warning: { bg: colors.signalSoft, text: colors.signalText },
+  error: { bg: '#F6E2D8', text: '#9A4424' },
+  info: { bg: '#EAF0F4', text: '#2D6F94' },
+  neutral: { bg: colors.surfaceSunken, text: colors.textSecondary },
 };
 
 const statusVariantMap: Record<string, BadgeVariant> = {
@@ -51,7 +51,8 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   label: {
-    ...typography.caption,
-    fontWeight: '600',
+    ...typography.overline,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
   },
 });

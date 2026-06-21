@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, RefreshControl, TextInput } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useMyDeliveries, useVerifyPickup, useVerifyDelivery, useUpdateDeliveryStatus } from '../../queries/delivery';
-import { Button, Input, Card, EmptyState, LoadingSpinner } from '../../components/ui';
+import { Button, EmptyState, LoadingSpinner } from '../../components/ui';
 import { StatusTimeline } from '../../components/delivery/StatusTimeline';
+import { MapHeader, BackChip, Pill, RouteLine, TicketStub, CodeBoxes } from '../../components/brand';
 import { useSocket } from '../../providers/SocketProvider';
 import { useAuthStore } from '../../stores/authStore';
-import { colors, spacing, typography, borderRadius } from '../../theme';
+import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 import * as Location from 'expo-location';
 import type { DeliveryRequest, DeliveryStatus } from '@peerdeliver/shared';
 import { SOCKET_EVENTS } from '@peerdeliver/shared';
@@ -57,22 +59,30 @@ function DeliveryActionCard({ delivery }: { delivery: DeliveryRequest }) {
     }
   };
 
-  return (
-    <Card style={styles.card}>
-      <Text style={styles.cardTitle}>{delivery.packageDescription || t('sender.delivery')}</Text>
-      <StatusTimeline currentStatus={delivery.status} />
+  const isPickupCode = delivery.status === 'accepted';
+  const isDeliveryCode = delivery.status === 'in_transit';
 
-      <View style={styles.addressRow}>
-        <Text style={styles.addressLabel}>{t('sender.pickup')}</Text>
-        <Text style={styles.addressValue}>{delivery.pickupAddress.label}</Text>
+  return (
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>{delivery.packageDescription || t('sender.delivery')}</Text>
+
+      {/* Vertical status timeline */}
+      <View style={styles.timelineWrap}>
+        <StatusTimeline currentStatus={delivery.status} orientation="vertical" />
       </View>
-      <View style={styles.addressRow}>
-        <Text style={styles.addressLabel}>{t('sender.delivery')}</Text>
-        <Text style={styles.addressValue}>{delivery.deliveryAddress.label}</Text>
-      </View>
-      <View style={styles.addressRow}>
-        <Text style={styles.addressLabel}>{t('sender.budget')}</Text>
-        <Text style={styles.addressValue}>CHF {delivery.budgetCHF.toFixed(0)}</Text>
+
+      {/* Route line card */}
+      <View style={styles.routeCard}>
+        <RouteLine
+          from={{ label: delivery.pickupAddress.label, sub: t('sender.pickup') }}
+          to={{ label: delivery.deliveryAddress.label, sub: t('sender.delivery') }}
+          gap={26}
+        />
+        <View style={styles.routeDivider} />
+        <View style={styles.budgetRow}>
+          <Text style={styles.budgetLabel}>{t('sender.budget')}</Text>
+          <Text style={styles.budgetValue}>CHF {delivery.budgetCHF.toFixed(0)}</Text>
+        </View>
       </View>
 
       {/* Matched: driver can start heading to pickup */}
@@ -86,40 +96,42 @@ function DeliveryActionCard({ delivery }: { delivery: DeliveryRequest }) {
       )}
 
       {/* Accepted: driver enters pickup code from sender */}
-      {delivery.status === 'accepted' && (
+      {isPickupCode && (
         <View style={styles.codeSection}>
           <Text style={styles.codePrompt}>{t('driver.enterPickupCode')}</Text>
-          <Input
-            value={code}
-            onChangeText={setCode}
-            placeholder="000000"
-            keyboardType="number-pad"
-            maxLength={6}
-          />
-          <Button
-            title={t('driver.confirmPickup')}
-            onPress={handleVerifyPickup}
-            loading={verifyPickup.isPending}
-          />
+          <TicketStub
+            title="PICKUP CODE"
+            locked
+            footer={
+              <Button
+                title={t('driver.confirmPickup')}
+                onPress={handleVerifyPickup}
+                loading={verifyPickup.isPending}
+              />
+            }
+          >
+            <CodeInput value={code} onChange={setCode} />
+          </TicketStub>
         </View>
       )}
 
       {/* In transit: driver enters delivery code from recipient */}
-      {delivery.status === 'in_transit' && (
+      {isDeliveryCode && (
         <View style={styles.codeSection}>
           <Text style={styles.codePrompt}>{t('driver.enterDeliveryCode')}</Text>
-          <Input
-            value={code}
-            onChangeText={setCode}
-            placeholder="000000"
-            keyboardType="number-pad"
-            maxLength={6}
-          />
-          <Button
-            title={t('driver.confirmDelivery')}
-            onPress={handleVerifyDelivery}
-            loading={verifyDelivery.isPending}
-          />
+          <TicketStub
+            title="DELIVERY CODE"
+            locked
+            footer={
+              <Button
+                title={t('driver.confirmDelivery')}
+                onPress={handleVerifyDelivery}
+                loading={verifyDelivery.isPending}
+              />
+            }
+          >
+            <CodeInput value={code} onChange={setCode} />
+          </TicketStub>
         </View>
       )}
 
@@ -129,12 +141,33 @@ function DeliveryActionCard({ delivery }: { delivery: DeliveryRequest }) {
           <Text style={styles.waitingText}>{t('driver.waitingSenderConfirm')}</Text>
         </View>
       )}
-    </Card>
+    </View>
   );
 }
 
-export function ActiveDeliveryScreen() {
+/** 6-digit code: visible CodeBoxes with a transparent TextInput overlay capturing input. */
+function CodeInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const inputRef = useRef<TextInput>(null);
+  return (
+    <View style={styles.codeInputWrap}>
+      <CodeBoxes value={value} showActive />
+      <TextInput
+        ref={inputRef}
+        value={value}
+        onChangeText={(v) => onChange(v.replace(/[^0-9]/g, '').slice(0, 6))}
+        keyboardType="number-pad"
+        maxLength={6}
+        autoFocus
+        caretHidden
+        style={styles.hiddenInput}
+      />
+    </View>
+  );
+}
+
+export function ActiveDeliveryScreen({ navigation }: any) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const { data: deliveries, isLoading, refetch, isRefetching } = useMyDeliveries();
   const socket = useSocket();
   const user = useAuthStore((s) => s.user);
@@ -207,78 +240,131 @@ export function ActiveDeliveryScreen() {
   if (isLoading) return <LoadingSpinner />;
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />}
-    >
-      {activeDeliveries.length === 0 ? (
-        <EmptyState
-          icon="📦"
-          title={t('driver.noActiveDeliveries')}
-          message={t('driver.noActiveDeliveriesMessage')}
+    <View style={styles.container}>
+      <MapHeader height={212}>
+        {navigation?.canGoBack?.() && (
+          <BackChip
+            onDark
+            onPress={() => navigation.goBack()}
+            style={StyleSheet.flatten([styles.backChip, { top: insets.top + spacing.xs }])}
+          />
+        )}
+        <Pill
+          label="ETA 14:25"
+          mono
+          onDark
+          style={StyleSheet.flatten([styles.etaPill, { top: insets.top + spacing.xs }])}
         />
-      ) : (
-        activeDeliveries.map((delivery) => (
-          <DeliveryActionCard key={delivery.id} delivery={delivery} />
-        ))
-      )}
-    </ScrollView>
+      </MapHeader>
+
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
+        }
+      >
+        {activeDeliveries.length === 0 ? (
+          <EmptyState
+            icon="📦"
+            title={t('driver.noActiveDeliveries')}
+            message={t('driver.noActiveDeliveriesMessage')}
+          />
+        ) : (
+          activeDeliveries.map((delivery) => (
+            <DeliveryActionCard key={delivery.id} delivery={delivery} />
+          ))
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  scroll: { flex: 1 },
   content: { padding: spacing.md, paddingBottom: spacing.xxl },
+  backChip: {
+    position: 'absolute',
+    left: spacing.md,
+  },
+  etaPill: {
+    position: 'absolute',
+    right: spacing.md,
+  },
   card: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: spacing.lg,
     marginBottom: spacing.md,
-    gap: spacing.sm,
+    gap: spacing.md,
+    ...shadow.card,
   },
   cardTitle: {
     ...typography.h3,
     color: colors.text,
   },
-  addressRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  timelineWrap: {
     paddingVertical: spacing.xs,
   },
-  addressLabel: {
+  routeCard: {
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    padding: spacing.md,
+  },
+  routeDivider: {
+    height: 1,
+    backgroundColor: colors.borderLight,
+    marginVertical: spacing.md,
+  },
+  budgetRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  budgetLabel: {
     ...typography.bodySmall,
     color: colors.textSecondary,
   },
-  addressValue: {
-    ...typography.bodySmall,
+  budgetValue: {
+    ...typography.figure,
     color: colors.text,
-    fontWeight: '600',
-    flex: 1,
-    textAlign: 'right',
   },
   actionButton: {
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
   },
   codeSection: {
-    marginTop: spacing.sm,
     gap: spacing.sm,
   },
   codePrompt: {
     ...typography.body,
     color: colors.text,
-    fontWeight: '600',
+    fontFamily: typography.bodyStrong.fontFamily,
     textAlign: 'center',
   },
+  codeInputWrap: {
+    position: 'relative',
+  },
+  hiddenInput: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0,
+    color: 'transparent',
+  },
   waitingBadge: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.signalSoft,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.warning,
+    borderColor: colors.signal,
   },
   waitingText: {
     ...typography.bodySmall,
-    color: colors.warning,
-    fontWeight: '600',
+    color: colors.signalText,
+    fontFamily: typography.bodyStrong.fontFamily,
   },
 });

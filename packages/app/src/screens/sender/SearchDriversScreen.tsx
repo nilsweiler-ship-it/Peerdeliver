@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Input, Button, EmptyState, LoadingSpinner, Modal } from '../../components/ui';
 import { RouteCard } from '../../components/route/RouteCard';
+import { RouteLine, BackChip } from '../../components/brand';
 import { useSearchRoutes } from '../../queries/route';
 import { colors, spacing, typography } from '../../theme';
 import type { DriverRoute } from '@peerdeliver/shared';
@@ -29,8 +31,9 @@ function geocodeCity(name: string): { lat: number; lng: number } | null {
   return SWISS_CITIES[key] || null;
 }
 
-export function SearchDriversScreen() {
+export function SearchDriversScreen({ navigation }: any) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [searchParams, setSearchParams] = useState<{
@@ -68,7 +71,12 @@ export function SearchDriversScreen() {
   return (
     <View style={styles.container}>
       {/* Search inputs */}
-      <View style={styles.searchBox}>
+      <View style={[styles.searchBox, { paddingTop: insets.top + spacing.md }]}>
+        <View style={styles.header}>
+          <BackChip onPress={() => navigation.goBack()} />
+        </View>
+        <Text style={styles.eyebrow}>{t('sender.findDrivers', 'Find drivers').toUpperCase()}</Text>
+        <Text style={styles.title}>{t('common.search')}</Text>
         <Input
           label={t('sender.fromLocation')}
           value={from}
@@ -120,6 +128,11 @@ export function SearchDriversScreen() {
       >
         {selectedRoute && (
           <View style={styles.detail}>
+            <RouteLine
+              from={selectedRoute.originAddress}
+              to={selectedRoute.destinationAddress}
+              style={styles.detailRoute}
+            />
             {selectedRoute.driver && (
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Driver</Text>
@@ -156,17 +169,36 @@ export function SearchDriversScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   searchBox: {
-    padding: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
     gap: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  eyebrow: {
+    ...typography.overline,
+    color: colors.textLight,
+    letterSpacing: 1.2,
+  },
+  title: {
+    ...typography.h1,
+    color: colors.text,
+    marginBottom: spacing.xs,
+  },
   list: {
-    padding: spacing.md,
+    padding: spacing.lg,
     flexGrow: 1,
   },
   detail: {
     gap: spacing.sm,
+  },
+  detailRoute: {
+    marginBottom: spacing.sm,
   },
   detailRow: {
     flexDirection: 'row',
@@ -178,8 +210,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   detailValue: {
-    ...typography.bodySmall,
+    ...typography.bodyStrong,
     color: colors.text,
-    fontWeight: '600',
   },
 });

@@ -2,7 +2,6 @@ import { prisma } from '../config';
 import { generateCode } from '../utils';
 import { AppError } from '../middleware';
 import type { CreateDeliveryInput } from '@peerdeliver/shared';
-import { stripeConfigured } from './stripe';
 import * as paymentService from './payment';
 
 // All scalar columns (excluding raw geometry) with ST_AsGeoJSON for coordinates
@@ -16,8 +15,8 @@ const DELIVERY_COLS = `
   dr."deliveryWindowStart", dr."deliveryWindowEnd",
   dr.status, dr."pickupCode", dr."deliveryCode",
   dr."co2SavedKg", dr."cancelledBy", dr."cancelReason",
-  dr."stripePaymentIntentId", dr."paymentStatus", dr."driverPayoutCHF",
-  dr."stripeTransferId", dr."refundedCHF", dr."refundedAt",
+  dr."twintRef", dr."twintPhone", dr."paymentStatus", dr."driverPayoutCHF",
+  dr."refundedCHF", dr."refundedAt",
   dr."createdAt", dr."updatedAt"
 `;
 
@@ -110,15 +109,9 @@ export async function createDelivery(senderId: string, input: CreateDeliveryInpu
     RETURNING id
   `;
 
-  let clientSecret: string | null = null;
-  if (stripeConfigured()) {
-    const intent = await paymentService.createPaymentIntentForDelivery(inserted[0].id, input.budgetCHF);
-    clientSecret = intent.clientSecret;
-  }
-
-  // Re-fetch after payment intent creation so stripePaymentIntentId is in the response.
-  const delivery = await getDeliveryById(inserted[0].id);
-  return { ...delivery, clientSecret };
+  // Payment is collected separately via the TWINT flow (POST /payments/twint/pay)
+  // once the sender confirms in-app. The delivery starts 'unpaid'.
+  return getDeliveryById(inserted[0].id);
 }
 
 export async function getDeliveriesBySender(senderId: string) {
@@ -166,10 +159,10 @@ export async function updateDeliveryStatus(id: string, status: string, cancelled
     cancelReason ?? null,
     id,
   );
-  // Void any outstanding authorisation when the delivery is cancelled for good.
-  // Reject-and-reassign goes to 'pending' (not 'cancelled') so the auth stays live.
-  if (status === 'cancelled' && stripeConfigured()) {
-    await paymentService.voidIntentOnCancel(id);
+  // Refund/void any outstanding TWINT hold when the delivery is cancelled for good.
+  // Reject-and-reassign goes to 'pending' (not 'cancelled') so the hold stays live.
+  if (status === 'cancelled') {
+    await paymentService.voidOnCancel(id);
   }
   return getDeliveryById(id);
 }
@@ -203,15 +196,6 @@ export async function getNearbyDeliveries(lat: number, lng: number, radiusKm: nu
 }
 
 export async function assignDelivery(deliveryId: string, driverId: string) {
-  // When payments are live, block drivers who haven't completed Stripe onboarding —
-  // otherwise we'd have no way to pay them when the delivery completes.
-  if (stripeConfigured()) {
-    const driver = await prisma.user.findUnique({ where: { id: driverId }, select: { stripePayoutsEnabled: true } });
-    if (!driver?.stripePayoutsEnabled) {
-      throw new AppError(400, 'Driver payout setup incomplete');
-    }
-  }
-
   // Driver requests — sets status to 'requested', sender must confirm
   await prisma.$queryRawUnsafe(
     `UPDATE delivery_requests SET "driverId" = $1, status = 'requested'::"DeliveryStatus", "updatedAt" = NOW() WHERE id = $2`,
@@ -294,11 +278,8 @@ export async function verifyDelivery(deliveryId: string, driverId: string, code:
     },
   });
 
-  // Capture funds and transfer driver's cut. No-op when Stripe isn't configured
-  // or when the delivery predates the payment system.
-  if (stripeConfigured()) {
-    await paymentService.captureAndPayoutOnDelivered(deliveryId);
-  }
+  // Split the budget and credit the driver. No-op if the sender never paid.
+  await paymentService.captureAndPayoutOnDelivered(deliveryId);
 
   return getDeliveryById(deliveryId);
 }

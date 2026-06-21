@@ -75,9 +75,6 @@ model User {
   co2Saved           Float              @default(0)
   language           String             @default("en")
   refreshToken       String?
-  stripeAccountId        String?
-  stripePayoutsEnabled   Boolean  @default(false)
-  stripeDetailsSubmitted Boolean  @default(false)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
@@ -119,10 +116,10 @@ model DeliveryRequest {
   co2SavedKg          Float?
   cancelledBy         String?
   cancelReason        String?
-  stripePaymentIntentId String?
+  twintRef              String?
+  twintPhone            String?
   paymentStatus         PaymentStatus  @default(unpaid)
   driverPayoutCHF       Float?
-  stripeTransferId      String?
   refundedCHF           Float?
   refundedAt            DateTime?
   createdAt           DateTime       @default(now())

@@ -12,7 +12,7 @@ import { colors, spacing, borderRadius, typography } from '../../theme';
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline';
+  variant?: 'primary' | 'secondary' | 'outline' | 'light';
   loading?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
@@ -56,18 +56,21 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48,
+    minHeight: 52,
   },
   primary: {
     backgroundColor: colors.primary,
   },
   secondary: {
-    backgroundColor: colors.accent,
+    backgroundColor: colors.signal,
   },
   outline: {
-    backgroundColor: 'transparent',
+    backgroundColor: colors.surface,
     borderWidth: 1.5,
-    borderColor: colors.primary,
+    borderColor: colors.border,
+  },
+  light: {
+    backgroundColor: colors.surfaceAlt,
   },
   disabled: {
     opacity: 0.5,
@@ -80,9 +83,12 @@ const styles = StyleSheet.create({
     color: colors.textInverse,
   },
   secondaryText: {
-    color: colors.textInverse,
+    color: colors.primaryDark,
   },
   outlineText: {
+    color: colors.textSecondary,
+  },
+  lightText: {
     color: colors.primary,
   },
 });

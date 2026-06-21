@@ -1,12 +1,15 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useMyDeliveries, useConfirmDelivery, useRejectDriver, useDriverInfo } from '../../queries/delivery';
 import { DeliveryCard } from '../../components/delivery/DeliveryCard';
-import { StatusTimeline } from '../../components/delivery/StatusTimeline';
 import { EmptyState, LoadingSpinner, Modal, Button } from '../../components/ui';
+import { Avatar } from '../../components/ui/Avatar';
+import { MapHeader, RouteLine, StatusBadge, Pill, SegmentedControl } from '../../components/brand';
 import { useSocket } from '../../providers/SocketProvider';
-import { colors, spacing, typography, borderRadius } from '../../theme';
+import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 import type { DeliveryRequest, DeliveryStatus } from '@peerdeliver/shared';
 import { SOCKET_EVENTS } from '@peerdeliver/shared';
 
@@ -14,6 +17,13 @@ type FilterTab = 'active' | 'completed' | 'all';
 
 const ACTIVE_STATUSES: DeliveryStatus[] = ['pending', 'requested', 'matched', 'accepted', 'picked_up', 'in_transit'];
 const COMPLETED_STATUSES: DeliveryStatus[] = ['delivered', 'cancelled', 'expired'];
+
+// 3-step mini progress nodes shown in the Track view.
+const PROGRESS_STEPS: { label: string; reaches: DeliveryStatus[] }[] = [
+  { label: 'Picked up', reaches: ['picked_up', 'in_transit', 'delivered'] },
+  { label: 'In transit', reaches: ['in_transit', 'delivered'] },
+  { label: 'Delivered', reaches: ['delivered'] },
+];
 
 function DriverRatingCard({ deliveryId, onConfirm, onReject, confirming, rejecting }: {
   deliveryId: string;
@@ -31,21 +41,30 @@ function DriverRatingCard({ deliveryId, onConfirm, onReject, confirming, rejecti
   const stars = driver.averageRating ? driver.averageRating.toFixed(1) : 'N/A';
 
   return (
-    <View style={styles.driverCard}>
-      <Text style={styles.driverCardTitle}>{t('sender.driverRequest')}</Text>
-      <View style={styles.driverInfo}>
-        <Text style={styles.driverName}>{driver.firstName} {driver.lastName}</Text>
-        <View style={styles.ratingRow}>
-          <Text style={styles.ratingStar}>{stars}</Text>
-          <Text style={styles.ratingCount}>({driver.totalRatings} {t('sender.ratings')})</Text>
+    <View style={styles.requestCard}>
+      <View style={styles.requestHeader}>
+        <View style={styles.requestBadge}>
+          <Text style={styles.requestBadgeText}>{t('sender.driverRequest')}</Text>
         </View>
-        <Text style={styles.driverDeliveries}>
-          {driver.totalDeliveries} {t('sender.completedDeliveries')}
-        </Text>
-        {driver.carModel && (
-          <Text style={styles.driverVehicle}>{driver.carModel}{driver.maxLoadKg ? ` (max ${driver.maxLoadKg} kg)` : ''}</Text>
-        )}
       </View>
+
+      <View style={styles.requestDriverRow}>
+        <Avatar firstName={driver.firstName} lastName={driver.lastName} uri={driver.avatarUrl} size={44} />
+        <View style={styles.flex}>
+          <Text style={styles.requestDriverName}>
+            {driver.firstName} {driver.lastName}
+          </Text>
+          <Text style={styles.requestDriverMeta}>
+            <Text style={styles.mono}>★ {stars}</Text> ({driver.totalRatings} {t('sender.ratings')})
+          </Text>
+          <Text style={styles.requestDriverSub}>
+            <Text style={styles.mono}>{driver.totalDeliveries}</Text> {t('sender.completedDeliveries')}
+            {driver.carModel ? ` · ${driver.carModel}` : ''}
+            {driver.maxLoadKg ? ` · max ${driver.maxLoadKg}kg` : ''}
+          </Text>
+        </View>
+      </View>
+
       <View style={styles.driverActions}>
         <Button
           title={t('sender.rejectDriver')}
@@ -91,7 +110,10 @@ function DriverTracker({ deliveryId }: { deliveryId: string }) {
 
   return (
     <View style={styles.trackerCard}>
-      <Text style={styles.trackerTitle}>{t('sender.driverLocation')}</Text>
+      <View style={styles.trackerHeader}>
+        <Feather name="navigation" size={13} color={colors.primaryLight} />
+        <Text style={styles.trackerTitle}>{t('sender.driverLocation')}</Text>
+      </View>
       {location ? (
         <View>
           <Text style={styles.trackerCoords}>
@@ -110,9 +132,13 @@ function DriverTracker({ deliveryId }: { deliveryId: string }) {
 
 export function MyShipmentsScreen({ navigation }: any) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const { data: deliveries, isLoading, refetch, isRefetching } = useMyDeliveries();
   const [filter, setFilter] = useState<FilterTab>('active');
-  const [selectedDelivery, setSelectedDelivery] = useState<DeliveryRequest | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Re-derive the open delivery from the latest list so the Track modal's
+  // status, progress and live tracker stay current as the driver advances it.
+  const selectedDelivery = deliveries?.find((d) => d.id === selectedId) ?? null;
   const confirmDelivery = useConfirmDelivery();
   const rejectDriver = useRejectDriver();
 
@@ -122,17 +148,22 @@ export function MyShipmentsScreen({ navigation }: any) {
     return true;
   });
 
-  const tabs: { key: FilterTab; label: string }[] = [
-    { key: 'active', label: t('common.active') },
-    { key: 'completed', label: t('common.completed') },
-    { key: 'all', label: t('common.all') },
+  const activeCount = deliveries?.filter((d) => ACTIVE_STATUSES.includes(d.status)).length ?? 0;
+  const completedCount = deliveries?.filter((d) => COMPLETED_STATUSES.includes(d.status)).length ?? 0;
+  const allCount = deliveries?.length ?? 0;
+
+  // Map the existing active/completed/all filter state onto SegmentedControl segments.
+  const segments = [
+    { key: 'active', label: t('common.active'), count: activeCount },
+    { key: 'completed', label: t('common.completed'), count: completedCount },
+    { key: 'all', label: t('common.all'), count: allCount },
   ];
 
   const handleConfirm = async (id: string) => {
     try {
       await confirmDelivery.mutateAsync(id);
       Alert.alert(t('sender.driverConfirmed'));
-      setSelectedDelivery(null);
+      setSelectedId(null);
     } catch {
       Alert.alert(t('common.error'));
     }
@@ -142,7 +173,7 @@ export function MyShipmentsScreen({ navigation }: any) {
     try {
       await rejectDriver.mutateAsync(id);
       Alert.alert(t('sender.driverRejected'));
-      setSelectedDelivery(null);
+      setSelectedId(null);
     } catch {
       Alert.alert(t('common.error'));
     }
@@ -150,28 +181,32 @@ export function MyShipmentsScreen({ navigation }: any) {
 
   const renderItem = useCallback(
     ({ item }: { item: DeliveryRequest }) => (
-      <DeliveryCard delivery={item} onPress={() => setSelectedDelivery(item)} />
+      <DeliveryCard delivery={item} onPress={() => setSelectedId(item.id)} />
     ),
     [],
   );
 
   if (isLoading) return <LoadingSpinner />;
 
+  const sel = selectedDelivery;
+  const trackingId = sel ? `#PD-${sel.id.slice(-6).toUpperCase()}` : '';
+  const currentIdx = sel
+    ? PROGRESS_STEPS.reduce((acc, step, i) => (step.reaches.includes(sel.status) ? i : acc), -1)
+    : -1;
+  const showCodeReminder =
+    !!sel && (sel.status === 'accepted' || sel.status === 'in_transit') && !!sel.pickupCode;
+
   return (
     <View style={styles.container}>
-      {/* Filter tabs */}
-      <View style={styles.tabs}>
-        {tabs.map((tab) => (
-          <TouchableOpacity
-            key={tab.key}
-            style={[styles.tab, filter === tab.key && styles.tabActive]}
-            onPress={() => setFilter(tab.key)}
-          >
-            <Text style={[styles.tabText, filter === tab.key && styles.tabTextActive]}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
+        <Text style={styles.title}>My shipments</Text>
+        <SegmentedControl
+          segments={segments}
+          value={filter}
+          onChange={(k) => setFilter(k as FilterTab)}
+          style={styles.segmented}
+        />
       </View>
 
       <FlatList
@@ -191,61 +226,124 @@ export function MyShipmentsScreen({ navigation }: any) {
         }
       />
 
-      {/* Detail modal */}
+      {/* Detail / Track modal */}
       <Modal
         visible={!!selectedDelivery}
-        onClose={() => setSelectedDelivery(null)}
+        onClose={() => setSelectedId(null)}
         title={selectedDelivery?.packageDescription || t('sender.delivery')}
       >
-        {selectedDelivery && (
+        {sel && (
           <View style={styles.detail}>
-            <StatusTimeline currentStatus={selectedDelivery.status} />
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>{t('sender.pickup')}</Text>
-              <Text style={styles.detailValue}>{selectedDelivery.pickupAddress.label}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>{t('sender.delivery')}</Text>
-              <Text style={styles.detailValue}>{selectedDelivery.deliveryAddress.label}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>{t('sender.budget')}</Text>
-              <Text style={styles.detailValue}>CHF {selectedDelivery.budgetCHF.toFixed(0)}</Text>
+            {/* Map hero */}
+            <View style={styles.mapWrap}>
+              <MapHeader height={248}>
+                <View style={styles.mapOverlay}>
+                  <Pill label={trackingId} mono tone="glass" onDark style={styles.trackPill} />
+                  <StatusBadge status={sel.status} />
+                </View>
+              </MapHeader>
             </View>
 
-            {/* Show driver confirmation card when status is 'requested' */}
-            {selectedDelivery.status === 'requested' && (
+            {/* Driver card overlapping the map */}
+            {sel.driver && sel.status !== 'requested' && (
+              <View style={styles.driverCardOverlap}>
+                <View style={styles.driverTopRow}>
+                  <Avatar
+                    firstName={sel.driver.firstName}
+                    lastName={sel.driver.lastName}
+                    uri={(sel.driver as any).avatarUrl}
+                    size={48}
+                  />
+                  <View style={styles.flex}>
+                    <Text style={styles.driverCardName}>
+                      {sel.driver.firstName} {sel.driver.lastName}
+                    </Text>
+                    <Text style={styles.driverCardMeta}>
+                      {(sel.driver as any).averageRating != null && (
+                        <Text>★ {(sel.driver as any).averageRating.toFixed(1)} · </Text>
+                      )}
+                      {(sel.driver as any).carModel || t('sender.searchDrivers')}
+                      {(sel.driver as any).licensePlate ? ` · ${(sel.driver as any).licensePlate}` : ''}
+                    </Text>
+                  </View>
+                  <View style={styles.contactRow}>
+                    <TouchableOpacity activeOpacity={0.85} style={styles.callBtn}>
+                      <Feather name="phone" size={17} color={colors.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity activeOpacity={0.85} style={styles.chatBtn}>
+                      <Feather name="message-circle" size={17} color={colors.textInverse} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View style={styles.divider} />
+
+                {/* 3-step mini progress */}
+                <View style={styles.progressRow}>
+                  {PROGRESS_STEPS.map((step, i) => {
+                    const done = i <= currentIdx;
+                    const isCurrent = i === currentIdx;
+                    return (
+                      <React.Fragment key={step.label}>
+                        <View style={styles.progressStep}>
+                          <View
+                            style={[
+                              styles.progressDot,
+                              done && styles.progressDotDone,
+                              isCurrent && styles.progressDotCurrent,
+                            ]}
+                          />
+                          <Text style={[styles.progressLabel, done && styles.progressLabelDone]}>
+                            {step.label}
+                          </Text>
+                        </View>
+                        {i < PROGRESS_STEPS.length - 1 && (
+                          <View style={[styles.progressBar, i < currentIdx && styles.progressBarDone]} />
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {/* Route */}
+            <View style={styles.routeCard}>
+              <RouteLine
+                from={{ label: sel.pickupAddress.label, sub: t('sender.pickup') }}
+                to={{ label: sel.deliveryAddress.label, sub: t('sender.delivery') }}
+              />
+              <View style={styles.budgetRow}>
+                <Text style={styles.budgetLabel}>{t('sender.budget')}</Text>
+                <Text style={styles.budgetValue}>CHF {sel.budgetCHF.toFixed(0)}</Text>
+              </View>
+            </View>
+
+            {/* Driver confirmation when status is 'requested' */}
+            {sel.status === 'requested' && (
               <DriverRatingCard
-                deliveryId={selectedDelivery.id}
-                onConfirm={() => handleConfirm(selectedDelivery.id)}
-                onReject={() => handleReject(selectedDelivery.id)}
+                deliveryId={sel.id}
+                onConfirm={() => handleConfirm(sel.id)}
+                onReject={() => handleReject(sel.id)}
                 confirming={confirmDelivery.isPending}
                 rejecting={rejectDriver.isPending}
               />
             )}
 
-            {selectedDelivery.driver && selectedDelivery.status !== 'requested' && (
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>{t('sender.searchDrivers')}</Text>
-                <Text style={styles.detailValue}>
-                  {selectedDelivery.driver.firstName} {selectedDelivery.driver.lastName}
-                </Text>
-              </View>
-            )}
-
             {/* Live driver tracking */}
-            {(selectedDelivery.status === 'accepted' || selectedDelivery.status === 'in_transit') && (
-              <DriverTracker deliveryId={selectedDelivery.id} />
+            {(sel.status === 'accepted' || sel.status === 'in_transit') && (
+              <DriverTracker deliveryId={sel.id} />
             )}
 
-            {/* Senders only see the pickup code — the delivery code is held by the
-                recipient, who shows it to the driver to confirm receipt. */}
-            {selectedDelivery.status === 'accepted' && selectedDelivery.pickupCode && (
-              <View style={styles.codeCard}>
-                <Text style={styles.codeTitle}>{t('sender.pickupCodeTitle')}</Text>
-                <Text style={styles.codeValue}>{selectedDelivery.pickupCode}</Text>
-                <Text style={styles.codeHint}>{t('sender.pickupCodeHint')}</Text>
+            {/* Senders see the pickup code; the recipient holds the delivery code. */}
+            {showCodeReminder && (
+              <View style={styles.codeReminder}>
+                <View style={styles.codeReminderHead}>
+                  <Feather name="key" size={14} color={colors.signalText} />
+                  <Text style={styles.codeReminderTitle}>{t('sender.pickupCodeTitle')}</Text>
+                </View>
+                <Text style={styles.codeReminderValue}>{sel.pickupCode}</Text>
+                <Text style={styles.codeReminderHint}>{t('sender.pickupCodeHint')}</Text>
               </View>
             )}
           </View>
@@ -256,103 +354,229 @@ export function MyShipmentsScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  mono: { fontFamily: typography.figure.fontFamily },
   container: { flex: 1, backgroundColor: colors.background },
-  tabs: {
-    flexDirection: 'row',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
+  header: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm,
   },
-  tab: {
-    flex: 1,
-    paddingVertical: spacing.sm,
-    alignItems: 'center',
-    borderRadius: 8,
-    backgroundColor: colors.surface,
+  title: {
+    ...typography.h2,
+    color: colors.text,
   },
-  tabActive: {
-    backgroundColor: colors.primary,
-  },
-  tabText: {
-    ...typography.bodySmall,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
-  tabTextActive: {
-    color: colors.textInverse,
+  segmented: {
+    marginTop: spacing.md,
   },
   list: {
-    padding: spacing.md,
+    padding: spacing.lg,
+    paddingTop: spacing.sm,
     flexGrow: 1,
   },
   detail: {
-    gap: spacing.md,
-    paddingTop: spacing.md,
+    paddingTop: spacing.xs,
   },
-  detailRow: {
+
+  // ── Map hero ──
+  mapWrap: {
+    marginHorizontal: -spacing.lg,
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+  },
+  mapOverlay: {
+    flex: 1,
+    padding: spacing.md,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  trackPill: {
+    alignSelf: 'flex-start',
+  },
+
+  // ── Driver card overlapping the map ──
+  driverCardOverlap: {
+    backgroundColor: colors.surface,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    marginTop: -26,
+    ...shadow.sheet,
+  },
+  driverTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  driverCardName: {
+    ...typography.bodyStrong,
+    fontSize: 16,
+    color: colors.text,
+  },
+  driverCardMeta: {
+    ...typography.caption,
+    fontFamily: typography.figure.fontFamily,
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  contactRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  callBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#E7EDE7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chatBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.borderLight,
+    marginVertical: spacing.md,
+  },
+
+  // ── 3-step mini progress ──
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  progressStep: {
+    alignItems: 'center',
+    width: 78,
+  },
+  progressDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.border,
+    marginBottom: 6,
+  },
+  progressDotDone: {
+    backgroundColor: colors.primary,
+  },
+  progressDotCurrent: {
+    backgroundColor: colors.signal,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+  },
+  progressLabel: {
+    ...typography.caption,
+    color: colors.textLight,
+    textAlign: 'center',
+  },
+  progressLabelDone: {
+    color: colors.text,
+    fontFamily: typography.bodyStrong.fontFamily,
+  },
+  progressBar: {
+    flex: 1,
+    height: 2,
+    backgroundColor: colors.border,
+    marginTop: 5,
+    marginHorizontal: -28,
+  },
+  progressBarDone: {
+    backgroundColor: colors.primary,
+  },
+
+  // ── Route card ──
+  routeCard: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    marginTop: spacing.md,
+    ...shadow.card,
+  },
+  budgetRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: spacing.xs,
+    alignItems: 'center',
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
   },
-  detailLabel: {
+  budgetLabel: {
     ...typography.bodySmall,
     color: colors.textSecondary,
   },
-  detailValue: {
-    ...typography.bodySmall,
+  budgetValue: {
+    ...typography.figure,
     color: colors.text,
-    fontWeight: '600',
-    flex: 1,
-    textAlign: 'right',
   },
+
+  // ── Loading ──
   loadingText: {
     ...typography.bodySmall,
     color: colors.textSecondary,
     textAlign: 'center',
     padding: spacing.md,
   },
-  driverCard: {
+
+  // ── Driver request card (status === requested) ──
+  requestCard: {
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1.5,
+    borderColor: colors.signal,
     padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    marginTop: spacing.md,
+    shadowColor: colors.signal,
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
   },
-  driverCardTitle: {
-    ...typography.h3,
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  driverInfo: {
-    gap: spacing.xs,
+  requestHeader: {
+    flexDirection: 'row',
     marginBottom: spacing.md,
   },
-  driverName: {
-    ...typography.body,
-    color: colors.text,
-    fontWeight: '600',
+  requestBadge: {
+    backgroundColor: colors.signalSoft,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
   },
-  ratingRow: {
+  requestBadgeText: {
+    ...typography.overline,
+    color: colors.signalText,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  requestDriverRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: spacing.sm,
+    marginBottom: spacing.md,
   },
-  ratingStar: {
-    ...typography.body,
-    color: colors.warning,
-    fontWeight: '700',
+  requestDriverName: {
+    ...typography.bodyStrong,
+    fontSize: 16,
+    color: colors.text,
   },
-  ratingCount: {
+  requestDriverMeta: {
     ...typography.caption,
     color: colors.textSecondary,
+    marginTop: 2,
   },
-  driverDeliveries: {
+  requestDriverSub: {
     ...typography.caption,
-    color: colors.textSecondary,
-  },
-  driverVehicle: {
-    ...typography.caption,
-    color: colors.primary,
+    color: colors.textLight,
+    marginTop: 1,
   },
   driverActions: {
     flexDirection: 'row',
@@ -364,60 +588,80 @@ const styles = StyleSheet.create({
   confirmButton: {
     flex: 2,
   },
+
+  // ── Live tracker ──
   trackerCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: borderRadius.xl,
     padding: spacing.md,
     borderWidth: 1,
-    borderColor: colors.trust,
+    borderColor: colors.border,
+    marginTop: spacing.md,
     alignItems: 'center',
   },
-  trackerTitle: {
-    ...typography.bodySmall,
-    color: colors.trust,
-    fontWeight: '700',
+  trackerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     marginBottom: spacing.xs,
   },
+  trackerTitle: {
+    ...typography.overline,
+    color: colors.primaryLight,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
   trackerCoords: {
-    ...typography.body,
+    ...typography.figure,
+    fontSize: 16,
     color: colors.text,
-    fontWeight: '600',
     textAlign: 'center',
   },
   trackerTime: {
     ...typography.caption,
+    fontFamily: typography.figure.fontFamily,
     color: colors.textSecondary,
     textAlign: 'center',
-    marginTop: spacing.xs,
+    marginTop: 2,
   },
   trackerWaiting: {
     ...typography.caption,
     color: colors.textLight,
   },
-  codeCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
+
+  // ── Pickup code reminder (marigold) ──
+  codeReminder: {
+    backgroundColor: colors.signalSoft,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: '#F0D9A8',
     padding: spacing.lg,
-    borderWidth: 2,
-    borderColor: colors.primary,
+    marginTop: spacing.md,
     alignItems: 'center',
   },
-  codeTitle: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    fontWeight: '600',
-    marginBottom: spacing.xs,
+  codeReminderHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginBottom: spacing.sm,
   },
-  codeValue: {
-    fontSize: 36,
-    fontWeight: '800',
-    color: colors.primary,
+  codeReminderTitle: {
+    ...typography.overline,
+    color: colors.signalText,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  codeReminderValue: {
+    ...typography.code,
+    fontSize: 30,
+    color: colors.signalText,
     letterSpacing: 8,
     marginBottom: spacing.xs,
   },
-  codeHint: {
+  codeReminderHint: {
     ...typography.caption,
-    color: colors.textLight,
+    color: colors.signalText,
+    opacity: 0.8,
     textAlign: 'center',
   },
 });

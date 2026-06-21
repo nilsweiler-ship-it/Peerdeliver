@@ -4,7 +4,6 @@ import { PublishRouteScreen } from '../screens/driver/PublishRouteScreen';
 import { AvailableDeliveriesScreen } from '../screens/driver/AvailableDeliveriesScreen';
 import { MyRoutesScreen } from '../screens/driver/MyRoutesScreen';
 import { ActiveDeliveryScreen } from '../screens/driver/ActiveDeliveryScreen';
-import { OnboardingScreen } from '../screens/driver/OnboardingScreen';
 import { EarningsScreen } from '../screens/driver/EarningsScreen';
 import { colors } from '../theme';
 
@@ -14,6 +13,7 @@ export function DriverStack() {
   return (
     <Stack.Navigator
       screenOptions={{
+        headerShown: false,
         headerStyle: { backgroundColor: colors.background },
         headerTintColor: colors.primary,
       }}
@@ -23,7 +23,6 @@ export function DriverStack() {
       <Stack.Screen name="AvailableDeliveries" component={AvailableDeliveriesScreen} options={{ title: 'Available Deliveries' }} />
       <Stack.Screen name="ActiveDeliveries" component={ActiveDeliveryScreen} options={{ title: 'My Deliveries' }} />
       <Stack.Screen name="Earnings" component={EarningsScreen} options={{ title: 'Earnings' }} />
-      <Stack.Screen name="PayoutOnboarding" component={OnboardingScreen} options={{ title: 'Payout setup' }} />
     </Stack.Navigator>
   );
 }

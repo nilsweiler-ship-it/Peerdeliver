@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useConversations } from '../../queries/chat';
-import { Avatar, EmptyState, LoadingSpinner, Badge } from '../../components/ui';
+import { Avatar, EmptyState, LoadingSpinner } from '../../components/ui';
 import { useAuthStore } from '../../stores/authStore';
 import { useSocket } from '../../providers/SocketProvider';
 import { SOCKET_EVENTS } from '@peerdeliver/shared';
@@ -12,6 +13,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 export function ChatListScreen({ navigation }: any) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const userId = useAuthStore((s) => s.user?.id);
   const { data: conversations, isLoading, refetch, isRefetching } = useConversations();
   const socket = useSocket();
@@ -71,7 +73,7 @@ export function ChatListScreen({ navigation }: any) {
           />
           <View style={styles.conversationContent}>
             <View style={styles.conversationHeader}>
-              <Text style={[styles.name, hasUnread && styles.nameBold]}>
+              <Text style={[styles.name, hasUnread && styles.nameBold]} numberOfLines={1}>
                 {other.firstName} {other.lastName}
               </Text>
               {item.lastMessage && (
@@ -103,7 +105,7 @@ export function ChatListScreen({ navigation }: any) {
         data={conversations}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingTop: insets.top + spacing.sm }]}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
         }
@@ -125,7 +127,8 @@ const styles = StyleSheet.create({
   list: { flexGrow: 1 },
   conversationItem: {
     flexDirection: 'row',
-    padding: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
     gap: spacing.md,
     alignItems: 'center',
   },
@@ -136,18 +139,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 2,
+    marginBottom: 3,
+    gap: spacing.sm,
   },
   name: {
-    ...typography.body,
+    ...typography.bodyStrong,
     color: colors.text,
+    flex: 1,
   },
   nameBold: {
-    fontWeight: '700',
+    color: colors.text,
   },
   time: {
-    ...typography.caption,
+    ...typography.overline,
+    fontFamily: typography.figure.fontFamily,
     color: colors.textLight,
+    letterSpacing: 0.5,
   },
   conversationFooter: {
     flexDirection: 'row',
@@ -162,21 +169,21 @@ const styles = StyleSheet.create({
   },
   previewBold: {
     color: colors.text,
-    fontWeight: '600',
+    fontFamily: typography.bodyStrong.fontFamily,
   },
   unreadBadge: {
     backgroundColor: colors.primary,
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
+    borderRadius: 11,
+    minWidth: 22,
+    height: 22,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 6,
   },
   unreadText: {
-    ...typography.caption,
+    ...typography.overline,
+    fontFamily: typography.figure.fontFamily,
     color: colors.textInverse,
-    fontWeight: '700',
     fontSize: 11,
   },
   separator: {

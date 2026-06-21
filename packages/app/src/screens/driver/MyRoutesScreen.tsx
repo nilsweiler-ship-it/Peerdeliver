@@ -1,14 +1,16 @@
 import React, { useCallback, useState } from 'react';
-import { View, StyleSheet, FlatList, Alert, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Alert, RefreshControl } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useMyRoutes, useToggleRoute, useDeleteRoute } from '../../queries/route';
 import { RouteCard } from '../../components/route/RouteCard';
 import { EmptyState, LoadingSpinner, Modal, Button } from '../../components/ui';
-import { colors, spacing } from '../../theme';
+import { colors, spacing, typography } from '../../theme';
 import type { DriverRoute } from '@peerdeliver/shared';
 
 export function MyRoutesScreen({ navigation }: any) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const { data: routes, isLoading, refetch, isRefetching } = useMyRoutes();
   const toggleRoute = useToggleRoute();
   const deleteRoute = useDeleteRoute();
@@ -49,13 +51,24 @@ export function MyRoutesScreen({ navigation }: any) {
 
   if (isLoading) return <LoadingSpinner />;
 
+  const activeCount = routes?.filter((r) => r.isActive).length ?? 0;
+
   return (
     <View style={styles.container}>
       <FlatList
         data={routes}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingTop: insets.top + spacing.md }]}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <Text style={styles.eyebrow}>{t('home.activeRoutes').toUpperCase()}</Text>
+            <View style={styles.headerRow}>
+              <Text style={styles.title}>{t('driver.myRoutes', 'My routes')}</Text>
+              <Text style={styles.count}>{activeCount}</Text>
+            </View>
+          </View>
+        }
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />}
         ListEmptyComponent={
           <EmptyState
@@ -103,7 +116,21 @@ export function MyRoutesScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  list: { padding: spacing.md, flexGrow: 1 },
+  list: { padding: spacing.lg, flexGrow: 1 },
+  header: { marginBottom: spacing.md },
+  eyebrow: {
+    ...typography.overline,
+    color: colors.textLight,
+    letterSpacing: 1.2,
+    marginBottom: 2,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  title: { ...typography.h1, color: colors.text },
+  count: { ...typography.figure, fontSize: 24, color: colors.textLight },
   actions: { gap: spacing.md, paddingTop: spacing.md },
   deleteButton: { borderColor: colors.error },
 });

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { colors, spacing, borderRadius, typography } from '../../theme';
 import { useTranslation } from 'react-i18next';
 
@@ -25,6 +26,8 @@ export function ChatInput({ onSend, onTyping, disabled }: ChatInputProps) {
     onTyping?.();
   };
 
+  const canSend = !!text.trim() && !disabled;
+
   return (
     <View style={styles.container}>
       <TextInput
@@ -38,11 +41,12 @@ export function ChatInput({ onSend, onTyping, disabled }: ChatInputProps) {
         editable={!disabled}
       />
       <TouchableOpacity
-        style={[styles.sendButton, !text.trim() && styles.sendDisabled]}
+        style={[styles.sendButton, !canSend && styles.sendDisabled]}
         onPress={handleSend}
-        disabled={!text.trim() || disabled}
+        disabled={!canSend}
+        activeOpacity={0.8}
       >
-        <Text style={styles.sendText}>{'>'}</Text>
+        <Feather name="arrow-up" size={20} color={colors.textInverse} />
       </TouchableOpacity>
     </View>
   );
@@ -52,36 +56,35 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    padding: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-    backgroundColor: colors.background,
+    borderTopColor: colors.border,
+    backgroundColor: colors.surface,
     gap: spacing.sm,
   },
   input: {
     flex: 1,
     ...typography.body,
     color: colors.text,
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.xl,
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.full,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    maxHeight: 100,
+    paddingTop: 11,
+    paddingBottom: 11,
+    maxHeight: 110,
   },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   sendDisabled: {
     backgroundColor: colors.border,
-  },
-  sendText: {
-    color: colors.textInverse,
-    fontSize: 18,
-    fontWeight: '700',
   },
 });

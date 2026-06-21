@@ -1,9 +1,20 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Button, Input } from '../../components/ui';
+import { BackChip, Pill } from '../../components/brand';
 import { useRegister } from '../../queries/auth';
-import { colors, spacing, typography, borderRadius } from '../../theme';
+import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 
 type RegisterRole = 'sender' | 'driver' | 'both' | 'recipient';
 
@@ -30,7 +41,8 @@ const CAR_SUGGESTIONS: { model: string; maxLoadKg: number }[] = [
 ];
 
 export function RegisterScreen({ navigation }: any) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const insets = useSafeAreaInsets();
   const register = useRegister();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -41,6 +53,7 @@ export function RegisterScreen({ navigation }: any) {
   const [carModel, setCarModel] = useState('');
   const [maxLoadKg, setMaxLoadKg] = useState('');
   const [showCarSuggestions, setShowCarSuggestions] = useState(false);
+  const [agreed, setAgreed] = useState(true);
 
   const isDriver = role === 'driver' || role === 'both';
 
@@ -55,12 +68,16 @@ export function RegisterScreen({ navigation }: any) {
   };
 
   const handleRegister = () => {
+    const lang = i18n.language?.slice(0, 2);
+    const language: 'en' | 'de' | 'fr' =
+      lang === 'de' || lang === 'fr' ? lang : 'en';
     register.mutate({
       email,
       password,
       firstName,
       lastName,
       role,
+      language,
       ...(isDriver && licensePlate && { licensePlate }),
       ...(isDriver && carModel && { carModel }),
       ...(isDriver && maxLoadKg && { maxLoadKg: parseFloat(maxLoadKg) }),
@@ -72,55 +89,92 @@ export function RegisterScreen({ navigation }: any) {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>{t('auth.register')}</Text>
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.xl },
+        ]}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Header */}
+        <View style={styles.headerRow}>
+          <BackChip onPress={() => navigation.goBack()} />
+          <Pill label="STEP 2 / 2" mono tone="sunken" />
+        </View>
 
-        <Input label={t('auth.firstName')} value={firstName} onChangeText={setFirstName} />
-        <Input label={t('auth.lastName')} value={lastName} onChangeText={setLastName} />
-        <Input
-          label={t('auth.email')}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        <Input
-          label={t('auth.password')}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+        <Text style={styles.title}>How will you use Shlep?</Text>
+        <Text style={styles.subtitle}>{t('auth.selectRole')}</Text>
 
-        <Text style={styles.roleLabel}>{t('auth.selectRole')}</Text>
-        <View style={styles.roleRow}>
-          <Button
+        {/* Hero role cards */}
+        <View style={styles.roleCards}>
+          <RoleCard
+            icon="package"
+            iconColor={colors.primary}
             title={t('auth.roleSender')}
+            caption="Get parcels delivered by neighbours already heading your way."
+            selected={role === 'sender'}
             onPress={() => setRole('sender')}
-            variant={role === 'sender' ? 'primary' : 'outline'}
-            style={styles.roleButton}
           />
-          <Button
+          <RoleCard
+            icon="truck"
+            iconColor={colors.destination}
             title={t('auth.roleDriver')}
+            caption="Earn on routes you're already driving — and cut carbon."
+            selected={role === 'driver'}
             onPress={() => setRole('driver')}
-            variant={role === 'driver' ? 'primary' : 'outline'}
-            style={styles.roleButton}
-          />
-        </View>
-        <View style={styles.roleRow}>
-          <Button
-            title={t('auth.roleBoth')}
-            onPress={() => setRole('both')}
-            variant={role === 'both' ? 'primary' : 'outline'}
-            style={styles.roleButton}
-          />
-          <Button
-            title={t('auth.roleRecipient')}
-            onPress={() => setRole('recipient')}
-            variant={role === 'recipient' ? 'primary' : 'outline'}
-            style={styles.roleButton}
           />
         </View>
 
+        {/* Secondary role options */}
+        <View style={styles.roleChips}>
+          <RoleChip
+            label={t('auth.roleBoth')}
+            selected={role === 'both'}
+            onPress={() => setRole('both')}
+          />
+          <RoleChip
+            label={t('auth.roleRecipient')}
+            selected={role === 'recipient'}
+            onPress={() => setRole('recipient')}
+          />
+        </View>
+
+        {/* Identity fields */}
+        <View style={styles.form}>
+          <View style={styles.nameRow}>
+            <View style={styles.nameField}>
+              <Input
+                label={t('auth.firstName')}
+                value={firstName}
+                onChangeText={setFirstName}
+              />
+            </View>
+            <View style={styles.nameField}>
+              <Input
+                label={t('auth.lastName')}
+                value={lastName}
+                onChangeText={setLastName}
+              />
+            </View>
+          </View>
+          <Input
+            label={t('auth.email')}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+          />
+          <Input
+            label={t('auth.password')}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoComplete="password-new"
+          />
+        </View>
+
+        {/* Driver vehicle section */}
         {isDriver && (
           <View style={styles.vehicleSection}>
             <Text style={styles.sectionTitle}>{t('auth.vehicleInfo')}</Text>
@@ -148,6 +202,7 @@ export function RegisterScreen({ navigation }: any) {
                       key={s.model}
                       style={styles.suggestionItem}
                       onPress={() => handleSelectCar(s)}
+                      activeOpacity={0.7}
                     >
                       <Text style={styles.suggestionText}>{s.model}</Text>
                       <Text style={styles.suggestionLoad}>~{s.maxLoadKg} kg</Text>
@@ -166,6 +221,20 @@ export function RegisterScreen({ navigation }: any) {
           </View>
         )}
 
+        {/* Terms */}
+        <TouchableOpacity
+          style={styles.termsRow}
+          onPress={() => setAgreed((v) => !v)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.checkbox, agreed && styles.checkboxOn]}>
+            {agreed && <Feather name="check" size={14} color={colors.textInverse} />}
+          </View>
+          <Text style={styles.termsText}>
+            I agree to the Shlep Terms of Service and Privacy Policy.
+          </Text>
+        </TouchableOpacity>
+
         {register.error && (
           <Text style={styles.error}>
             {(register.error as any)?.response?.data?.error || t('common.error')}
@@ -173,20 +242,84 @@ export function RegisterScreen({ navigation }: any) {
         )}
 
         <Button
-          title={t('auth.register')}
+          title="Create account  →"
           onPress={handleRegister}
           loading={register.isPending}
-          disabled={!email || !password || !firstName || !lastName || (isDriver && !licensePlate)}
+          disabled={
+            !email ||
+            !password ||
+            !firstName ||
+            !lastName ||
+            !agreed ||
+            (isDriver && !licensePlate)
+          }
+          style={styles.cta}
         />
 
-        <Button
-          title={t('auth.hasAccount')}
+        <TouchableOpacity
           onPress={() => navigation.goBack()}
-          variant="outline"
-          style={styles.secondaryButton}
-        />
+          style={styles.signinLink}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.signinText}>{t('auth.hasAccount')}</Text>
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
+  );
+}
+
+function RoleCard({
+  icon,
+  iconColor,
+  title,
+  caption,
+  selected,
+  onPress,
+}: {
+  icon: keyof typeof Feather.glyphMap;
+  iconColor: string;
+  title: string;
+  caption: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity
+      activeOpacity={0.9}
+      onPress={onPress}
+      style={[styles.roleCard, selected && styles.roleCardSelected]}
+    >
+      <View style={styles.roleCardTop}>
+        <View style={[styles.roleIcon, { backgroundColor: iconColor + '18' }]}>
+          <Feather name={icon} size={22} color={iconColor} />
+        </View>
+        <View style={[styles.radio, selected && styles.radioOn]}>
+          {selected && <Feather name="check" size={14} color={colors.textInverse} />}
+        </View>
+      </View>
+      <Text style={styles.roleTitle}>{title}</Text>
+      <Text style={styles.roleCaption}>{caption}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function RoleChip({
+  label,
+  selected,
+  onPress,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={onPress}
+      style={[styles.roleChip, selected && styles.roleChipOn]}
+    >
+      <Text style={[styles.roleChipText, selected && styles.roleChipTextOn]}>{label}</Text>
+    </TouchableOpacity>
   );
 }
 
@@ -197,35 +330,114 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
-    justifyContent: 'center',
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.xl,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.lg,
   },
   title: {
     ...typography.h1,
-    color: colors.primary,
-    textAlign: 'center',
-    marginBottom: spacing.xl,
-  },
-  roleLabel: {
-    ...typography.body,
     color: colors.text,
-    fontWeight: '500',
-    marginBottom: spacing.sm,
   },
-  roleRow: {
+  subtitle: {
+    ...typography.body,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+    marginBottom: spacing.lg,
+  },
+  roleCards: {
     flexDirection: 'row',
     gap: spacing.sm,
-    marginBottom: spacing.sm,
   },
-  roleButton: {
+  roleCard: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: borderRadius.xl,
+    padding: spacing.md,
+    ...shadow.card,
+  },
+  roleCardSelected: {
+    borderColor: colors.primary,
+  },
+  roleCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
+  roleIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radio: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioOn: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  roleTitle: {
+    ...typography.h3,
+    color: colors.text,
+  },
+  roleCaption: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+    lineHeight: 16,
+  },
+  roleChips: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  roleChip: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  roleChipOn: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  roleChipText: {
+    ...typography.bodySmall,
+    fontFamily: typography.bodyStrong.fontFamily,
+    color: colors.textSecondary,
+  },
+  roleChipTextOn: {
+    color: colors.textInverse,
+  },
+  form: {
+    marginTop: spacing.lg,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  nameField: {
     flex: 1,
   },
-  bothButton: {
-    marginBottom: spacing.md,
-  },
   vehicleSection: {
-    marginBottom: spacing.md,
+    marginTop: spacing.xs,
   },
   sectionTitle: {
     ...typography.h3,
@@ -233,17 +445,19 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   suggestions: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.lg,
     marginTop: -spacing.sm,
     marginBottom: spacing.sm,
     maxHeight: 180,
+    overflow: 'hidden',
   },
   suggestionItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
@@ -255,16 +469,48 @@ const styles = StyleSheet.create({
   },
   suggestionLoad: {
     ...typography.bodySmall,
+    fontFamily: typography.figure.fontFamily,
     color: colors.primary,
-    fontWeight: '600',
+  },
+  termsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    marginBottom: spacing.md,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxOn: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  termsText: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+    flex: 1,
   },
   error: {
     ...typography.bodySmall,
     color: colors.error,
-    textAlign: 'center',
     marginBottom: spacing.sm,
   },
-  secondaryButton: {
-    marginTop: spacing.sm,
+  cta: {
+    marginTop: spacing.xs,
+  },
+  signinLink: {
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+  },
+  signinText: {
+    ...typography.button,
+    color: colors.primary,
   },
 });

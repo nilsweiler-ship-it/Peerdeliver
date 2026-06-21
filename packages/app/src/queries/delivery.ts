@@ -9,6 +9,12 @@ export function useMyDeliveries() {
       const { data } = await api.get<ApiResponse<DeliveryRequest[]>>('/deliveries/mine');
       return data.data!;
     },
+    // Keep the list live: a delivery's status changes on the *other* party's
+    // device (driver advances pending→…→in_transit→delivered), so without this
+    // the sender's screen shows stale data until a manual pull-to-refresh.
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000,
   });
 }
 

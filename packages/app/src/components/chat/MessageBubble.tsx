@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { colors, spacing, typography } from '../../theme';
 import type { Message } from '@peerdeliver/shared';
 
 interface MessageBubbleProps {
@@ -20,7 +20,10 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
         <Text style={[styles.text, isOwn ? styles.ownText : styles.otherText]}>
           {message.content}
         </Text>
-        <Text style={[styles.time, isOwn ? styles.ownTime : styles.otherTime]}>{time}</Text>
+      </View>
+      <View style={[styles.metaRow, isOwn ? styles.ownMetaRow : styles.otherMetaRow]}>
+        <Text style={styles.time}>{time}</Text>
+        {isOwn && <Text style={styles.receipt}>{message.readAt ? 'Read' : 'Sent'}</Text>}
       </View>
     </View>
   );
@@ -29,27 +32,36 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.md,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
+    maxWidth: '82%',
   },
   ownContainer: {
+    alignSelf: 'flex-end',
     alignItems: 'flex-end',
   },
   otherContainer: {
+    alignSelf: 'flex-start',
     alignItems: 'flex-start',
   },
   bubble: {
-    maxWidth: '80%',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.lg,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   ownBubble: {
     backgroundColor: colors.primary,
-    borderBottomRightRadius: borderRadius.sm,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    borderBottomRightRadius: 5,
+    borderBottomLeftRadius: 16,
   },
   otherBubble: {
     backgroundColor: colors.surface,
-    borderBottomLeftRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    borderBottomRightRadius: 16,
+    borderBottomLeftRadius: 5,
   },
   text: {
     ...typography.body,
@@ -60,15 +72,25 @@ const styles = StyleSheet.create({
   otherText: {
     color: colors.text,
   },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 3,
+    paddingHorizontal: 4,
+  },
+  ownMetaRow: {
+    justifyContent: 'flex-end',
+  },
+  otherMetaRow: {
+    justifyContent: 'flex-start',
+  },
   time: {
-    ...typography.caption,
-    marginTop: 2,
-  },
-  ownTime: {
-    color: 'rgba(255,255,255,0.7)',
-    textAlign: 'right',
-  },
-  otherTime: {
+    ...typography.overline,
     color: colors.textLight,
+  },
+  receipt: {
+    ...typography.overline,
+    color: colors.impact,
   },
 });

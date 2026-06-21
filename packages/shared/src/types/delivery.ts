@@ -59,8 +59,8 @@ export interface DeliveryRequest {
   driverPayoutCHF?: number;
   refundedCHF?: number;
   refundedAt?: string;
-  stripePaymentIntentId?: string;
-  clientSecret?: string | null;
+  twintRef?: string;
+  twintPhone?: string;
   createdAt: string;
   updatedAt: string;
 }

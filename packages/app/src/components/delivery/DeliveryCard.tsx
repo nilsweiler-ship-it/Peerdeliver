@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Card } from '../ui/Card';
-import { Badge, getStatusVariant } from '../ui/Badge';
 import { Avatar } from '../ui/Avatar';
+import { StatusBadge } from '../brand/StatusBadge';
+import { RouteLine } from '../brand/RouteLine';
 import { colors, spacing, typography } from '../../theme';
 import { useTranslation } from 'react-i18next';
 import type { DeliveryRequest } from '@peerdeliver/shared';
@@ -16,34 +17,25 @@ interface DeliveryCardProps {
 export function DeliveryCard({ delivery, onPress }: DeliveryCardProps) {
   const { t } = useTranslation();
   const sizeInfo = PACKAGE_SIZES[delivery.packageSize];
-  const statusLabel = delivery.status.replace('_', ' ').toUpperCase();
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.7} disabled={!onPress}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} disabled={!onPress}>
       <Card style={styles.card}>
         <View style={styles.header}>
-          <Badge label={statusLabel} variant={getStatusVariant(delivery.status)} />
+          <StatusBadge status={delivery.status} />
           <Text style={styles.price}>CHF {delivery.budgetCHF.toFixed(0)}</Text>
         </View>
 
-        <View style={styles.route}>
-          <View style={styles.routePoint}>
-            <View style={[styles.dot, styles.dotGreen]} />
-            <Text style={styles.address} numberOfLines={1}>
-              {delivery.pickupAddress.label}
-            </Text>
-          </View>
-          <View style={styles.routeLine} />
-          <View style={styles.routePoint}>
-            <View style={[styles.dot, styles.dotRed]} />
-            <Text style={styles.address} numberOfLines={1}>
-              {delivery.deliveryAddress.label}
-            </Text>
-          </View>
-        </View>
+        <RouteLine
+          from={delivery.pickupAddress.label}
+          to={delivery.deliveryAddress.label}
+          style={styles.route}
+        />
+
+        <View style={styles.divider} />
 
         <View style={styles.footer}>
-          <Text style={styles.meta}>
+          <Text style={styles.meta} numberOfLines={1}>
             {sizeInfo.label} · {delivery.packageDescription || t('sender.packageSize')}
           </Text>
           {delivery.driver && (
@@ -73,50 +65,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   price: {
-    ...typography.h3,
-    color: colors.primary,
+    ...typography.figure,
+    color: colors.text,
   },
   route: {
     marginBottom: spacing.sm,
   },
-  routePoint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  dotGreen: {
-    backgroundColor: colors.success,
-  },
-  dotRed: {
-    backgroundColor: colors.accent,
-  },
-  routeLine: {
-    width: 1,
-    height: 16,
-    backgroundColor: colors.border,
-    marginLeft: 4,
-  },
-  address: {
-    ...typography.bodySmall,
-    color: colors.text,
-    flex: 1,
+  divider: {
+    height: 1,
+    backgroundColor: colors.borderLight,
+    marginVertical: spacing.sm,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: spacing.sm,
   },
   meta: {
     ...typography.caption,
     color: colors.textSecondary,
+    flexShrink: 1,
   },
   driver: {
     flexDirection: 'row',

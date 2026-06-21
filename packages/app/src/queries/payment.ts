@@ -1,39 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
+import type { DeliveryRequest } from '@peerdeliver/shared';
 
-interface ConnectStatus {
-  onboarded: boolean;
-  payoutsEnabled: boolean;
-}
-
-export function useConnectStatus() {
-  return useQuery<ConnectStatus>({
-    queryKey: ['connect-status'],
-    queryFn: async () => {
-      const { data } = await api.get('/payments/connect/status');
-      return data.data;
-    },
-  });
-}
-
-export function useStartConnectOnboarding() {
-  return useMutation<{ url: string }, Error, { refreshUrl?: string; returnUrl?: string } | void>({
-    mutationFn: async (vars) => {
-      const { data } = await api.post('/payments/connect/onboarding', vars ?? {});
-      return data.data;
-    },
-  });
-}
-
-export function useDevCompleteOnboarding() {
+/** Sender confirms a (simulated) TWINT payment for a delivery. */
+export function useTwintPay() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async () => {
-      const { data } = await api.post('/payments/connect/dev-complete');
+  return useMutation<DeliveryRequest, Error, { deliveryRequestId: string; phone?: string }>({
+    mutationFn: async (vars) => {
+      const { data } = await api.post('/payments/twint/pay', vars);
       return data.data;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['connect-status'] });
+      qc.invalidateQueries({ queryKey: ['deliveries'] });
     },
   });
 }
@@ -47,7 +25,6 @@ interface EarningsResponse {
     budgetCHF: number;
     platformFeeCHF: number | null;
     driverPayoutCHF: number | null;
-    stripeTransferId: string | null;
     updatedAt: string;
   }>;
 }

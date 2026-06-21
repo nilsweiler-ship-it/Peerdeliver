@@ -8,7 +8,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { colors, spacing, borderRadius, typography, shadow } from '../../theme';
 
 interface GeoAdminResult {
   id: number;
@@ -49,14 +49,15 @@ export function AddressAutocomplete({
   const [suggestions, setSuggestions] = useState<GeoAdminResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [focused, setFocused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const selectedRef = useRef(false);
 
   const search = useCallback(async (query: string) => {
-    if (query.length < MIN_QUERY_LENGTH) {
+    if (query.trim().length < MIN_QUERY_LENGTH) {
       setSuggestions([]);
       setShowDropdown(false);
+      setLoading(false);
       return;
     }
 
@@ -83,7 +84,7 @@ export function AddressAutocomplete({
         setShowDropdown(results.length > 0);
       }
     } catch {
-      // Ignore aborted requests
+      // Ignore aborted / failed requests
     } finally {
       if (!controller.signal.aborted) {
         setLoading(false);
@@ -93,10 +94,6 @@ export function AddressAutocomplete({
 
   const handleChangeText = useCallback(
     (newText: string) => {
-      if (selectedRef.current) {
-        selectedRef.current = false;
-        return;
-      }
       setText(newText);
       onSelect(null);
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -108,10 +105,12 @@ export function AddressAutocomplete({
   const handleSelect = useCallback(
     (item: GeoAdminResult) => {
       const lbl = stripHtml(item.attrs.label);
-      selectedRef.current = true;
-      setShowDropdown(false);
-      setSuggestions([]);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      abortRef.current?.abort();
       setText(lbl);
+      setSuggestions([]);
+      setShowDropdown(false);
+      setLoading(false);
       onSelect({
         label: lbl,
         point: { lat: item.attrs.lat, lng: item.attrs.lon },
@@ -127,43 +126,44 @@ export function AddressAutocomplete({
     };
   }, []);
 
+  const open = showDropdown && suggestions.length > 0;
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, (open || focused) && styles.containerActive]}>
       {label && <Text style={styles.label}>{label}</Text>}
       <View>
         <TextInput
-          style={[styles.input, error && styles.inputError]}
+          style={[styles.input, focused && styles.inputFocused, error && styles.inputError]}
           placeholder={placeholder}
           placeholderTextColor={colors.textLight}
           value={text}
           onChangeText={handleChangeText}
+          autoCorrect={false}
+          autoCapitalize="words"
           onFocus={() => {
+            setFocused(true);
             if (suggestions.length > 0) setShowDropdown(true);
           }}
           onBlur={() => {
-            setTimeout(() => setShowDropdown(false), 250);
+            setFocused(false);
+            // Delay so a suggestion tap registers before the dropdown closes.
+            setTimeout(() => setShowDropdown(false), 200);
           }}
         />
         {loading && (
-          <ActivityIndicator
-            size="small"
-            color={colors.primary}
-            style={styles.spinner}
-          />
+          <ActivityIndicator size="small" color={colors.primary} style={styles.spinner} />
         )}
       </View>
       {error && <Text style={styles.error}>{error}</Text>}
-      {showDropdown && (
+      {open && (
         <View style={styles.dropdown}>
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            nestedScrollEnabled
-          >
-            {suggestions.map((item) => (
+          <ScrollView keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+            {suggestions.map((item, idx) => (
               <TouchableOpacity
                 key={`${item.id}-${item.attrs.lat}-${item.attrs.lon}`}
-                style={styles.suggestion}
+                style={[styles.suggestion, idx === suggestions.length - 1 && styles.suggestionLast]}
                 onPress={() => handleSelect(item)}
+                activeOpacity={0.7}
               >
                 <Text style={styles.suggestionText} numberOfLines={2}>
                   {stripHtml(item.attrs.label)}
@@ -182,11 +182,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     zIndex: 1,
   },
+  // Lift this field (and its overlay dropdown) above sibling fields below it.
+  containerActive: {
+    zIndex: 50,
+  },
   label: {
-    ...typography.bodySmall,
+    ...typography.bodyStrong,
     color: colors.text,
-    marginBottom: spacing.xs,
-    fontWeight: '500',
+    marginBottom: 6,
   },
   input: {
     ...typography.body,
@@ -195,8 +198,11 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingVertical: 14,
     color: colors.text,
+  },
+  inputFocused: {
+    borderColor: colors.primaryLight,
   },
   inputError: {
     borderColor: colors.error,
@@ -212,24 +218,31 @@ const styles = StyleSheet.create({
     top: '50%',
     marginTop: -8,
   },
+  // Absolute overlay so the suggestions float over the form instead of
+  // shoving the layout down as you type.
   dropdown: {
-    backgroundColor: colors.card,
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.lg,
-    marginTop: spacing.xs,
-    maxHeight: 220,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
+    marginTop: 6,
+    maxHeight: 240,
+    overflow: 'hidden',
+    ...shadow.sheet,
+    zIndex: 50,
   },
   suggestion: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
+  },
+  suggestionLast: {
+    borderBottomWidth: 0,
   },
   suggestionText: {
     ...typography.bodySmall,

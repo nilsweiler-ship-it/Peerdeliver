@@ -1,23 +1,36 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, Alert, RefreshControl, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Alert,
+  RefreshControl,
+  TouchableOpacity,
+  Modal,
+  Pressable,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useNearbyDeliveries, useAssignDelivery } from '../../queries/delivery';
-import { useConnectStatus } from '../../queries/payment';
 import { DeliveryCard } from '../../components/delivery/DeliveryCard';
-import { EmptyState, LoadingSpinner, Modal, Button } from '../../components/ui';
-import { colors, spacing, typography, borderRadius } from '../../theme';
+import { EmptyState, LoadingSpinner, Button } from '../../components/ui';
+import { Pill, BackChip } from '../../components/brand';
+import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 import type { DeliveryRequest } from '@peerdeliver/shared';
 import { PACKAGE_SIZES } from '@peerdeliver/shared';
 
+const SEARCH = { lat: 47.3769, lng: 8.5417, radius: 100 };
+
 export function AvailableDeliveriesScreen({ navigation }: any) {
   const { t } = useTranslation();
-  const { data: connect } = useConnectStatus();
-  const onboarded = connect?.onboarded && connect?.payoutsEnabled;
+  const insets = useSafeAreaInsets();
   // Default to Zurich center for demo — in production, use driver's first route origin
   const { data: deliveries, isLoading, refetch, isRefetching } = useNearbyDeliveries({
-    lat: 47.3769,
-    lng: 8.5417,
-    radius: 100,
+    lat: SEARCH.lat,
+    lng: SEARCH.lng,
+    radius: SEARCH.radius,
   });
   const assignDelivery = useAssignDelivery();
   const [selectedDelivery, setSelectedDelivery] = useState<DeliveryRequest | null>(null);
@@ -33,33 +46,63 @@ export function AvailableDeliveriesScreen({ navigation }: any) {
   };
 
   const renderItem = useCallback(
-    ({ item }: { item: DeliveryRequest }) => (
-      <DeliveryCard delivery={item} onPress={() => setSelectedDelivery(item)} />
-    ),
+    ({ item }: { item: DeliveryRequest }) => {
+      const distanceKm = (item as any).distanceKm as number | undefined;
+      return (
+        <View>
+          {distanceKm != null && (
+            <View style={styles.distanceRow}>
+              <Pill
+                label={`${distanceKm.toFixed(1)} km away`}
+                icon="navigation"
+                iconColor={colors.destination}
+                mono
+                tone="sunken"
+              />
+            </View>
+          )}
+          <DeliveryCard delivery={item} onPress={() => setSelectedDelivery(item)} />
+        </View>
+      );
+    },
     [],
   );
 
   if (isLoading) return <LoadingSpinner />;
 
+  const senderRating =
+    selectedDelivery && (selectedDelivery as any).sender?.averageRating
+      ? `★ ${((selectedDelivery as any).sender.averageRating as number).toFixed(1)} (${(selectedDelivery as any).sender.totalRatings})`
+      : null;
+  const detailDistance =
+    selectedDelivery && (selectedDelivery as any).distanceKm != null
+      ? `${((selectedDelivery as any).distanceKm as number).toFixed(1)} km`
+      : null;
+
   return (
     <View style={styles.container}>
-      {connect && !onboarded && (
-        <TouchableOpacity
-          style={styles.onboardingBanner}
-          onPress={() => navigation.navigate('PayoutOnboarding')}
-        >
-          <Text style={styles.bannerTitle}>Complete payout setup</Text>
-          <Text style={styles.bannerBody}>
-            You need a Stripe-connected bank account before accepting deliveries. Tap to set up.
-          </Text>
-        </TouchableOpacity>
-      )}
       <FlatList
         data={deliveries}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />}
+        contentContainerStyle={[styles.list, { paddingTop: insets.top + spacing.md }]}
+        refreshControl={
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
+        }
+        ListHeaderComponent={
+          <View style={styles.headerBlock}>
+            <View style={styles.headerRow}>
+              <BackChip onPress={() => navigation.goBack()} />
+              <Text style={styles.title}>Available nearby</Text>
+            </View>
+            <Pill
+              label="Zürich · 100 km radius"
+              icon="map-pin"
+              iconColor={colors.destination}
+              style={styles.locationPill}
+            />
+          </View>
+        }
         ListEmptyComponent={
           <EmptyState
             icon="📍"
@@ -69,55 +112,38 @@ export function AvailableDeliveriesScreen({ navigation }: any) {
         }
       />
 
-      {/* Delivery detail modal */}
+      {/* Delivery detail — bottom sheet */}
       <Modal
         visible={!!selectedDelivery}
-        onClose={() => setSelectedDelivery(null)}
-        title={selectedDelivery?.packageDescription || t('driver.availableDeliveries')}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSelectedDelivery(null)}
       >
+        <Pressable style={styles.scrim} onPress={() => setSelectedDelivery(null)} />
         {selectedDelivery && (
-          <View style={styles.detail}>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>{t('sender.pickup')}</Text>
-              <Text style={styles.detailValue}>{selectedDelivery.pickupAddress.label}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>{t('sender.delivery')}</Text>
-              <Text style={styles.detailValue}>{selectedDelivery.deliveryAddress.label}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>{t('sender.packageSize')}</Text>
-              <Text style={styles.detailValue}>
+          <View style={[styles.sheet, { paddingBottom: insets.bottom + spacing.lg }]}>
+            <View style={styles.grabber} />
+
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle} numberOfLines={2}>
+                {(selectedDelivery.packageDescription || t('driver.availableDeliveries'))} ·{' '}
                 {PACKAGE_SIZES[selectedDelivery.packageSize].label}
               </Text>
+              <Text style={styles.sheetPrice}>CHF {selectedDelivery.budgetCHF.toFixed(0)}</Text>
             </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>{t('sender.budget')}</Text>
-              <Text style={styles.detailValue}>CHF {selectedDelivery.budgetCHF.toFixed(0)}</Text>
+
+            <View style={styles.detail}>
+              <DetailRow label={t('sender.pickup')} value={selectedDelivery.pickupAddress.label} />
+              <DetailRow label={t('sender.delivery')} value={selectedDelivery.deliveryAddress.label} />
+              {detailDistance && <DetailRow label="Distance" value={detailDistance} mono />}
+              {senderRating && <DetailRow label={t('driver.senderRating')} value={senderRating} mono />}
             </View>
-            {(selectedDelivery as any).distanceKm != null && (
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Distance</Text>
-                <Text style={styles.detailValue}>
-                  {((selectedDelivery as any).distanceKm as number).toFixed(1)} km
-                </Text>
-              </View>
-            )}
-            {(selectedDelivery as any).sender && (
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>{t('driver.senderRating')}</Text>
-                <Text style={styles.detailValue}>
-                  {(selectedDelivery as any).sender.averageRating
-                    ? `${(selectedDelivery as any).sender.averageRating.toFixed(1)} (${(selectedDelivery as any).sender.totalRatings})`
-                    : 'N/A'}
-                </Text>
-              </View>
-            )}
+
             <Button
-              title={t('driver.requestDelivery')}
+              title={`${t('driver.requestDelivery')}  →`}
               onPress={() => handleAccept(selectedDelivery)}
               loading={assignDelivery.isPending}
-              style={{ marginTop: spacing.md }}
+              style={styles.cta}
             />
           </View>
         )}
@@ -126,32 +152,114 @@ export function AvailableDeliveriesScreen({ navigation }: any) {
   );
 }
 
+function DetailRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <View style={styles.detailRow}>
+      <Text style={styles.detailLabel}>{label}</Text>
+      <Text style={[styles.detailValue, mono && styles.detailValueMono]}>{value}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   container: { flex: 1, backgroundColor: colors.background },
+  list: { paddingHorizontal: spacing.md, paddingBottom: spacing.xxl, flexGrow: 1 },
+  headerBlock: {
+    marginBottom: spacing.md,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  title: {
+    ...typography.h2,
+    color: colors.text,
+    marginLeft: spacing.sm,
+  },
+  locationPill: {
+    marginTop: spacing.sm,
+  },
+  distanceRow: {
+    marginBottom: spacing.xs,
+  },
+  // onboarding banner
   onboardingBanner: {
-    margin: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.md,
     padding: spacing.md,
-    backgroundColor: '#FFF8E1',
+    backgroundColor: colors.signalSoft,
     borderWidth: 1,
-    borderColor: colors.warning,
-    borderRadius: borderRadius.lg,
+    borderColor: colors.signal,
+    borderRadius: borderRadius.xl,
+  },
+  bannerIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bannerTitle: {
     ...typography.bodySmall,
-    color: colors.text,
-    fontWeight: '700',
-    marginBottom: spacing.xs,
+    color: colors.signalText,
+    fontFamily: typography.bodyStrong.fontFamily,
+    marginBottom: 2,
   },
   bannerBody: {
     ...typography.caption,
-    color: colors.textSecondary,
+    color: colors.signalText,
   },
-  list: { padding: spacing.md, flexGrow: 1 },
-  detail: { gap: spacing.sm },
+  // bottom sheet
+  scrim: {
+    flex: 1,
+    backgroundColor: colors.overlay,
+  },
+  sheet: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    ...shadow.sheet,
+  },
+  grabber: {
+    alignSelf: 'center',
+    width: 40,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: colors.border,
+    marginBottom: spacing.md,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  sheetTitle: {
+    ...typography.h3,
+    color: colors.text,
+    flex: 1,
+  },
+  sheetPrice: {
+    ...typography.figure,
+    color: colors.text,
+  },
+  detail: { gap: spacing.xs },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: spacing.xs,
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
   },
   detailLabel: {
     ...typography.bodySmall,
@@ -160,8 +268,14 @@ const styles = StyleSheet.create({
   detailValue: {
     ...typography.bodySmall,
     color: colors.text,
-    fontWeight: '600',
+    fontFamily: typography.bodyStrong.fontFamily,
     flex: 1,
     textAlign: 'right',
+  },
+  detailValueMono: {
+    fontFamily: typography.figure.fontFamily,
+  },
+  cta: {
+    marginTop: spacing.lg,
   },
 });

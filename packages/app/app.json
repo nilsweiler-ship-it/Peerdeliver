@@ -22,11 +22,11 @@
       }
     },
     "extra": {
-      "apiUrl": "http://192.168.1.141:3001",
-      "stripePublishableKey": "pk_test_51TL4Ba9s4LgD9mOsxagKSRktI7POkxxVd6Hr6im4PkuGNILKqBncrjiHbm7ZhiD1juPe1wtYDzYBLeKf4S3czI8000blE8bnox"
+      "apiUrl": "http://192.168.1.141:3001"
     },
     "plugins": [
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-font"
     ]
   }
 }

@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, Switch, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '../../stores/authStore';
 import { useLogout } from '../../queries/auth';
-import { Button, Card } from '../../components/ui';
+import { Avatar, Badge } from '../../components/ui';
+import { GradientSurface, RouteWatermark, LeafMark, SegmentedControl } from '../../components/brand';
 import { api } from '../../services/api';
-import { colors, spacing, typography, borderRadius } from '../../theme';
+import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 import type { UserRole } from '@peerdeliver/shared';
 
 const ROLE_OPTIONS: { key: UserRole; labelKey: string }[] = [
@@ -18,6 +21,7 @@ const ROLE_OPTIONS: { key: UserRole; labelKey: string }[] = [
 
 export function ProfileScreen() {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
@@ -39,58 +43,96 @@ export function ProfileScreen() {
     }
   };
 
-  const getRoleLabel = (role?: string) => {
-    switch (role) {
-      case 'sender': return t('auth.roleSender');
-      case 'driver': return t('auth.roleDriver');
-      case 'both': return t('auth.roleBoth');
-      case 'recipient': return t('auth.roleRecipient');
-      default: return role;
-    }
-  };
+  // ── Derived figures for the impact card ─────────────────
+  const co2Saved = user?.co2Saved ?? 0;
+  const totalDeliveries = user?.totalDeliveries ?? 0;
+  const carTrips = Math.max(0, Math.round(co2Saved / 1.6));
+  const kmShared = Math.round(co2Saved / 0.12); // ~120 g CO₂ / km saved
+  const neighbours = totalDeliveries; // one neighbour reached per delivery
+  const rating = user?.averageRating ? user.averageRating.toFixed(1) : 'N/A';
+  const memberYear = user?.createdAt ? new Date(user.createdAt).getFullYear() : '';
+  const isVerified = user?.verificationStatus === 'verified';
 
   return (
-    <View style={styles.container}>
-      <Card style={styles.card}>
-        <Text style={styles.name}>{user?.firstName} {user?.lastName}</Text>
-        <Text style={styles.email}>{user?.email}</Text>
-        <Text style={styles.role}>{getRoleLabel(user?.role)}</Text>
-      </Card>
-
-      <View style={styles.stats}>
-        <Card style={styles.statCard}>
-          <Text style={styles.statValue}>{user?.totalDeliveries ?? 0}</Text>
-          <Text style={styles.statLabel}>{t('profile.deliveryHistory')}</Text>
-        </Card>
-        <Card style={styles.statCard}>
-          <Text style={styles.statValue}>{(user?.co2Saved ?? 0).toFixed(1)} kg</Text>
-          <Text style={styles.statLabel}>{t('profile.co2Saved')}</Text>
-        </Card>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.md }]}
+    >
+      {/* Header */}
+      <View style={styles.header}>
+        <Avatar firstName={user?.firstName} lastName={user?.lastName} uri={user?.avatarUrl} size={64} />
+        <View style={styles.headerInfo}>
+          <Text style={styles.name} numberOfLines={1}>
+            {user?.firstName} {user?.lastName}
+          </Text>
+          <Text style={styles.meta}>
+            ★ {rating} · Member since {memberYear}
+          </Text>
+        </View>
+        <TouchableOpacity style={styles.gear} activeOpacity={0.7}>
+          <Feather name="settings" size={20} color={colors.textSecondary} />
+        </TouchableOpacity>
       </View>
 
-      {/* Role switcher */}
+      {/* Role — primary sender/driver toggle */}
       <Text style={styles.sectionTitle}>{t('profile.changeRole')}</Text>
+      <SegmentedControl
+        segments={[
+          { key: 'sender', label: t('auth.roleSender') },
+          { key: 'driver', label: t('auth.roleDriver') },
+        ]}
+        value={user?.role === 'driver' ? 'driver' : 'sender'}
+        onChange={(key) => handleRoleChange(key as UserRole)}
+      />
       <View style={styles.roleRow}>
         {ROLE_OPTIONS.map((option) => (
           <TouchableOpacity
             key={option.key}
-            style={[styles.roleOption, user?.role === option.key && styles.roleOptionActive]}
+            style={[styles.roleChip, user?.role === option.key && styles.roleChipActive]}
             onPress={() => handleRoleChange(option.key)}
             disabled={updatingRole}
+            activeOpacity={0.8}
           >
-            <Text
-              style={[styles.roleOptionText, user?.role === option.key && styles.roleOptionTextActive]}
-            >
+            <Text style={[styles.roleChipText, user?.role === option.key && styles.roleChipTextActive]}>
               {t(option.labelKey)}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
+      {/* LIFETIME IMPACT */}
+      <View style={styles.impactWrap}>
+        <GradientSurface style={styles.impactGradient}>
+          <RouteWatermark size={240} opacity={0.1} style={{ right: -50, top: -20 }} />
+          <View style={styles.impactHead}>
+            <LeafMark size={16} color={colors.impactLeaf} />
+            <Text style={styles.impactOverline}>LIFETIME IMPACT</Text>
+          </View>
+          <Text style={styles.impactAmount}>{co2Saved.toFixed(1)} kg</Text>
+          <Text style={styles.impactSub}>≈ {carTrips} car trips never made</Text>
+          <View style={styles.impactStats}>
+            <View style={styles.impactStat}>
+              <Text style={styles.impactStatValue}>{totalDeliveries}</Text>
+              <Text style={styles.impactStatLabel}>Deliveries</Text>
+            </View>
+            <View style={styles.impactDivider} />
+            <View style={styles.impactStat}>
+              <Text style={styles.impactStatValue}>{kmShared}</Text>
+              <Text style={styles.impactStatLabel}>km shared</Text>
+            </View>
+            <View style={styles.impactDivider} />
+            <View style={styles.impactStat}>
+              <Text style={styles.impactStatValue}>{neighbours}</Text>
+              <Text style={styles.impactStatLabel}>Neighbours</Text>
+            </View>
+          </View>
+        </GradientSurface>
+      </View>
+
       {/* Location sharing toggle — drivers only */}
       {(user?.role === 'driver' || user?.role === 'both') && (
         <View style={styles.locationRow}>
-          <View>
+          <View style={styles.flex}>
             <Text style={styles.locationLabel}>{t('profile.shareLocation')}</Text>
             <Text style={styles.locationHint}>{t('profile.shareLocationHint')}</Text>
           </View>
@@ -105,119 +147,250 @@ export function ProfileScreen() {
               }
             }}
             trackColor={{ true: colors.primary, false: colors.border }}
-            thumbColor={colors.card}
+            thumbColor={colors.surface}
           />
         </View>
       )}
 
-      {isDriver && (
-        <View style={styles.driverLinks}>
-          <TouchableOpacity
-            style={styles.linkRow}
+      {/* Settings list */}
+      <View style={styles.settingsList}>
+        {isDriver && (
+          <SettingsRow
+            icon="credit-card"
+            label="Earnings & payouts"
             onPress={() => navigation.navigate('DriverStack', { screen: 'Earnings' })}
-          >
-            <Text style={styles.linkLabel}>Earnings</Text>
-            <Text style={styles.linkChevron}>›</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.linkRow}
-            onPress={() => navigation.navigate('DriverStack', { screen: 'PayoutOnboarding' })}
-          >
-            <Text style={styles.linkLabel}>Payout setup</Text>
-            <Text style={styles.linkChevron}>›</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+          />
+        )}
+        <SettingsRow
+          icon="shield"
+          label="Verification & trust"
+          trailing={isVerified ? <Badge label="VERIFIED" variant="success" /> : undefined}
+        />
+        <SettingsRow icon="help-circle" label="Help & support" last />
+      </View>
 
-      <Button
-        title={t('auth.logout')}
+      {/* Log out */}
+      <TouchableOpacity
+        style={styles.logout}
         onPress={() => logout.mutate()}
-        variant="outline"
-        loading={logout.isPending}
-      />
-    </View>
+        disabled={logout.isPending}
+        activeOpacity={0.85}
+      >
+        <Feather name="log-out" size={18} color={colors.textInverse} />
+        <Text style={styles.logoutText}>{t('auth.logout')}</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+}
+
+function SettingsRow({
+  icon,
+  label,
+  onPress,
+  trailing,
+  last,
+}: {
+  icon: keyof typeof Feather.glyphMap;
+  label: string;
+  onPress?: () => void;
+  trailing?: React.ReactNode;
+  last?: boolean;
+}) {
+  const Wrapper: any = onPress ? TouchableOpacity : View;
+  return (
+    <Wrapper
+      activeOpacity={0.7}
+      onPress={onPress}
+      style={[styles.settingsRow, !last && styles.settingsRowBorder]}
+    >
+      <View style={styles.settingsIcon}>
+        <Feather name={icon} size={18} color={colors.primary} />
+      </View>
+      <Text style={styles.settingsLabel}>{label}</Text>
+      {trailing ?? <Feather name="chevron-right" size={20} color={colors.textLight} />}
+    </Wrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: spacing.lg, backgroundColor: colors.background },
-  card: { alignItems: 'center', marginBottom: spacing.lg, marginTop: spacing.lg },
-  name: { ...typography.h2, color: colors.text },
-  email: { ...typography.body, color: colors.textSecondary, marginTop: spacing.xs },
-  role: { ...typography.caption, color: colors.primary, marginTop: spacing.xs, textTransform: 'uppercase', fontWeight: '600' },
-  stats: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.lg },
-  statCard: { flex: 1, alignItems: 'center' },
-  statValue: { ...typography.h2, color: colors.primary },
-  statLabel: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
-  sectionTitle: {
-    ...typography.h3,
-    color: colors.text,
-    marginBottom: spacing.sm,
+  flex: { flex: 1 },
+  container: { flex: 1, backgroundColor: colors.background },
+  content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
+
+  // Header
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
   },
+  headerInfo: { flex: 1 },
+  name: { ...typography.h2, color: colors.text },
+  meta: {
+    ...typography.caption,
+    fontFamily: typography.figure.fontFamily,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  gear: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Role
+  sectionTitle: { ...typography.h3, color: colors.text },
   roleRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing.sm,
-    marginBottom: spacing.lg,
   },
-  roleOption: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    borderRadius: borderRadius.lg,
-    borderWidth: 2,
+  roleChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
     borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
-  roleOptionActive: {
+  roleChipActive: {
     borderColor: colors.primary,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: colors.impactSurface,
   },
-  roleOptionText: {
+  roleChipText: {
     ...typography.bodySmall,
-    fontWeight: '600',
+    fontFamily: typography.bodyStrong.fontFamily,
     color: colors.textSecondary,
   },
-  roleOptionTextActive: {
+  roleChipTextActive: {
     color: colors.primary,
   },
+
+  // Impact card
+  impactWrap: {
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+    ...shadow.card,
+  },
+  impactGradient: { padding: spacing.lg },
+  impactHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  impactOverline: {
+    ...typography.overline,
+    color: 'rgba(255,255,255,0.6)',
+    letterSpacing: 1.5,
+  },
+  impactAmount: {
+    ...typography.figureLg,
+    color: colors.impactOnDark,
+    marginTop: spacing.sm,
+  },
+  impactSub: {
+    ...typography.bodySmall,
+    color: 'rgba(255,255,255,0.6)',
+    marginTop: spacing.xs,
+  },
+  impactStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.lg,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.14)',
+  },
+  impactStat: { flex: 1, alignItems: 'center' },
+  impactStatValue: {
+    ...typography.figure,
+    color: colors.textInverse,
+  },
+  impactStatLabel: {
+    ...typography.caption,
+    color: 'rgba(255,255,255,0.6)',
+    marginTop: 2,
+  },
+  impactDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+  },
+
+  // Location row
   locationRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: spacing.md,
-    borderRadius: borderRadius.lg,
-    marginBottom: spacing.lg,
+    borderRadius: borderRadius.xl,
+    gap: spacing.md,
+    ...shadow.card,
   },
   locationLabel: {
-    ...typography.body,
+    ...typography.bodyStrong,
     color: colors.text,
-    fontWeight: '600',
   },
   locationHint: {
     ...typography.caption,
     color: colors.textSecondary,
-    marginTop: spacing.xs,
+    marginTop: 2,
   },
-  driverLinks: {
-    marginBottom: spacing.lg,
-    borderRadius: borderRadius.lg,
+
+  // Settings list
+  settingsList: {
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+    ...shadow.card,
   },
-  linkRow: {
+  settingsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: spacing.md,
     padding: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
-  linkLabel: {
+  settingsRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  settingsIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.impactSurface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  settingsLabel: {
     ...typography.body,
     color: colors.text,
-    fontWeight: '500',
+    flex: 1,
   },
-  linkChevron: {
-    ...typography.body,
-    color: colors.textLight,
+
+  // Logout
+  logout: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.destination,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.lg,
+    minHeight: 52,
+    marginTop: spacing.xs,
+  },
+  logoutText: {
+    ...typography.button,
+    color: colors.textInverse,
   },
 });

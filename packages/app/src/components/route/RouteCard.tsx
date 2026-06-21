@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Avatar } from '../ui/Avatar';
-import { colors, spacing, typography } from '../../theme';
+import { RouteLine } from '../brand/RouteLine';
+import { colors, spacing, typography, borderRadius } from '../../theme';
 import { PACKAGE_SIZES } from '@peerdeliver/shared';
 import type { DriverRoute } from '@peerdeliver/shared';
 
@@ -27,7 +28,7 @@ export function RouteCard({ route, onPress, showDriver = false }: RouteCardProps
   });
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.7} disabled={!onPress}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} disabled={!onPress}>
       <Card style={styles.card}>
         <View style={styles.header}>
           {route.isActive ? (
@@ -41,29 +42,20 @@ export function RouteCard({ route, onPress, showDriver = false }: RouteCardProps
           />
         </View>
 
-        <View style={styles.route}>
-          <View style={styles.routePoint}>
-            <View style={[styles.dot, styles.dotGreen]} />
-            <Text style={styles.address} numberOfLines={1}>
-              {route.originAddress}
-            </Text>
-          </View>
-          <View style={styles.routeLine} />
-          <View style={styles.routePoint}>
-            <View style={[styles.dot, styles.dotRed]} />
-            <Text style={styles.address} numberOfLines={1}>
-              {route.destinationAddress}
-            </Text>
-          </View>
-        </View>
+        <RouteLine
+          from={route.originAddress}
+          to={route.destinationAddress}
+          variant="horizontal"
+          style={styles.route}
+        />
+
+        <View style={styles.divider} />
 
         <View style={styles.footer}>
           <Text style={styles.meta}>
-            {formattedDate} · {formattedTime}
+            {formattedDate} · <Text style={styles.metaMono}>{formattedTime}</Text>
           </Text>
-          <Text style={styles.meta}>
-            {sizeInfo.label} · {sizeInfo.description}
-          </Text>
+          <Text style={styles.meta}>{sizeInfo.label}</Text>
         </View>
 
         {showDriver && route.driver && (
@@ -102,37 +94,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   route: {
     marginBottom: spacing.sm,
   },
-  routePoint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  dotGreen: {
-    backgroundColor: colors.success,
-  },
-  dotRed: {
-    backgroundColor: colors.accent,
-  },
-  routeLine: {
-    width: 1,
-    height: 16,
-    backgroundColor: colors.border,
-    marginLeft: 4,
-  },
-  address: {
-    ...typography.bodySmall,
-    color: colors.text,
-    flex: 1,
+  divider: {
+    height: 1,
+    backgroundColor: colors.borderLight,
+    marginVertical: spacing.sm,
   },
   footer: {
     flexDirection: 'row',
@@ -142,6 +112,10 @@ const styles = StyleSheet.create({
   meta: {
     ...typography.caption,
     color: colors.textSecondary,
+  },
+  metaMono: {
+    fontFamily: typography.figure.fontFamily,
+    color: colors.text,
   },
   driverRow: {
     flexDirection: 'row',
@@ -163,14 +137,14 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   dayBadge: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSunken,
     paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingVertical: 3,
+    borderRadius: borderRadius.sm,
   },
   dayText: {
-    ...typography.caption,
+    ...typography.overline,
     color: colors.textSecondary,
-    fontWeight: '600',
+    textTransform: 'uppercase',
   },
 });
