@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
-import Constants from 'expo-constants';
+import { resolveDevApiUrl } from './devHost';
 
 const storage = Platform.OS === 'web'
   ? {
@@ -10,9 +10,7 @@ const storage = Platform.OS === 'web'
     }
   : require('expo-secure-store');
 
-const DEV_API_URL =
-  Constants.expoConfig?.extra?.apiUrl || 'http://localhost:3001';
-const API_URL = __DEV__ ? DEV_API_URL : 'https://api.peerdeliver.ch';
+const API_URL = __DEV__ ? resolveDevApiUrl() : 'https://api.peerdeliver.ch';
 
 export const api = axios.create({
   baseURL: `${API_URL}/api`,

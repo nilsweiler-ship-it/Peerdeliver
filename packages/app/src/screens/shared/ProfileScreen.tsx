@@ -6,8 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '../../stores/authStore';
 import { useLogout } from '../../queries/auth';
-import { Avatar, Badge } from '../../components/ui';
-import { GradientSurface, RouteWatermark, LeafMark, SegmentedControl } from '../../components/brand';
+import { Badge } from '../../components/ui';
+import { GradientSurface, RouteWatermark, LeafMark, SegmentedControl, GrowthAvatar, growthStage } from '../../components/brand';
 import { api } from '../../services/api';
 import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 import type { UserRole } from '@peerdeliver/shared';
@@ -52,6 +52,8 @@ export function ProfileScreen() {
   const rating = user?.averageRating ? user.averageRating.toFixed(1) : 'N/A';
   const memberYear = user?.createdAt ? new Date(user.createdAt).getFullYear() : '';
   const isVerified = user?.verificationStatus === 'verified';
+  const stage = growthStage(co2Saved);
+  const toNext = stage.next ? Math.max(0, stage.next.min - co2Saved) : 0;
 
   return (
     <ScrollView
@@ -60,7 +62,7 @@ export function ProfileScreen() {
     >
       {/* Header */}
       <View style={styles.header}>
-        <Avatar firstName={user?.firstName} lastName={user?.lastName} uri={user?.avatarUrl} size={64} />
+        <GrowthAvatar co2={co2Saved} size={64} />
         <View style={styles.headerInfo}>
           <Text style={styles.name} numberOfLines={1}>
             {user?.firstName} {user?.lastName}
@@ -68,10 +70,28 @@ export function ProfileScreen() {
           <Text style={styles.meta}>
             ★ {rating} · Member since {memberYear}
           </Text>
+          <View style={styles.stagePill}>
+            <LeafMark size={11} color={colors.impact} />
+            <Text style={styles.stageText}>{stage.name}</Text>
+          </View>
         </View>
         <TouchableOpacity style={styles.gear} activeOpacity={0.7}>
           <Feather name="settings" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
+      </View>
+
+      {/* Growth progress */}
+      <View style={styles.growthCard}>
+        <View style={styles.growthHead}>
+          <Text style={styles.growthName}>{stage.name}</Text>
+          <Text style={styles.growthNext}>
+            {stage.next ? `${toNext.toFixed(1)} kg to ${stage.next.name}` : 'Fully grown 🌳'}
+          </Text>
+        </View>
+        <View style={styles.growthTrack}>
+          <View style={[styles.growthFill, { width: `${Math.round(stage.progress * 100)}%` }]} />
+        </View>
+        <Text style={styles.growthHint}>Your tree grows with every kg of CO₂ you save together.</Text>
       </View>
 
       {/* Role — primary sender/driver toggle */}
@@ -164,9 +184,15 @@ export function ProfileScreen() {
         <SettingsRow
           icon="shield"
           label="Verification & trust"
+          onPress={() => navigation.navigate('Verification')}
           trailing={isVerified ? <Badge label="VERIFIED" variant="success" /> : undefined}
         />
-        <SettingsRow icon="help-circle" label="Help & support" last />
+        <SettingsRow
+          icon="help-circle"
+          label="Help & support"
+          onPress={() => navigation.navigate('HelpSupport')}
+          last
+        />
       </View>
 
       {/* Log out */}
@@ -240,6 +266,63 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  stagePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    alignSelf: 'flex-start',
+    backgroundColor: colors.impactSurface,
+    borderRadius: borderRadius.full,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginTop: 6,
+  },
+  stageText: {
+    ...typography.caption,
+    fontFamily: typography.bodyStrong.fontFamily,
+    color: colors.impact,
+  },
+
+  // Growth progress
+  growthCard: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    marginTop: spacing.md,
+    gap: spacing.sm,
+    ...shadow.card,
+  },
+  growthHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  growthName: {
+    ...typography.bodyStrong,
+    color: colors.text,
+  },
+  growthNext: {
+    ...typography.caption,
+    fontFamily: typography.figure.fontFamily,
+    color: colors.impact,
+  },
+  growthTrack: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.surfaceSunken,
+    overflow: 'hidden',
+  },
+  growthFill: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.impact,
+  },
+  growthHint: {
+    ...typography.caption,
+    color: colors.textLight,
   },
 
   // Role

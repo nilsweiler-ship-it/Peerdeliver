@@ -10,7 +10,7 @@ import { useConversations } from '../../queries/chat';
 import { Button } from '../../components/ui';
 import { Avatar } from '../../components/ui/Avatar';
 import { RouteCard } from '../../components/route/RouteCard';
-import { ImpactCard, RouteLine, StatusBadge } from '../../components/brand';
+import { ImpactCard, RouteLine, StatusBadge, GrowthAvatar } from '../../components/brand';
 import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 import type { DeliveryStatus } from '@peerdeliver/shared';
 
@@ -101,6 +101,7 @@ export function HomeScreen({ navigation }: any) {
 
   const isSender = role === 'sender' || role === 'both';
   const isDriver = role === 'driver' || role === 'both';
+  const isRecipient = role === 'recipient';
 
   const { data: deliveries, refetch: refetchDeliveries } = useMyDeliveries();
   const { data: routes } = useMyRoutes({ enabled: isDriver });
@@ -110,8 +111,26 @@ export function HomeScreen({ navigation }: any) {
   const requestedDeliveries = deliveries?.filter((d) => d.status === 'requested') || [];
   const senderDeliveries = activeDeliveries.filter((d) => d.senderId === user?.id);
   const driverDeliveries = activeDeliveries.filter((d) => d.driverId === user?.id);
+  const completedDriverDeliveries = (deliveries || []).filter(
+    (d) => d.driverId === user?.id && d.status === 'delivered',
+  );
+  // A recipient's `deliveries` are already scoped to them server-side; match
+  // defensively on id or email so the count/section work regardless.
+  const recipientDeliveries = activeDeliveries.filter(
+    (d) =>
+      d.recipientId === user?.id ||
+      (!!d.recipientEmail && d.recipientEmail.toLowerCase() === user?.email?.toLowerCase()),
+  );
   const activeRoutes = routes?.filter((r) => r.isActive) || [];
   const unreadCount = conversations?.reduce((sum, c) => sum + c.unreadCount, 0) || 0;
+
+  // The primary "active deliveries" stat depends on the viewer's role.
+  const primaryDeliveries = isSender ? senderDeliveries : isDriver ? driverDeliveries : recipientDeliveries;
+  const primaryNav: [string, string] = isSender
+    ? ['SenderStack', 'MyShipments']
+    : isDriver
+    ? ['DriverStack', 'ActiveDeliveries']
+    : ['RecipientStack', 'IncomingDeliveries'];
 
   const co2 = user?.co2Saved ?? 0;
   const carTrips = Math.max(0, Math.round(co2 / 1.6));
@@ -134,10 +153,10 @@ export function HomeScreen({ navigation }: any) {
             {t('common.welcome')}, {user?.firstName}
           </Text>
         </View>
-        <View>
-          <Avatar firstName={user?.firstName} lastName={user?.lastName} uri={user?.avatarUrl} size={46} />
+        <TouchableOpacity activeOpacity={0.85} onPress={() => navigation.navigate('Profile')}>
+          <GrowthAvatar co2={co2} size={46} />
           {unreadCount > 0 && <View style={styles.notifDot} />}
-        </View>
+        </TouchableOpacity>
       </View>
 
       {/* Stat cards */}
@@ -145,12 +164,10 @@ export function HomeScreen({ navigation }: any) {
         <TouchableOpacity
           activeOpacity={0.85}
           style={styles.statCard}
-          onPress={() => navigation.navigate(isSender ? 'SenderStack' : 'DriverStack', {
-            screen: isSender ? 'MyShipments' : 'ActiveDeliveries',
-          })}
+          onPress={() => navigation.navigate(primaryNav[0], { screen: primaryNav[1] })}
         >
-          <Text style={styles.statNumber}>{(isSender ? senderDeliveries : driverDeliveries).length}</Text>
-          <Text style={styles.statLabel}>{t('home.activeDeliveries')}</Text>
+          <Text style={styles.statNumber}>{primaryDeliveries.length}</Text>
+          <Text style={styles.statLabel}>{isRecipient ? t('recipient.incomingDeliveries') : t('home.activeDeliveries')}</Text>
         </TouchableOpacity>
         {isDriver && (
           <TouchableOpacity
@@ -273,6 +290,52 @@ export function HomeScreen({ navigation }: any) {
               ))}
             </View>
           )}
+
+          {completedDriverDeliveries.length > 0 && (
+            <View style={styles.subsection}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.subsectionTitle}>{t('driver.pastDeliveries')}</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('DriverStack', { screen: 'Earnings' })}>
+                  <Text style={styles.viewAll}>{t('home.viewAll')}</Text>
+                </TouchableOpacity>
+              </View>
+              {completedDriverDeliveries.slice(0, 3).map((delivery) => (
+                <ActiveRouteRow
+                  key={delivery.id}
+                  from={delivery.pickupAddress.label}
+                  to={delivery.deliveryAddress.label}
+                  status={delivery.status}
+                  onPress={() => navigation.navigate('DriverStack', { screen: 'Earnings' })}
+                />
+              ))}
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* ===== RECIPIENT SECTION ===== */}
+      {isRecipient && (
+        <View style={styles.section}>
+          <Button
+            title={t('recipient.incomingDeliveries')}
+            onPress={() => navigation.navigate('RecipientStack', { screen: 'IncomingDeliveries' })}
+          />
+          {recipientDeliveries.length > 0 ? (
+            <View style={styles.subsection}>
+              <Text style={styles.subsectionTitle}>{t('recipient.incomingDeliveries')}</Text>
+              {recipientDeliveries.slice(0, 4).map((delivery) => (
+                <ActiveRouteRow
+                  key={delivery.id}
+                  from={delivery.pickupAddress.label}
+                  to={delivery.deliveryAddress.label}
+                  status={delivery.status}
+                  onPress={() => navigation.navigate('RecipientStack', { screen: 'IncomingDeliveries' })}
+                />
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.recipientEmpty}>{t('recipient.noIncomingMessage')}</Text>
+          )}
         </View>
       )}
     </ScrollView>
@@ -350,6 +413,7 @@ const styles = StyleSheet.create({
   statNumber: {
     ...typography.figure,
     fontSize: 27,
+    lineHeight: 34,
     color: colors.text,
   },
   statHighlight: {
@@ -391,6 +455,10 @@ const styles = StyleSheet.create({
   },
   driverActionBtn: {
     flex: 1,
+  },
+  recipientEmpty: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
   },
   mono: {
     fontFamily: typography.figure.fontFamily,

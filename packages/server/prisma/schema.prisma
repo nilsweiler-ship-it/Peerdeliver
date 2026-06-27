@@ -69,6 +69,9 @@ model User {
   maxLoadKg          Float?
   shareLocation      Boolean            @default(true)
   verificationStatus VerificationStatus @default(unverified)
+  phoneVerified      Boolean            @default(false)
+  idVerified         Boolean            @default(false)
+  plateVerified      Boolean            @default(false)
   averageRating      Float?
   totalRatings       Int                @default(0)
   totalDeliveries    Int                @default(0)

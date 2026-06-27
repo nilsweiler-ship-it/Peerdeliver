@@ -193,8 +193,10 @@ export function MyShipmentsScreen({ navigation }: any) {
   const currentIdx = sel
     ? PROGRESS_STEPS.reduce((acc, step, i) => (step.reaches.includes(sel.status) ? i : acc), -1)
     : -1;
+  // The sender hands the pickup code to the driver at pickup, so it must be
+  // visible from 'matched' until pickup is verified (matched → accepted).
   const showCodeReminder =
-    !!sel && (sel.status === 'accepted' || sel.status === 'in_transit') && !!sel.pickupCode;
+    !!sel && (sel.status === 'matched' || sel.status === 'accepted') && !!sel.pickupCode;
 
   return (
     <View style={styles.container}>

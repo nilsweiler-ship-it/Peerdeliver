@@ -147,7 +147,8 @@
     "originAddress": "Origin City / Address",
     "destinationAddress": "Destination City / Address",
     "departureDate": "Departure Date",
-    "priceRange": "Price Range (CHF)"
+    "priceRange": "Price Range (CHF)",
+    "pastDeliveries": "Past deliveries"
   },
   "recipient": {
     "incomingDeliveries": "Incoming Deliveries",

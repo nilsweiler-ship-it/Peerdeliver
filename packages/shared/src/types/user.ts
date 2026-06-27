@@ -16,6 +16,9 @@ export interface User {
   maxLoadKg?: number;
   shareLocation?: boolean;
   verificationStatus: VerificationStatus;
+  phoneVerified?: boolean;
+  idVerified?: boolean;
+  plateVerified?: boolean;
   averageRating?: number;
   totalRatings: number;
   totalDeliveries: number;

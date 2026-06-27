@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, RefreshControl, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, RefreshControl, TextInput, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useMyDeliveries, useVerifyPickup, useVerifyDelivery, useUpdateDeliveryStatus } from '../../queries/delivery';
@@ -145,11 +145,14 @@ function DeliveryActionCard({ delivery }: { delivery: DeliveryRequest }) {
   );
 }
 
-/** 6-digit code: visible CodeBoxes with a transparent TextInput overlay capturing input. */
+/**
+ * 6-digit code: visible CodeBoxes backed by a hidden TextInput. Tapping anywhere
+ * on the boxes re-focuses the input (so you can edit/backspace after typing).
+ */
 function CodeInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const inputRef = useRef<TextInput>(null);
   return (
-    <View style={styles.codeInputWrap}>
+    <Pressable style={styles.codeInputWrap} onPress={() => inputRef.current?.focus()}>
       <CodeBoxes value={value} showActive />
       <TextInput
         ref={inputRef}
@@ -161,7 +164,7 @@ function CodeInput({ value, onChange }: { value: string; onChange: (v: string) =
         caretHidden
         style={styles.hiddenInput}
       />
-    </View>
+    </Pressable>
   );
 }
 
@@ -349,8 +352,14 @@ const styles = StyleSheet.create({
   codeInputWrap: {
     position: 'relative',
   },
+  // Tiny + offscreen so it captures the keyboard without intercepting taps on
+  // the boxes (the Pressable wrapper handles focus).
   hiddenInput: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    width: 1,
+    height: 1,
+    top: 0,
+    left: 0,
     opacity: 0,
     color: 'transparent',
   },

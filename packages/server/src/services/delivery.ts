@@ -270,6 +270,29 @@ export async function verifyDelivery(deliveryId: string, driverId: string, code:
     deliveryId,
   );
 
+  // ── Impact + stats ──────────────────────────────────────────────
+  // CO₂ saved ≈ the dedicated car trip this delivery avoided (the driver was
+  // already heading that way). distance_km × 0.12 kg CO₂/km (avg small car).
+  const [{ km }] = await prisma.$queryRawUnsafe<{ km: number }[]>(
+    `SELECT ST_Distance(dr."pickupPoint"::geography, dr."deliveryPoint"::geography) / 1000 AS km
+       FROM delivery_requests dr WHERE dr.id = $1`,
+    deliveryId,
+  );
+  const co2SavedKg = Math.round((km || 0) * 0.12 * 100) / 100;
+
+  await prisma.deliveryRequest.update({ where: { id: deliveryId }, data: { co2SavedKg } });
+  // Credit both parties' lifetime impact; the driver also gets a completed delivery.
+  await prisma.user.update({
+    where: { id: driverId },
+    data: { co2Saved: { increment: co2SavedKg }, totalDeliveries: { increment: 1 } },
+  });
+  if (delivery.senderId) {
+    await prisma.user.update({
+      where: { id: delivery.senderId },
+      data: { co2Saved: { increment: co2SavedKg } },
+    });
+  }
+
   await prisma.message.create({
     data: {
       deliveryRequestId: deliveryId,

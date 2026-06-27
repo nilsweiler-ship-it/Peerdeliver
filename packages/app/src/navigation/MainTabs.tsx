@@ -7,7 +7,7 @@ import { SenderStack } from './SenderStack';
 import { DriverStack } from './DriverStack';
 import { RecipientStack } from './RecipientStack';
 import { ChatStack } from './ChatStack';
-import { ProfileScreen } from '../screens/shared/ProfileScreen';
+import { ProfileStack } from './ProfileStack';
 import { colors, typography } from '../theme';
 import { useTranslation } from 'react-i18next';
 
@@ -84,7 +84,7 @@ export function MainTabs() {
       />
       <Tab.Screen
         name="Profile"
-        component={ProfileScreen}
+        component={ProfileStack}
         options={{ title: t('tabs.profile'), tabBarIcon: icon('user') }}
       />
     </Tab.Navigator>

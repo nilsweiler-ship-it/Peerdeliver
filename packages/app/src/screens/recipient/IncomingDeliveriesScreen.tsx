@@ -71,7 +71,7 @@ export function IncomingDeliveriesScreen() {
       >
         {sel && (
           <View style={styles.heroWrap}>
-            <GradientSurface style={styles.hero}>
+            <GradientSurface fill={false} style={styles.hero}>
               <RouteWatermark size={240} opacity={0.1} style={{ right: -50, top: -30 }} />
 
               <Text style={styles.overline}>INCOMING DELIVERY</Text>

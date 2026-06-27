@@ -18,3 +18,4 @@ export { Confetti } from './Confetti';
 export { SuccessMedallion } from './SuccessMedallion';
 export { Pill } from './Pill';
 export { BackChip } from './BackChip';
+export { GrowthAvatar, growthStage } from './GrowthAvatar';
