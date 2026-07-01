@@ -2,7 +2,9 @@ import React from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import Constants from 'expo-constants';
 import { useFonts } from 'expo-font';
+import { StripeProvider } from './src/lib/stripe';
 import {
   BricolageGrotesque_600SemiBold,
   BricolageGrotesque_700Bold,
@@ -41,14 +43,19 @@ export default function App() {
     return <View style={{ flex: 1, backgroundColor: colors.background }} />;
   }
 
+  // Empty key is fine: in simulated-TWINT mode Stripe is never called.
+  const stripeKey = (Constants.expoConfig?.extra?.stripePublishableKey as string | undefined) || '';
+
   return (
     <SafeAreaProvider>
-      <QueryProvider>
-        <SocketProvider>
-          <StatusBar style="dark" />
-          <RootNavigator />
-        </SocketProvider>
-      </QueryProvider>
+      <StripeProvider publishableKey={stripeKey} merchantIdentifier="merchant.com.peerdeliver.app">
+        <QueryProvider>
+          <SocketProvider>
+            <StatusBar style="dark" />
+            <RootNavigator />
+          </SocketProvider>
+        </QueryProvider>
+      </StripeProvider>
     </SafeAreaProvider>
   );
 }

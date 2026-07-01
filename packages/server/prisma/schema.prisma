@@ -67,11 +67,15 @@ model User {
   licensePlate       String?
   carModel           String?
   maxLoadKg          Float?
+  vehicleSize        PackageSize?
   shareLocation      Boolean            @default(true)
   verificationStatus VerificationStatus @default(unverified)
   phoneVerified      Boolean            @default(false)
   idVerified         Boolean            @default(false)
   plateVerified      Boolean            @default(false)
+  stripeAccountId        String?
+  stripePayoutsEnabled   Boolean         @default(false)
+  stripeDetailsSubmitted Boolean         @default(false)
   averageRating      Float?
   totalRatings       Int                @default(0)
   totalDeliveries    Int                @default(0)
@@ -121,6 +125,8 @@ model DeliveryRequest {
   cancelReason        String?
   twintRef              String?
   twintPhone            String?
+  stripePaymentIntentId String?
+  stripeTransferId      String?
   paymentStatus         PaymentStatus  @default(unpaid)
   driverPayoutCHF       Float?
   refundedCHF           Float?

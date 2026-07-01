@@ -7,7 +7,7 @@ import { useMyDeliveries, useConfirmDelivery, useRejectDriver, useDriverInfo } f
 import { DeliveryCard } from '../../components/delivery/DeliveryCard';
 import { EmptyState, LoadingSpinner, Modal, Button } from '../../components/ui';
 import { Avatar } from '../../components/ui/Avatar';
-import { MapHeader, RouteLine, StatusBadge, Pill, SegmentedControl } from '../../components/brand';
+import { LiveMap, RouteLine, StatusBadge, Pill, SegmentedControl } from '../../components/brand';
 import { useSocket } from '../../providers/SocketProvider';
 import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 import type { DeliveryRequest, DeliveryStatus } from '@peerdeliver/shared';
@@ -84,7 +84,13 @@ function DriverRatingCard({ deliveryId, onConfirm, onReject, confirming, rejecti
   );
 }
 
-function DriverTracker({ deliveryId }: { deliveryId: string }) {
+function DriverTracker({
+  deliveryId,
+  onLocation,
+}: {
+  deliveryId: string;
+  onLocation?: (loc: { lat: number; lng: number; timestamp: string }) => void;
+}) {
   const { t } = useTranslation();
   const socket = useSocket();
   const { data: driver } = useDriverInfo(deliveryId);
@@ -97,6 +103,7 @@ function DriverTracker({ deliveryId }: { deliveryId: string }) {
 
     const handler = (data: { lat: number; lng: number; timestamp: string }) => {
       setLocation(data);
+      onLocation?.(data);
     };
     socket.on(SOCKET_EVENTS.TRACKING_LOCATION_NEW, handler);
 
@@ -136,6 +143,11 @@ export function MyShipmentsScreen({ navigation }: any) {
   const { data: deliveries, isLoading, refetch, isRefetching } = useMyDeliveries();
   const [filter, setFilter] = useState<FilterTab>('active');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Live driver position for the map marker (fed by the DriverTracker below).
+  const [driverLoc, setDriverLoc] = useState<{ lat: number; lng: number } | null>(null);
+  useEffect(() => {
+    setDriverLoc(null);
+  }, [selectedId]);
   // Re-derive the open delivery from the latest list so the Track modal's
   // status, progress and live tracker stay current as the driver advances it.
   const selectedDelivery = deliveries?.find((d) => d.id === selectedId) ?? null;
@@ -238,12 +250,17 @@ export function MyShipmentsScreen({ navigation }: any) {
           <View style={styles.detail}>
             {/* Map hero */}
             <View style={styles.mapWrap}>
-              <MapHeader height={248}>
+              <LiveMap
+                height={248}
+                from={sel.pickupAddress.point}
+                to={sel.deliveryAddress.point}
+                driver={driverLoc}
+              >
                 <View style={styles.mapOverlay}>
                   <Pill label={trackingId} mono tone="glass" onDark style={styles.trackPill} />
                   <StatusBadge status={sel.status} />
                 </View>
-              </MapHeader>
+              </LiveMap>
             </View>
 
             {/* Driver card overlapping the map */}
@@ -334,7 +351,7 @@ export function MyShipmentsScreen({ navigation }: any) {
 
             {/* Live driver tracking */}
             {(sel.status === 'accepted' || sel.status === 'in_transit') && (
-              <DriverTracker deliveryId={sel.id} />
+              <DriverTracker deliveryId={sel.id} onLocation={setDriverLoc} />
             )}
 
             {/* Senders see the pickup code; the recipient holds the delivery code. */}

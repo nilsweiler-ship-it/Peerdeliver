@@ -23,6 +23,7 @@ export async function register(input: RegisterInput) {
       licensePlate: input.licensePlate,
       carModel: input.carModel,
       maxLoadKg: input.maxLoadKg,
+      vehicleSize: input.vehicleSize,
     },
   });
 

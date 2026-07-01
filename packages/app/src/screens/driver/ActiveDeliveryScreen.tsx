@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useMyDeliveries, useVerifyPickup, useVerifyDelivery, useUpdateDeliveryStatus } from '../../queries/delivery';
 import { Button, EmptyState, LoadingSpinner } from '../../components/ui';
 import { StatusTimeline } from '../../components/delivery/StatusTimeline';
-import { MapHeader, BackChip, Pill, RouteLine, TicketStub, CodeBoxes } from '../../components/brand';
+import { LiveMap, BackChip, Pill, RouteLine, TicketStub, CodeBoxes } from '../../components/brand';
 import { useSocket } from '../../providers/SocketProvider';
 import { useAuthStore } from '../../stores/authStore';
 import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
@@ -244,7 +244,11 @@ export function ActiveDeliveryScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <MapHeader height={212}>
+      <LiveMap
+        height={212}
+        from={activeDeliveries[0]?.pickupAddress.point}
+        to={activeDeliveries[0]?.deliveryAddress.point}
+      >
         {navigation?.canGoBack?.() && (
           <BackChip
             onDark
@@ -258,7 +262,7 @@ export function ActiveDeliveryScreen({ navigation }: any) {
           onDark
           style={StyleSheet.flatten([styles.etaPill, { top: insets.top + spacing.xs }])}
         />
-      </MapHeader>
+      </LiveMap>
 
       <ScrollView
         style={styles.scroll}

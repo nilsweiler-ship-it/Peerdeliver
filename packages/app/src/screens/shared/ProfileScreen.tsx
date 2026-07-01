@@ -175,11 +175,18 @@ export function ProfileScreen() {
       {/* Settings list */}
       <View style={styles.settingsList}>
         {isDriver && (
-          <SettingsRow
-            icon="credit-card"
-            label="Earnings & payouts"
-            onPress={() => navigation.navigate('DriverStack', { screen: 'Earnings' })}
-          />
+          <>
+            <SettingsRow
+              icon="credit-card"
+              label="Earnings & payouts"
+              onPress={() => navigation.navigate('DriverStack', { screen: 'Earnings' })}
+            />
+            <SettingsRow
+              icon="dollar-sign"
+              label="Payout setup"
+              onPress={() => navigation.navigate('DriverStack', { screen: 'PayoutOnboarding' })}
+            />
+          </>
         )}
         <SettingsRow
           icon="shield"

@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useNearbyDeliveries, useAssignDelivery } from '../../queries/delivery';
+import { useConnectStatus } from '../../queries/payment';
 import { DeliveryCard } from '../../components/delivery/DeliveryCard';
 import { EmptyState, LoadingSpinner, Button } from '../../components/ui';
 import { Pill, BackChip } from '../../components/brand';
@@ -26,6 +27,10 @@ const SEARCH = { lat: 47.3769, lng: 8.5417, radius: 100 };
 export function AvailableDeliveriesScreen({ navigation }: any) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  // Real-payment mode only: nudge drivers to finish payout setup. In simulated
+  // mode the status is always onboarded, so the banner stays hidden.
+  const { data: connect } = useConnectStatus();
+  const needsPayoutSetup = !!connect && !(connect.onboarded && connect.payoutsEnabled);
   // Default to Zurich center for demo — in production, use driver's first route origin
   const { data: deliveries, isLoading, refetch, isRefetching } = useNearbyDeliveries({
     lat: SEARCH.lat,
@@ -101,6 +106,22 @@ export function AvailableDeliveriesScreen({ navigation }: any) {
               iconColor={colors.destination}
               style={styles.locationPill}
             />
+            {needsPayoutSetup && (
+              <TouchableOpacity
+                activeOpacity={0.85}
+                style={styles.onboardingBanner}
+                onPress={() => navigation.navigate('PayoutOnboarding')}
+              >
+                <View style={styles.bannerIcon}>
+                  <Feather name="alert-circle" size={18} color={colors.signalText} />
+                </View>
+                <View style={styles.flex}>
+                  <Text style={styles.bannerTitle}>Complete payout setup</Text>
+                  <Text style={styles.bannerBody}>Add your bank details before accepting deliveries.</Text>
+                </View>
+                <Feather name="chevron-right" size={18} color={colors.signalText} />
+              </TouchableOpacity>
+            )}
           </View>
         }
         ListEmptyComponent={

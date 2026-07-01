@@ -10,6 +10,7 @@ export { CO2Chip } from './CO2Chip';
 export { CodeBoxes } from './CodeBoxes';
 export { TicketStub } from './TicketStub';
 export { MapHeader } from './MapHeader';
+export { LiveMap } from './LiveMap';
 export { Stepper } from './Stepper';
 export { SegmentedControl } from './SegmentedControl';
 export type { Segment } from './SegmentedControl';

@@ -5,6 +5,7 @@ import { AvailableDeliveriesScreen } from '../screens/driver/AvailableDeliveries
 import { MyRoutesScreen } from '../screens/driver/MyRoutesScreen';
 import { ActiveDeliveryScreen } from '../screens/driver/ActiveDeliveryScreen';
 import { EarningsScreen } from '../screens/driver/EarningsScreen';
+import { OnboardingScreen } from '../screens/driver/OnboardingScreen';
 import { colors } from '../theme';
 
 const Stack = createNativeStackNavigator();
@@ -23,6 +24,7 @@ export function DriverStack() {
       <Stack.Screen name="AvailableDeliveries" component={AvailableDeliveriesScreen} options={{ title: 'Available Deliveries' }} />
       <Stack.Screen name="ActiveDeliveries" component={ActiveDeliveryScreen} options={{ title: 'My Deliveries' }} />
       <Stack.Screen name="Earnings" component={EarningsScreen} options={{ title: 'Earnings' }} />
+      <Stack.Screen name="PayoutOnboarding" component={OnboardingScreen} options={{ title: 'Payouts' }} />
     </Stack.Navigator>
   );
 }

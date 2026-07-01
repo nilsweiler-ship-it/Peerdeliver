@@ -1,7 +1,8 @@
 import { prisma } from '../config';
 import { generateCode } from '../utils';
 import { AppError } from '../middleware';
-import type { CreateDeliveryInput } from '@peerdeliver/shared';
+import type { CreateDeliveryInput, PackageSize } from '@peerdeliver/shared';
+import { sizesUpTo, ALL_SIZES } from '@peerdeliver/shared';
 import * as paymentService from './payment';
 
 // All scalar columns (excluding raw geometry) with ST_AsGeoJSON for coordinates
@@ -16,7 +17,7 @@ const DELIVERY_COLS = `
   dr.status, dr."pickupCode", dr."deliveryCode",
   dr."co2SavedKg", dr."cancelledBy", dr."cancelReason",
   dr."twintRef", dr."twintPhone", dr."paymentStatus", dr."driverPayoutCHF",
-  dr."refundedCHF", dr."refundedAt",
+  dr."stripePaymentIntentId", dr."stripeTransferId", dr."refundedCHF", dr."refundedAt",
   dr."createdAt", dr."updatedAt"
 `;
 
@@ -109,9 +110,12 @@ export async function createDelivery(senderId: string, input: CreateDeliveryInpu
     RETURNING id
   `;
 
-  // Payment is collected separately via the TWINT flow (POST /payments/twint/pay)
-  // once the sender confirms in-app. The delivery starts 'unpaid'.
-  return getDeliveryById(inserted[0].id);
+  // Real mode: create a Stripe TWINT PaymentIntent and return its clientSecret for
+  // the app to confirm. Sim mode: returns null and the sender confirms via
+  // POST /payments/twint/pay. Either way the delivery starts 'unpaid'.
+  const clientSecret = await paymentService.createPaymentForDelivery(inserted[0].id, input.budgetCHF);
+  const delivery = await getDeliveryById(inserted[0].id);
+  return { ...delivery, clientSecret };
 }
 
 export async function getDeliveriesBySender(senderId: string) {
@@ -167,7 +171,16 @@ export async function updateDeliveryStatus(id: string, status: string, cancelled
   return getDeliveryById(id);
 }
 
-export async function getNearbyDeliveries(lat: number, lng: number, radiusKm: number = 50) {
+export async function getNearbyDeliveries(
+  lat: number,
+  lng: number,
+  radiusKm: number = 50,
+  capacity?: { vehicleSize?: PackageSize | null; maxLoadKg?: number | null },
+) {
+  // Only surface deliveries this driver's vehicle can actually carry.
+  const allowed = capacity?.vehicleSize ? sizesUpTo(capacity.vehicleSize) : ALL_SIZES;
+  const maxLoad = capacity?.maxLoadKg ?? null;
+
   const rows: RawDeliveryRow[] = await prisma.$queryRawUnsafe(
     `SELECT ${DELIVERY_COLS},
       ST_Distance(
@@ -186,16 +199,26 @@ export async function getNearbyDeliveries(lat: number, lng: number, radiusKm: nu
         ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,
         $3
       )
+      AND dr."packageSize"::text = ANY($4::text[])
+      AND ($5::float IS NULL OR dr."packageWeight" IS NULL OR dr."packageWeight" <= $5)
     ORDER BY "distanceKm" ASC
     LIMIT 50`,
     lat,
     lng,
     radiusKm * 1000,
+    allowed,
+    maxLoad,
   );
   return rows.map(transformDelivery);
 }
 
 export async function assignDelivery(deliveryId: string, driverId: string) {
+  // In real-payment mode, block drivers who haven't completed payout onboarding —
+  // otherwise we couldn't pay them out on delivery. (No-op in simulated mode.)
+  if (!(await paymentService.driverCanReceivePayouts(driverId))) {
+    throw new AppError(400, 'Complete payout setup before accepting deliveries');
+  }
+
   // Driver requests — sets status to 'requested', sender must confirm
   await prisma.$queryRawUnsafe(
     `UPDATE delivery_requests SET "driverId" = $1, status = 'requested'::"DeliveryStatus", "updatedAt" = NOW() WHERE id = $2`,

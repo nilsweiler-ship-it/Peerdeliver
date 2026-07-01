@@ -23,6 +23,7 @@ export async function updateProfile(
     licensePlate?: string | null;
     carModel?: string | null;
     maxLoadKg?: number | null;
+    vehicleSize?: 'S' | 'M' | 'L' | null;
   },
 ) {
   const user = await prisma.user.update({

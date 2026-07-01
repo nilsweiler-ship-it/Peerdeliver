@@ -13,12 +13,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useStripe } from '../../lib/stripe';
 import { Button, Input, Card, AddressAutocomplete } from '../../components/ui';
 import type { AddressSelection } from '../../components/ui';
 import { Stepper, BackChip, Pill, RouteLine } from '../../components/brand';
 import { useCreateDelivery } from '../../queries/delivery';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { PackageSize, CreateDeliveryInput } from '@peerdeliver/shared';
+import { estimateSize } from '@peerdeliver/shared';
 
 const SIZES: { key: PackageSize; labelKey: string }[] = [
   { key: 'S', labelKey: 'sender.sizeSmall' },
@@ -32,6 +34,7 @@ export function CreateRequestScreen({ navigation }: any) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const createDelivery = useCreateDelivery();
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [step, setStep] = useState(0);
 
   // Step 0: Package details
@@ -39,6 +42,8 @@ export function CreateRequestScreen({ navigation }: any) {
   const [description, setDescription] = useState('');
   const [weight, setWeight] = useState('');
   const [declaredValue, setDeclaredValue] = useState('');
+  const [listingText, setListingText] = useState('');
+  const [autoFill, setAutoFill] = useState<ReturnType<typeof estimateSize> | null>(null);
 
   // Step 1: Addresses
   const [pickupAddress, setPickupAddress] = useState<AddressSelection | null>(null);
@@ -68,6 +73,14 @@ export function CreateRequestScreen({ navigation }: any) {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleAutoFill = () => {
+    const est = estimateSize(listingText);
+    setPackageSize(est.size);
+    setWeight(String(est.weightKg));
+    if (!description.trim()) setDescription(listingText.trim());
+    setAutoFill(est);
   };
 
   const handleNext = () => {
@@ -102,13 +115,38 @@ export function CreateRequestScreen({ navigation }: any) {
 
     try {
       const delivery = await createDelivery.mutateAsync(input);
-      // Collect payment via the TWINT flow. The delivery is created 'unpaid';
-      // the Twint screen confirms payment, then sends the sender to MyShipments.
-      navigation.navigate('TwintPayment', {
-        deliveryId: delivery.id,
-        amountCHF: budget,
-        summary: description.trim() || t('sender.delivery'),
-      });
+      const clientSecret = (delivery as any)?.clientSecret as string | null | undefined;
+
+      if (clientSecret) {
+        // REAL mode: confirm the Stripe TWINT PaymentIntent via the Payment Sheet
+        // (TWINT app-switch). The webhook marks the delivery authorised.
+        const init = await initPaymentSheet({
+          paymentIntentClientSecret: clientSecret,
+          merchantDisplayName: 'Shlep',
+          allowsDelayedPaymentMethods: false,
+        });
+        if (init.error) {
+          Alert.alert(t('common.error'), init.error.message);
+          navigation.navigate('MyShipments');
+          return;
+        }
+        const sheet = await presentPaymentSheet();
+        if (sheet.error) {
+          // Cancelled/failed — delivery exists but unpaid; they can retry later.
+          Alert.alert(t('common.error'), sheet.error.message);
+          navigation.navigate('MyShipments');
+          return;
+        }
+        Alert.alert(t('sender.createSuccess'));
+        navigation.navigate('MyShipments');
+      } else {
+        // SIM mode: confirm on the simulated TWINT screen.
+        navigation.navigate('TwintPayment', {
+          deliveryId: delivery.id,
+          amountCHF: budget,
+          summary: description.trim() || t('sender.delivery'),
+        });
+      }
     } catch (err: any) {
       const msg = err?.response?.data?.error || err?.message || t('common.error');
       Alert.alert(t('common.error'), msg);
@@ -138,6 +176,28 @@ export function CreateRequestScreen({ navigation }: any) {
         {/* Step 0: Package Details */}
         {step === 0 && (
           <Card style={styles.stepCard}>
+            <View style={styles.autoFillCard}>
+              <Text style={styles.autoFillLabel}>Shipping from a marketplace?</Text>
+              <Input
+                value={listingText}
+                onChangeText={setListingText}
+                placeholder="Paste the listing title or a link, e.g. 'IKEA Ektorp 2-seat sofa'"
+              />
+              <Button
+                title="Auto-fill"
+                onPress={handleAutoFill}
+                variant="outline"
+                style={styles.autoFillButton}
+              />
+              {autoFill && (
+                <Text style={styles.autoFillResult}>
+                  Detected: {autoFill.category} · size{' '}
+                  <Text style={styles.autoFillMono}>{autoFill.size}</Text> · ~
+                  <Text style={styles.autoFillMono}>{autoFill.weightKg}</Text> kg
+                </Text>
+              )}
+            </View>
+
             <Text style={styles.sectionTitle}>{t('sender.packageSize')}</Text>
             <View style={styles.sizeRow}>
               {SIZES.map((s) => {
@@ -321,6 +381,30 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...typography.h3,
     color: colors.text,
+  },
+  autoFillCard: {
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceSunken,
+    gap: spacing.sm,
+  },
+  autoFillLabel: {
+    ...typography.bodySmall,
+    fontFamily: typography.bodyStrong.fontFamily,
+    color: colors.textSecondary,
+  },
+  autoFillButton: {
+    alignSelf: 'flex-start',
+  },
+  autoFillResult: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
+  autoFillMono: {
+    fontFamily: typography.figure.fontFamily,
+    color: colors.primary,
   },
   fieldHint: {
     ...typography.caption,

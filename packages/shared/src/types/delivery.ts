@@ -61,6 +61,9 @@ export interface DeliveryRequest {
   refundedAt?: string;
   twintRef?: string;
   twintPhone?: string;
+  stripePaymentIntentId?: string;
+  /** Present when created in real (Stripe) mode — the app confirms with this. */
+  clientSecret?: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -78,7 +78,12 @@ export async function getNearby(req: Request, res: Response, next: NextFunction)
       return;
     }
 
-    const deliveries = await deliveryService.getNearbyDeliveries(lat, lng, radius);
+    // Only surface deliveries the requesting driver's vehicle can carry.
+    const driver = await userService.getUserById(req.user!.userId);
+    const deliveries = await deliveryService.getNearbyDeliveries(lat, lng, radius, {
+      vehicleSize: (driver as any).vehicleSize,
+      maxLoadKg: (driver as any).maxLoadKg,
+    });
     success(res, deliveries);
   } catch (err) {
     next(err);

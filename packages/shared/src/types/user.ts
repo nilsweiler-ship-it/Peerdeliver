@@ -14,6 +14,8 @@ export interface User {
   licensePlate?: string;
   carModel?: string;
   maxLoadKg?: number;
+  /** Largest package size the driver's vehicle can carry. */
+  vehicleSize?: 'S' | 'M' | 'L';
   shareLocation?: boolean;
   verificationStatus: VerificationStatus;
   phoneVerified?: boolean;

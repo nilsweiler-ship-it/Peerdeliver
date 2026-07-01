@@ -18,6 +18,12 @@ import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 
 type RegisterRole = 'sender' | 'driver' | 'both' | 'recipient';
 
+const CAPACITY_OPTIONS: { key: 'S' | 'M' | 'L'; caption: string }[] = [
+  { key: 'S', caption: 'Bags & small boxes' },
+  { key: 'M', caption: 'Backpack-sized' },
+  { key: 'L', caption: 'Boot space / bulky' },
+];
+
 // Common car models with estimated max load in kg
 const CAR_SUGGESTIONS: { model: string; maxLoadKg: number }[] = [
   { model: 'VW Golf', maxLoadKg: 380 },
@@ -52,6 +58,7 @@ export function RegisterScreen({ navigation }: any) {
   const [licensePlate, setLicensePlate] = useState('');
   const [carModel, setCarModel] = useState('');
   const [maxLoadKg, setMaxLoadKg] = useState('');
+  const [vehicleSize, setVehicleSize] = useState<'S' | 'M' | 'L'>('L');
   const [showCarSuggestions, setShowCarSuggestions] = useState(false);
   const [agreed, setAgreed] = useState(true);
 
@@ -81,6 +88,7 @@ export function RegisterScreen({ navigation }: any) {
       ...(isDriver && licensePlate && { licensePlate }),
       ...(isDriver && carModel && { carModel }),
       ...(isDriver && maxLoadKg && { maxLoadKg: parseFloat(maxLoadKg) }),
+      ...(isDriver && { vehicleSize }),
     });
   };
 
@@ -218,6 +226,28 @@ export function RegisterScreen({ navigation }: any) {
               keyboardType="numeric"
               placeholder="kg"
             />
+
+            <Text style={styles.capacityLabel}>How much can you carry?</Text>
+            <View style={styles.capacityRow}>
+              {CAPACITY_OPTIONS.map((o) => {
+                const selected = vehicleSize === o.key;
+                return (
+                  <TouchableOpacity
+                    key={o.key}
+                    activeOpacity={0.85}
+                    style={[styles.capacityCard, selected && styles.capacityCardSelected]}
+                    onPress={() => setVehicleSize(o.key)}
+                  >
+                    <Text style={[styles.capacitySize, selected && styles.capacitySizeSelected]}>
+                      {o.key}
+                    </Text>
+                    <Text style={[styles.capacityCaption, selected && styles.capacityCaptionSelected]}>
+                      {o.caption}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
         )}
 
@@ -443,6 +473,48 @@ const styles = StyleSheet.create({
     ...typography.h3,
     color: colors.text,
     marginBottom: spacing.sm,
+  },
+  capacityLabel: {
+    ...typography.bodySmall,
+    fontFamily: typography.bodyStrong.fontFamily,
+    color: colors.textSecondary,
+    marginTop: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  capacityRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  capacityCard: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xs,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  capacityCardSelected: {
+    borderColor: colors.primary,
+    backgroundColor: '#ECF1EC',
+  },
+  capacitySize: {
+    ...typography.h3,
+    color: colors.textSecondary,
+  },
+  capacitySizeSelected: {
+    color: colors.primary,
+  },
+  capacityCaption: {
+    ...typography.caption,
+    color: colors.textLight,
+    textAlign: 'center',
+    lineHeight: 15,
+  },
+  capacityCaptionSelected: {
+    color: colors.primaryDark,
   },
   suggestions: {
     backgroundColor: colors.surface,
