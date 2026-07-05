@@ -28,7 +28,7 @@ export const colors = {
   // ── Text ──────────────────────────────────────────────
   text: '#16201B',          // Near-black spruce
   textSecondary: '#6F6A5F', // Warm grey
-  textLight: '#736B5C',     // Captions, mono labels (WCAG AA on paper + white)
+  textLight: '#A39C8C',     // Captions, mono labels
   textInverse: '#FFFFFF',
 
   // ── Lines ─────────────────────────────────────────────
@@ -43,12 +43,6 @@ export const colors = {
   info: '#2D6F94',
 
   overlay: 'rgba(20, 28, 22, 0.34)',
-
-  // ── Legacy aliases ────────────────────────────────────
-  // Kept so pre-redesign references keep resolving to a sensible new token.
-  accent: '#C2613C',        // → destination (terracotta)
-  trust: '#2D6F94',         // → info
-  card: '#FFFFFF',          // → surface
 } as const;
 
 // Status → token map for delivery states (pending/matched/in_transit/delivered)
