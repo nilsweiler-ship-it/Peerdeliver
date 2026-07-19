@@ -6,6 +6,7 @@ A static, self-contained site to publish at **shlep.ch** — enough to satisfy t
 - `index.html` — landing page (hero, live handoff demo, how it works, sender/driver tabs, pricing slider, trust, CO₂ impact, waitlist, FAQ, footer). Design: amber `#E0A32E` accent + forest green `#14532D`, "S-Route" logo mark (concept E), IBM Plex Sans/Mono + Bricolage Grotesque.
 - `assets/` — hero & sender photos (webp).
 - `legal.html` — Terms, Privacy Policy, and Impressum (tabbed), reached from the footer.
+- `kontakt.html` — contact page (topic + message form via the same formsubmit relay, direct email aside).
 - `i18n.js` — landing translations + language switcher (remembers choice, auto-detects browser language).
 - `legal.js` — legal document text in all four languages.
 
