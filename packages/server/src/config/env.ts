@@ -6,7 +6,8 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(10),
   PORT: z.coerce.number().default(3001),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PLATFORM_FEE_PERCENT: z.coerce.number().default(8.1),
+  PLATFORM_FEE_PERCENT: z.coerce.number().default(9),
+  PLATFORM_FEE_MIN_CHF: z.coerce.number().default(1.5),
   // Real payments via Stripe (TWINT + card). Leave unset to use simulated TWINT.
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_PUBLISHABLE_KEY: z.string().optional(),

@@ -56,12 +56,12 @@ This is a **cost of revenue** (scales with transactions), not a fixed bill:
 - **TWINT:** ~1.3% (direct); routed through Stripe as a bank redirect.
 - **Stripe Connect:** small monthly fee per *active* connected (driver) account that receives a payout, plus payout fees.
 
-**Why this matters for your margin — a CHF 24 delivery at your 10% take (CHF 2.40 revenue):**
+**Why this matters for your margin — a CHF 24 delivery at the 9% + min. CHF 1.50 fee (CHF 2.16 revenue):**
 
 | Payment method | Processing fee | % of your CHF 2.40 revenue |
 |---|---|---|
-| Card (2.9% + 0.30) | ~CHF 1.00 | **~42%** |
-| TWINT (~1.3%) | ~CHF 0.31 | **~13%** |
+| Card (2.9% + 0.30) | ~CHF 1.00 | **~46%** |
+| TWINT (~1.3%) | ~CHF 0.31 | **~14%** |
 
 **Takeaway:** on small Swiss tickets, card fees eat a large share of the platform take. Steering users to **TWINT** roughly triples your net margin per delivery — a strong reason to make TWINT the default and to factor Stripe Connect's per-active-account fee into driver-payout economics.
 
@@ -96,3 +96,25 @@ The headline: infrastructure is cheap and predictable — you can run the full Z
 - [Expo EAS pricing](https://expo.dev/pricing)
 - [Neon / Supabase / Render Postgres comparison (2026)](https://selfhost.dev/blog/managed-postgresql-comparison-2026/)
 - [Resend pricing](https://resend.com/pricing) · [Postmark pricing](https://postmarkapp.com/support/article/1107-how-does-monthly-pricing-work)
+
+---
+
+## 6. Platform fee derivation (adopted 2026-07-19: 9% with CHF 1.50 minimum)
+
+Bottom-up cost per delivery (CHF), assuming 70% TWINT / 30% card mix, weekly-batched payouts, ~4 deliveries per active driver/month:
+
+| Component | CHF / delivery | Nature |
+|---|---|---|
+| Payment processing (mix) | 0.31–1.00 → ~0.52 @ CHF 24 | part fixed, part % |
+| Stripe Connect active-account fee (amortised) | ~0.50 | fixed |
+| Payout fee (batched) | ~0.06 | fixed |
+| Shipment insurance (group policy, avg. declared ~CHF 100, benchmark ~1.25% of value) | ~0.40 | ~fixed |
+| Infra/email/monitoring (pilot volume) | ~0.15 | fixed |
+| Refund/chargeback reserve (0.5% GMV) | ~0.12 | % |
+| **Total** | **~1.50–2.10** | mostly fixed |
+
+Because the cost is mostly **fixed per delivery**, it is 12.3% of a CHF 12 ticket but only 5.3% of CHF 40 — a flat percentage cannot be both cost-covering and honest at all ticket sizes.
+
+**Chosen structure: 9% with a CHF 1.50 minimum.** Break-even around CHF 17; margin +0.14 at CHF 20, +0.41 at CHF 24, +1.49 at CHF 40. The minimum protects small tickets (below ~CHF 16.70 the CHF 1.50 floor applies). Communicated as "91% goes to the driver" with the minimum disclosed in pricing UI, FAQ and AGB.
+
+Context for investors: pure-cost recovery is deliberate pilot positioning; marketplace take-rate benchmarks run far higher (Airbnb ~14–16%, Uber ~25–30%), leaving obvious headroom.

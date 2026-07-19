@@ -301,7 +301,7 @@
   "createRequestExtra": {
     "marketplacePrompt": "Shipping from a marketplace?",
     "autoFill": "Auto-fill",
-    "platformFee": "Platform fee (8.1%)",
+    "platformFee": "Platform fee (9%, min. CHF 1.50)",
     "driverReceives": "Driver receives"
   },
   "searchExtra": {

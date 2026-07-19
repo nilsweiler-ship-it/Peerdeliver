@@ -301,7 +301,7 @@
   "createRequestExtra": {
     "marketplacePrompt": "Versand von einem Marktplatz?",
     "autoFill": "Automatisch ausfüllen",
-    "platformFee": "Plattformgebühr (8.1 %)",
+    "platformFee": "Plattformgebühr (9 %, mind. CHF 1.50)",
     "driverReceives": "Fahrende Person erhält"
   },
   "searchExtra": {

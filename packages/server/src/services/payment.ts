@@ -17,8 +17,12 @@ function roundCents(chf: number): number {
 }
 
 export function computeSplit(budgetCHF: number): { platformFeeCHF: number; driverPayoutCHF: number } {
+  // 9% platform fee with a CHF 1.50 minimum: per-delivery costs (payment
+  // processing, insurance, payout rails) are mostly fixed, so small tickets
+  // need a floor to stay cost-covering.
   const feePct = env.PLATFORM_FEE_PERCENT / 100;
-  const platformFeeCHF = Math.round(budgetCHF * feePct * 100) / 100;
+  const rawFee = Math.max(budgetCHF * feePct, env.PLATFORM_FEE_MIN_CHF);
+  const platformFeeCHF = Math.min(Math.round(rawFee * 100) / 100, budgetCHF);
   const driverPayoutCHF = Math.round((budgetCHF - platformFeeCHF) * 100) / 100;
   return { platformFeeCHF, driverPayoutCHF };
 }
