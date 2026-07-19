@@ -1,6 +1,6 @@
 # Shlep — Full-Scale Validation Protocol
 
-*A staged plan to validate that Shlep is correct, safe, and reliable enough to move from prototype → closed Zürich pilot → public scale. Each phase has entry criteria, tests, and explicit go/no-go gates. Owners and dates are left blank for you to assign.*
+*A staged plan to validate that Shlep is correct, safe, and reliable enough to move from prototype → closed launch cohort → public Switzerland-wide scale. Each phase has entry criteria, tests, and explicit go/no-go gates. Owners and dates are left blank for you to assign.*
 
 > **Legal note:** the regulatory items below are planning prompts, not legal advice. Confirm insurance, liability, data-protection, and financial-regulation questions with a Swiss lawyer and your insurer before public launch.
 
@@ -37,7 +37,7 @@ Run every core flow for each role. Track pass/fail per row.
 | 9 | Live location tracking | both | Driver location streams to sender within ~10s |
 | 10 | Chat (send/receive, quick replies, read receipts) | both | Messages deliver in real time, scoped to shipment |
 | 11 | Ratings after delivery | sender/recipient | Rating recorded against driver (not self) |
-| 12 | Earnings & payout view | driver | Pending balance, per-delivery split (90/10), statuses |
+| 12 | Earnings & payout view | driver | Pending balance, per-delivery split (91/9, min. fee CHF 1.50), statuses |
 | 13 | Role switch (sender ↔ driver ↔ both) | all | Tabs/permissions update immediately |
 | 14 | Cancellations / expiry | all | Status + payment handled correctly (see Phase 2) |
 
@@ -49,9 +49,9 @@ Run every core flow for each role. Track pass/fail per row.
 
 ## Phase 2 — Payments validation (highest-risk area)
 
-Use Stripe **test mode** end-to-end, then a small set of **real low-value** transactions before pilot.
+Use Stripe **test mode** end-to-end, then a small set of **real low-value** transactions before launch.
 
-- [ ] **Escrow flow:** payment authorised on match, **captured only on verified delivery**; driver payout = 90%, platform = 10% (matches `computeSplit`).
+- [ ] **Escrow flow:** payment authorised on match, **captured only on verified delivery**; platform fee = 9% with CHF 1.50 minimum, remainder to driver (matches `computeSplit` incl. `PLATFORM_FEE_MIN_CHF`).
 - [ ] **TWINT** happy path completes and settles; **card** happy path completes.
 - [ ] **Failure paths:** declined card, insufficient funds, abandoned TWINT redirect, expired authorization — each leaves delivery + payment in a consistent state (no "delivered but unpaid" or "paid but undelivered").
 - [ ] **Cancellations/refunds:** sender cancels pre-pickup → authorization voided; cancel post-pickup → refund policy applied; failed delivery → refund.
@@ -82,7 +82,7 @@ Use Stripe **test mode** end-to-end, then a small set of **real low-value** tran
 
 Set targets, then test against them on staging.
 
-| Metric | Target (pilot) | Target (scale) |
+| Metric | Target (launch) | Target (scale) |
 |---|---|---|
 | API p95 latency (reads) | < 300 ms | < 300 ms |
 | API p95 latency (writes) | < 600 ms | < 600 ms |
@@ -97,7 +97,7 @@ Set targets, then test against them on staging.
 - [ ] DB: add/verify indexes on hot queries (geo-radius search, deliveries by user/status, messages by shipment); test with a seeded large dataset.
 - [ ] Graceful degradation: what happens if Stripe, the DB, or sockets are briefly down?
 
-**Gate 4:** targets met at pilot concurrency with headroom; a documented plan (not necessarily built) for scale concurrency.
+**Gate 4:** targets met at launch concurrency with headroom; a documented plan (not necessarily built) for nationwide-scale concurrency.
 
 ---
 
@@ -124,13 +124,13 @@ Set targets, then test against them on staging.
 
 ---
 
-## Phase 7 — Zürich pilot (the real validation)
+## Phase 7 — Closed launch cohort, Switzerland-wide (the real validation)
 
-**Design:** closed cohort on 1–2 dense corridors (e.g. Zürich–Winterthur, Zürich–Zug). Seed supply first (recruit founding drivers with recurring routes), then invite senders. Instrument everything.
+**Design:** Switzerland-wide from day one, but as a **closed cohort concentrated on 3–5 dense corridors across regions** (e.g. Zürich–Winterthur, Bern–Thun, Genf–Lausanne, Basel–Liestal) so liquidity forms instead of spreading thin. Seed supply first (recruit founding drivers with recurring routes), then invite senders. Instrument everything.
 
 **Success metrics & thresholds:**
 
-| Metric | Why it matters | Pilot target |
+| Metric | Why it matters | Launch target |
 |---|---|---|
 | Match rate (requests matched) | Liquidity | ≥ 70% |
 | Time-to-match | Marketplace health | median < 2 h |
@@ -143,23 +143,23 @@ Set targets, then test against them on staging.
 | Crash-free sessions | Stability | ≥ 99.5% |
 | CAC (informal) & TWINT share | Economics | tracked; TWINT ≥ 50% |
 
-- [ ] Analytics instrumented for each metric above (event tracking) before the pilot starts.
+- [ ] Analytics instrumented for each metric above (event tracking) before launch.
 - [ ] Weekly review cadence; qualitative interviews with ≥ 5 senders and ≥ 5 drivers.
 
 ---
 
 ## Go / No-Go: scaling gate
 
-**Scale beyond the pilot only if ALL are true:**
+**Open the cohort to the public only if ALL are true:**
 
 1. Gates 0–6 passed; no open P0/P1 defects.
-2. Pilot hit match rate ≥ 70%, verified-delivery ≥ 95%, dispute rate < 2%.
+2. Launch cohort hit match rate ≥ 70%, verified-delivery ≥ 95%, dispute rate < 2%.
 3. Repeat rates clear thresholds (senders ≥ 30%, drivers ≥ 40%) — evidence of real, recurring demand *and* supply.
-4. Payments reconciled cleanly for the full pilot; zero money/status mismatches.
+4. Payments reconciled cleanly for the full launch period; zero money/status mismatches.
 5. Insurance, data-protection, and prohibited-items policies live.
 6. Load targets met with headroom and a documented horizontal-scale plan.
 
-**If any fail:** iterate within the pilot rather than expanding geography — scaling a leaky funnel multiplies the leak.
+**If any fail:** iterate within the closed cohort rather than opening up — scaling a leaky funnel multiplies the leak.
 
 ---
 
@@ -169,4 +169,4 @@ Set targets, then test against them on staging.
 2. Phase 2 (payments) — highest risk; overlaps with 0–1.
 3. Phases 3–5 (security, load, device/a11y/l10n) — before external users.
 4. Phase 6 (trust/insurance/ops) — insurance lead time can be long; **start early**.
-5. Phase 7 (pilot) — the decisive validation; everything else exists to make this trustworthy.
+5. Phase 7 (closed launch) — the decisive validation; everything else exists to make this trustworthy.
