@@ -7,7 +7,7 @@
 | # | Capability | Real API / service | Status today | MVP priority | Notes |
 |---|---|---|---|---|---|
 | 1 | Payments (TWINT + card) | **Stripe** (Payments) | Simulated TWINT fallback; real Stripe wired if keys set | **Must** | TWINT + cards are Stripe methods. Needs Swiss legal entity, live keys, webhook. Your only real variable cost (~1.3% TWINT / 2.9%+0.30 card). |
-| 2 | Driver payouts + bank/KYC | **Stripe Connect** (Express) | Simulated ("payout-ready" for all) | **Must** | Connect onboarding also collects driver IBAN + identity/KYC. Pays out the 90% split. |
+| 2 | Driver payouts + bank/KYC | **Stripe Connect** (Express) | Simulated ("payout-ready" for all) | **Must** | Connect onboarding also collects driver IBAN + identity/KYC. Pays out the 91% split (9% fee, min. CHF 1.50). |
 | 3 | Push notifications | **Expo Push** (`expo-notifications`) | Not implemented | **Must** | Free. Essential UX: match found, driver en route, code needed, delivered. |
 | 4 | Transactional email | **Resend / Postmark / SES** | Screen exists, no email actually sent | **Must** | Email verification, receipts, delivery notifications. ~$0–20/mo at pilot scale. |
 | 5 | Phone verification (SMS OTP) | **Twilio Verify / Vonage / MessageBird** | Simulated (accepts any valid-format number) | **Must** | Baseline trust for a stranger-to-stranger network at national scale. Pay-per-OTP. |
