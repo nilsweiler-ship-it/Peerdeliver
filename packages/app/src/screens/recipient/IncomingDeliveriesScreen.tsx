@@ -74,13 +74,13 @@ export function IncomingDeliveriesScreen() {
             <GradientSurface fill={false} style={styles.hero}>
               <RouteWatermark size={240} opacity={0.1} style={{ right: -50, top: -30 }} />
 
-              <Text style={styles.overline}>INCOMING DELIVERY</Text>
+              <Text style={styles.overline}>{t('incoming.overline').toUpperCase()}</Text>
 
               {showCode ? (
                 <>
-                  <Text style={styles.heroTitle}>Your parcel is almost here</Text>
+                  <Text style={styles.heroTitle}>{t('incoming.almostHere')}</Text>
                   <Text style={styles.heroSub}>
-                    Show this code to the driver to confirm you received it.
+                    {t('incoming.showCode')}
                   </Text>
 
                   <TicketStub title={t('recipient.deliveryCodeTitle')} locked style={styles.stub}>
@@ -88,7 +88,7 @@ export function IncomingDeliveriesScreen() {
                     {validUntil && (
                       <View style={styles.validPill}>
                         <Feather name="clock" size={12} color={colors.impact} />
-                        <Text style={styles.validText}>Valid until {validUntil}</Text>
+                        <Text style={styles.validText}>{t('incoming.validUntil', { time: validUntil })}</Text>
                       </View>
                     )}
                   </TicketStub>
@@ -106,7 +106,7 @@ export function IncomingDeliveriesScreen() {
                           {driver.firstName} {driver.lastName}
                         </Text>
                         <Text style={styles.driverMeta}>
-                          {driverRating ? `★ ${driverRating}` : '★ —'} · arriving in ~12 min
+                          {driverRating ? `★ ${driverRating}` : '★ —'} · {t('incoming.arriving')}
                         </Text>
                       </View>
                       <TouchableOpacity activeOpacity={0.85} style={styles.callBtn}>
@@ -120,9 +120,9 @@ export function IncomingDeliveriesScreen() {
                   <Text style={styles.heroTitle}>
                     {isTerminal
                       ? sel.status === 'delivered'
-                        ? 'Delivered'
-                        : 'Delivery cancelled'
-                      : 'On its way to you'}
+                        ? t('incoming.delivered')
+                        : t('incoming.cancelled')
+                      : t('incoming.onItsWay')}
                   </Text>
                   <Text style={styles.heroSub}>
                     {isTerminal
@@ -169,7 +169,7 @@ export function IncomingDeliveriesScreen() {
               <View style={styles.safetyNote}>
                 <Feather name="shield" size={13} color={colors.impactLeaf} />
                 <Text style={styles.safetyText}>
-                  Never share this code until the driver is in front of you.
+                  {t('incoming.neverShare')}
                 </Text>
               </View>
             </GradientSurface>

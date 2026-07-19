@@ -179,7 +179,22 @@
     "changeRole": "Change Role",
     "roleUpdated": "Role updated!",
     "shareLocation": "Share Location",
-    "shareLocationHint": "Allow senders to track you during delivery"
+    "shareLocationHint": "Allow senders to track you during delivery",
+    "legal": "Legal & policies"
+  },
+  "settings": {
+    "title": "Settings",
+    "preferences": "Preferences",
+    "language": "Language",
+    "legalSection": "Legal",
+    "terms": "Terms & Conditions",
+    "privacy": "Privacy Policy",
+    "impressum": "Legal Notice"
+  },
+  "legal": {
+    "lastUpdated": "Last updated: {{date}}",
+    "disclaimer": "This document is a template provided for convenience and is not legal advice. Have it reviewed by a qualified Swiss lawyer before you rely on it.",
+    "agree": "By continuing, you agree to our Terms and Privacy Policy."
   },
   "home": {
     "activeDeliveries": "Active Deliveries",
@@ -205,6 +220,166 @@
     "delivered": "Delivered",
     "cancelled": "Cancelled",
     "expired": "Expired"
+  },
+  "verifyEmail": {
+    "eyebrow": "One more step",
+    "title": "Verify your email",
+    "text": "Check your inbox for a verification link to finish setting up your account."
+  },
+  "register": {
+    "step": "Step 2 / 2",
+    "roleQuestion": "How will you use Shlep?",
+    "capacityQuestion": "How much can you carry?",
+    "createAccount": "Create account",
+    "carModelPlaceholder": "e.g. VW Golf",
+    "platePlaceholder": "ZH 123456"
+  },
+  "profileExtra": {
+    "treeGrows": "Your tree grows with every kg of CO₂ you save together.",
+    "lifetimeImpact": "Lifetime impact",
+    "deliveries": "Deliveries",
+    "neighbours": "Neighbours",
+    "earningsPayouts": "Earnings & payouts",
+    "payoutSetup": "Payout setup",
+    "verificationTrust": "Verification & trust",
+    "helpSupport": "Help & support"
+  },
+  "verification": {
+    "title": "Verification & trust",
+    "trustScore": "Trust score",
+    "getVerified": "Get verified",
+    "trustSignals": "Your trust signals",
+    "email": "Email",
+    "phone": "Phone number",
+    "phonePlaceholder": "+41 79 123 45 67",
+    "verify": "Verify",
+    "oneTimeCode": "We'll send a one-time code.",
+    "identity": "Identity (ID)",
+    "verifyIdentity": "Verify identity",
+    "plate": "Driver's licence plate",
+    "verifyPlate": "Verify plate",
+    "verified": "Verified"
+  },
+  "delivered": {
+    "title": "Delivered!",
+    "summary": "{{contents}} delivered to {{city}}",
+    "co2OnTrip": "CO₂ saved on this trip",
+    "because": "Because {{driver}} was already driving this way.",
+    "rateDriver": "Rate your driver",
+    "submit": "Submit rating"
+  },
+  "incoming": {
+    "overline": "Incoming delivery",
+    "almostHere": "Your parcel is almost here",
+    "showCode": "Show this code to the driver to confirm you received it.",
+    "validUntil": "Valid until {{time}}",
+    "arriving": "arriving in ~12 min",
+    "delivered": "Delivered",
+    "cancelled": "Delivery cancelled",
+    "onItsWay": "On its way to you",
+    "neverShare": "Never share this code until the driver is in front of you."
+  },
+  "earnings": {
+    "title": "Earnings",
+    "pendingPayout": "Pending payout",
+    "paidWeekly": "Paid out weekly to your bank account",
+    "thisWeek": "This week",
+    "recentPayouts": "Recent payouts",
+    "noEarnings": "No earnings yet"
+  },
+  "onboarding": {
+    "payouts": "Payouts",
+    "getPaid": "Get paid",
+    "payoutsReadyDemo": "Payouts ready (demo mode)",
+    "setUpToReceive": "You're set up to receive deliveries.",
+    "payoutsEnabled": "Payouts enabled",
+    "allSet": "You're all set to receive payouts.",
+    "setupIn3": "Set up payouts in 3 steps",
+    "handledByStripe": "Takes a couple of minutes — handled securely by Stripe.",
+    "setUpPayouts": "Set up payouts"
+  },
+  "createRequestExtra": {
+    "marketplacePrompt": "Shipping from a marketplace?",
+    "autoFill": "Auto-fill",
+    "platformFee": "Platform fee (10%)",
+    "driverReceives": "Driver receives"
+  },
+  "searchExtra": {
+    "cityFromPlaceholder": "e.g. Zurich",
+    "cityToPlaceholder": "e.g. Bern",
+    "driver": "Driver"
+  },
+  "availableExtra": {
+    "availableNearby": "Available nearby",
+    "radius": "{{city}} · {{km}} km radius",
+    "completePayoutSetup": "Complete payout setup",
+    "addBankDetails": "Add your bank details before accepting deliveries.",
+    "distance": "Distance"
+  },
+  "activeExtra": {
+    "pickupCode": "Pickup code",
+    "deliveryCode": "Delivery code",
+    "eta": "ETA {{time}}"
+  },
+  "ui": {
+    "close": "Close",
+    "verified": "Verified"
+  },
+  "help": {
+    "title": "Help & support",
+    "faqPill": "FAQ",
+    "quickContact": "Quick contact",
+    "frequentlyAsked": "Frequently asked",
+    "resources": "Resources",
+    "madeIn": "Made in Zürich 🇨🇭",
+    "emailUs": "Email us",
+    "reportProblem": "Report a problem",
+    "reportHint": "Tell us what went wrong",
+    "safety": "Safety / emergency",
+    "safetyHint": "Urgent help & trip safety",
+    "safetyTitle": "Safety & emergency",
+    "safetyBody": "In an emergency, call 112 immediately.\n\nFor a trip safety concern that is not an emergency, contact support at support@shlep.ch and we will respond as quickly as we can.",
+    "emailSupport": "Email support",
+    "community": "Community guidelines",
+    "terms": "Terms of service",
+    "privacy": "Privacy policy",
+    "trust": "Trust & safety",
+    "q1": "How does Shlep work?",
+    "a1": "Neighbours who are already driving a route carry your parcel along the way. You book a delivery, pay via TWINT, and the payment is held until your parcel reaches its destination.",
+    "q2": "How do delivery codes work?",
+    "a2": "When the driver picks up, the sender shares a pickup code to confirm the handover. On arrival, the recipient shows a delivery code. The two codes make sure the parcel passes through the right hands at each step.",
+    "q3": "When am I charged?",
+    "a3": "Your TWINT payment is authorised and held the moment you book. It is only released to the driver once the parcel has been delivered and confirmed.",
+    "q4": "Is my payment safe?",
+    "a4": "Yes. Funds are held securely until delivery is confirmed, and if a delivery is cancelled before pickup your payment is refunded in full.",
+    "q5": "How do I become a driver?",
+    "a5": "Switch your role to Driver in your Profile, publish a route you are already travelling, and complete verification by adding your ID and licence plate. Once verified you can start carrying parcels.",
+    "q6": "What if my parcel is damaged or lost?",
+    "a6": "Contact support within 48 hours of the delivery. The declared value of every parcel is kept on file, which helps us resolve damage or loss claims quickly.",
+    "q7": "How is CO₂ saved calculated?",
+    "a7": "A Shlep delivery piggybacks on a trip someone is already making, so it avoids a separate dedicated car journey. We estimate roughly 0.12 kg of CO₂ saved for every kilometre that would otherwise have been driven.",
+    "q8": "How do I cancel?",
+    "a8": "Open the shipment you want to cancel and tap cancel. Cancellations made before the driver picks up the parcel are refunded automatically."
+  },
+  "growth": {
+    "0": "Seedling", "1": "Sprout", "2": "Leaf", "3": "Shoot", "4": "Plant",
+    "5": "Sapling", "6": "Tree", "7": "Fruit tree", "8": "Forest"
+  },
+  "more": {
+    "memberSince": "Member since {{year}}",
+    "carTrips": "≈ {{count}} car trips never made",
+    "kmShared": "km shared",
+    "toNext": "{{kg}} kg to {{name}}",
+    "fullyGrown": "Fully grown 🌳",
+    "phoneError": "Could not verify your phone number.",
+    "plateError": "Could not verify your licence plate.",
+    "onbStep1Title": "Verify your identity",
+    "onbStep1Sub": "A quick, secure check via Stripe.",
+    "onbStep2Title": "Add your bank account",
+    "onbStep2Sub": "Your IBAN — where payouts land.",
+    "onbStep3Title": "Start receiving payouts",
+    "onbStep3Sub": "Your share arrives after each drop.",
+    "earningsEmpty": "Completed deliveries will appear here."
   },
   "tagline": "Your package is already on its way."
 }

@@ -52,7 +52,7 @@ export function LoginScreen({ navigation }: any) {
           <View style={styles.hero}>
             <Text style={styles.headline}>Send it with someone already going there.</Text>
             <Text style={styles.subcopy}>
-              The neighbourly parcel network. Real people, already on the road — moving things forward.
+              Send greener. Earn on the side. On your schedule.
             </Text>
             <CO2Chip label="LOW-CARBON BY DESIGN" onDark style={styles.pill} />
           </View>

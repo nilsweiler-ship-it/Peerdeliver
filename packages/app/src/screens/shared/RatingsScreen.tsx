@@ -39,9 +39,9 @@ export function RatingsScreen({ navigation, route }: any) {
       >
         <View style={styles.hero}>
           <SuccessMedallion size={108} />
-          <Text style={styles.title}>Delivered!</Text>
+          <Text style={styles.title}>{t('delivered.title')}</Text>
           <Text style={styles.summary}>
-            {contents} delivered to {city}
+            {t('delivered.summary', { contents, city })}
           </Text>
         </View>
 
@@ -49,15 +49,15 @@ export function RatingsScreen({ navigation, route }: any) {
         <View style={styles.impactCard}>
           <LeafMark size={22} color={colors.impactLeaf} />
           <Text style={styles.impactAmount}>{co2SavedKg.toFixed(1)} kg</Text>
-          <Text style={styles.impactCaption}>CO₂ saved on this trip</Text>
+          <Text style={styles.impactCaption}>{t('delivered.co2OnTrip')}</Text>
           <Text style={styles.impactSub}>
-            Because {driver} was already driving this way.
+            {t('delivered.because', { driver })}
           </Text>
         </View>
 
         {/* Rating */}
         <View style={styles.ratingBlock}>
-          <Text style={styles.ratingPrompt}>Rate your driver</Text>
+          <Text style={styles.ratingPrompt}>{t('delivered.rateDriver')}</Text>
           <View style={styles.starRow}>
             {[1, 2, 3, 4, 5].map((i) => {
               const filled = rating >= i;
@@ -84,7 +84,7 @@ export function RatingsScreen({ navigation, route }: any) {
         </View>
 
         <Button
-          title="Submit rating"
+          title={t('delivered.submit')}
           onPress={handleSubmit}
           variant="light"
           style={styles.submit}

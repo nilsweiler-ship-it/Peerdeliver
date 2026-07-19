@@ -2,102 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { BackChip, Pill } from '../../components/brand';
 import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 
 const APP_VERSION = 'Shlep · v0.1.0';
-
-// ── Quick-contact cards ──────────────────────────────────
-const CONTACT_CARDS: {
-  key: string;
-  icon: keyof typeof Feather.glyphMap;
-  label: string;
-  hint: string;
-  tone: 'spruce' | 'signal' | 'destination';
-  action: () => void;
-}[] = [
-  {
-    key: 'email',
-    icon: 'mail',
-    label: 'Email us',
-    hint: 'support@shlep.ch',
-    tone: 'spruce',
-    action: () => Linking.openURL('mailto:support@shlep.ch'),
-  },
-  {
-    key: 'report',
-    icon: 'alert-triangle',
-    label: 'Report a problem',
-    hint: 'Tell us what went wrong',
-    tone: 'signal',
-    action: () => Linking.openURL('mailto:support@shlep.ch?subject=Problem%20report'),
-  },
-  {
-    key: 'safety',
-    icon: 'shield',
-    label: 'Safety / emergency',
-    hint: 'Urgent help & trip safety',
-    tone: 'destination',
-    action: () =>
-      Alert.alert(
-        'Safety & emergency',
-        'In an emergency, call 112 immediately.\n\nFor a trip safety concern that is not an emergency, contact support at support@shlep.ch and we will respond as quickly as we can.',
-        [
-          { text: 'Close', style: 'cancel' },
-          { text: 'Email support', onPress: () => Linking.openURL('mailto:support@shlep.ch?subject=Safety%20concern') },
-        ],
-      ),
-  },
-];
-
-// ── FAQ ──────────────────────────────────────────────────
-const FAQS: { q: string; a: string }[] = [
-  {
-    q: 'How does Shlep work?',
-    a: 'Neighbours who are already driving a route carry your parcel along the way. You book a delivery, pay via TWINT, and the payment is held until your parcel reaches its destination.',
-  },
-  {
-    q: 'How do delivery codes work?',
-    a: 'When the driver picks up, the sender shares a pickup code to confirm the handover. On arrival, the recipient shows a delivery code. The two codes make sure the parcel passes through the right hands at each step.',
-  },
-  {
-    q: 'When am I charged?',
-    a: 'Your TWINT payment is authorised and held the moment you book. It is only released to the driver once the parcel has been delivered and confirmed.',
-  },
-  {
-    q: 'Is my payment safe?',
-    a: 'Yes. Funds are held securely until delivery is confirmed, and if a delivery is cancelled before pickup your payment is refunded in full.',
-  },
-  {
-    q: 'How do I become a driver?',
-    a: 'Switch your role to Driver in your Profile, publish a route you are already travelling, and complete verification by adding your ID and licence plate. Once verified you can start carrying parcels.',
-  },
-  {
-    q: 'What if my parcel is damaged or lost?',
-    a: 'Contact support within 48 hours of the delivery. The declared value of every parcel is kept on file, which helps us resolve damage or loss claims quickly.',
-  },
-  {
-    q: 'How is CO₂ saved calculated?',
-    a: 'A Shlep delivery piggybacks on a trip someone is already making, so it avoids a separate dedicated car journey. We estimate roughly 0.12 kg of CO₂ saved for every kilometre that would otherwise have been driven.',
-  },
-  {
-    q: 'How do I cancel?',
-    a: 'Open the shipment you want to cancel and tap cancel. Cancellations made before the driver picks up the parcel are refunded automatically.',
-  },
-];
-
-// ── Resources ────────────────────────────────────────────
-const RESOURCES: {
-  key: string;
-  icon: keyof typeof Feather.glyphMap;
-  label: string;
-  url?: string;
-}[] = [
-  { key: 'community', icon: 'users', label: 'Community guidelines', url: 'https://shlep.ch/community' },
-  { key: 'terms', icon: 'file-text', label: 'Terms of service', url: 'https://shlep.ch/terms' },
-  { key: 'privacy', icon: 'lock', label: 'Privacy policy', url: 'https://shlep.ch/privacy' },
-  { key: 'trust', icon: 'shield', label: 'Trust & safety', url: 'https://shlep.ch/trust' },
-];
 
 const TONE_MAP = {
   spruce: { bg: colors.impactSurface, fg: colors.primary },
@@ -106,8 +15,77 @@ const TONE_MAP = {
 };
 
 export function HelpSupportScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  // ── Quick-contact cards ──────────────────────────────────
+  const CONTACT_CARDS: {
+    key: string;
+    icon: keyof typeof Feather.glyphMap;
+    label: string;
+    hint: string;
+    tone: 'spruce' | 'signal' | 'destination';
+    action: () => void;
+  }[] = [
+    {
+      key: 'email',
+      icon: 'mail',
+      label: t('help.emailUs'),
+      hint: 'support@shlep.ch',
+      tone: 'spruce',
+      action: () => Linking.openURL('mailto:support@shlep.ch'),
+    },
+    {
+      key: 'report',
+      icon: 'alert-triangle',
+      label: t('help.reportProblem'),
+      hint: t('help.reportHint'),
+      tone: 'signal',
+      action: () => Linking.openURL('mailto:support@shlep.ch?subject=Problem%20report'),
+    },
+    {
+      key: 'safety',
+      icon: 'shield',
+      label: t('help.safety'),
+      hint: t('help.safetyHint'),
+      tone: 'destination',
+      action: () =>
+        Alert.alert(
+          t('help.safetyTitle'),
+          t('help.safetyBody'),
+          [
+            { text: t('ui.close'), style: 'cancel' },
+            { text: t('help.emailSupport'), onPress: () => Linking.openURL('mailto:support@shlep.ch?subject=Safety%20concern') },
+          ],
+        ),
+    },
+  ];
+
+  // ── FAQ ──────────────────────────────────────────────────
+  const FAQS: { q: string; a: string }[] = [
+    { q: t('help.q1'), a: t('help.a1') },
+    { q: t('help.q2'), a: t('help.a2') },
+    { q: t('help.q3'), a: t('help.a3') },
+    { q: t('help.q4'), a: t('help.a4') },
+    { q: t('help.q5'), a: t('help.a5') },
+    { q: t('help.q6'), a: t('help.a6') },
+    { q: t('help.q7'), a: t('help.a7') },
+    { q: t('help.q8'), a: t('help.a8') },
+  ];
+
+  // ── Resources ────────────────────────────────────────────
+  const RESOURCES: {
+    key: string;
+    icon: keyof typeof Feather.glyphMap;
+    label: string;
+    url?: string;
+  }[] = [
+    { key: 'community', icon: 'users', label: t('help.community'), url: 'https://shlep.ch/community' },
+    { key: 'terms', icon: 'file-text', label: t('help.terms'), url: 'https://shlep.ch/terms' },
+    { key: 'privacy', icon: 'lock', label: t('help.privacy'), url: 'https://shlep.ch/privacy' },
+    { key: 'trust', icon: 'shield', label: t('help.trust'), url: 'https://shlep.ch/trust' },
+  ];
 
   return (
     <View style={styles.container}>
@@ -119,12 +97,12 @@ export function HelpSupportScreen({ navigation }: any) {
         {/* Header */}
         <View style={styles.header}>
           <BackChip onPress={() => navigation.goBack()} />
-          <Text style={styles.title}>Help & support</Text>
-          <Pill label="FAQ" tone="sunken" />
+          <Text style={styles.title}>{t('help.title')}</Text>
+          <Pill label={t('help.faqPill')} tone="sunken" />
         </View>
 
         {/* ── Quick contact ── */}
-        <Text style={styles.sectionTitle}>Quick contact</Text>
+        <Text style={styles.sectionTitle}>{t('help.quickContact')}</Text>
         <View style={styles.contactRow}>
           {CONTACT_CARDS.map((c) => {
             const tone = TONE_MAP[c.tone];
@@ -148,7 +126,7 @@ export function HelpSupportScreen({ navigation }: any) {
         </View>
 
         {/* ── FAQ ── */}
-        <Text style={styles.sectionTitle}>Frequently asked</Text>
+        <Text style={styles.sectionTitle}>{t('help.frequentlyAsked')}</Text>
         <View style={styles.faqList}>
           {FAQS.map((item, i) => {
             const open = openFaq === i;
@@ -173,7 +151,7 @@ export function HelpSupportScreen({ navigation }: any) {
         </View>
 
         {/* ── Resources ── */}
-        <Text style={styles.sectionTitle}>Resources</Text>
+        <Text style={styles.sectionTitle}>{t('help.resources')}</Text>
         <View style={styles.resourceList}>
           {RESOURCES.map((r, i) => (
             <TouchableOpacity
@@ -194,7 +172,7 @@ export function HelpSupportScreen({ navigation }: any) {
         {/* ── Footer ── */}
         <View style={styles.footer}>
           <Text style={styles.version}>{APP_VERSION}</Text>
-          <Text style={styles.madeIn}>Made in Zürich 🇨🇭</Text>
+          <Text style={styles.madeIn}>{t('help.madeIn')}</Text>
         </View>
       </ScrollView>
     </View>

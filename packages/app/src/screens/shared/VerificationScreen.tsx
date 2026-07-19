@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
 import { useVerify, useDevVerifyAll } from '../../queries/verification';
 import { Button, Input, Badge } from '../../components/ui';
@@ -13,6 +14,7 @@ function serverError(err: any): string | undefined {
 }
 
 export function VerificationScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
   const verify = useVerify();
@@ -41,7 +43,7 @@ export function VerificationScreen({ navigation }: any) {
     try {
       await verify.mutateAsync({ type: 'phone', value: phone });
     } catch (err: any) {
-      setPhoneError(serverError(err) ?? 'Could not verify your phone number.');
+      setPhoneError(serverError(err) ?? t('more.phoneError'));
     }
   };
 
@@ -58,7 +60,7 @@ export function VerificationScreen({ navigation }: any) {
     try {
       await verify.mutateAsync({ type: 'plate', value: plate });
     } catch (err: any) {
-      setPlateError(serverError(err) ?? 'Could not verify your licence plate.');
+      setPlateError(serverError(err) ?? t('more.plateError'));
     }
   };
 
@@ -79,24 +81,24 @@ export function VerificationScreen({ navigation }: any) {
       {/* Header */}
       <View style={styles.header}>
         <BackChip onPress={() => navigation.goBack()} />
-        <Text style={styles.title}>Verification &amp; trust</Text>
+        <Text style={styles.title}>{t('verification.title')}</Text>
       </View>
 
       {/* Hero trust summary */}
       <View style={styles.hero}>
         <View style={styles.heroTop}>
           <View style={styles.flex}>
-            <Text style={styles.heroOverline}>TRUST SCORE</Text>
+            <Text style={styles.heroOverline}>{t('verification.trustScore').toUpperCase()}</Text>
             <Text style={styles.heroScore}>
               {done} / {total} <Text style={styles.heroScoreUnit}>verified</Text>
             </Text>
           </View>
           {isVerified ? (
-            <Badge label="VERIFIED" variant="success" />
+            <Badge label={t('ui.verified').toUpperCase()} variant="success" />
           ) : (
             <View style={styles.getVerified}>
               <Feather name="shield" size={13} color={colors.primary} />
-              <Text style={styles.getVerifiedText}>Get verified</Text>
+              <Text style={styles.getVerifiedText}>{t('verification.getVerified')}</Text>
             </View>
           )}
         </View>
@@ -111,10 +113,10 @@ export function VerificationScreen({ navigation }: any) {
       </View>
 
       {/* Checklist */}
-      <Text style={styles.sectionTitle}>Your trust signals</Text>
+      <Text style={styles.sectionTitle}>{t('verification.trustSignals')}</Text>
 
       {/* 1. Email */}
-      <TrustItem icon="mail" title="Email" verified>
+      <TrustItem icon="mail" title={t('verification.email')} verified>
         <Text style={styles.itemValue} numberOfLines={1}>
           {user?.email}
         </Text>
@@ -123,7 +125,7 @@ export function VerificationScreen({ navigation }: any) {
       {/* 2. Phone */}
       <TrustItem
         icon="phone"
-        title="Phone number"
+        title={t('verification.phone')}
         verified={!!user?.phoneVerified}
         verifiedValue={user?.phone}
       >
@@ -132,29 +134,29 @@ export function VerificationScreen({ navigation }: any) {
             <Input
               value={phone}
               onChangeText={setPhone}
-              placeholder="+41 79 123 45 67"
+              placeholder={t('verification.phonePlaceholder')}
               keyboardType="phone-pad"
               autoComplete="tel"
               error={phoneError}
               style={styles.input}
             />
             <Button
-              title="Verify"
+              title={t('verification.verify')}
               onPress={handleVerifyPhone}
               loading={verify.isPending}
               disabled={!phone.trim()}
             />
-            <Text style={styles.caption}>We&apos;ll send a one-time code.</Text>
+            <Text style={styles.caption}>{t('verification.oneTimeCode')}</Text>
           </View>
         )}
       </TrustItem>
 
       {/* 3. Identity */}
-      <TrustItem icon="user-check" title="Identity (ID)" verified={!!user?.idVerified}>
+      <TrustItem icon="user-check" title={t('verification.identity')} verified={!!user?.idVerified}>
         {!user?.idVerified && (
           <View style={styles.action}>
             <Button
-              title="Verify identity"
+              title={t('verification.verifyIdentity')}
               onPress={handleVerifyId}
               loading={verify.isPending}
             />
@@ -169,7 +171,7 @@ export function VerificationScreen({ navigation }: any) {
       {isDriver && (
         <TrustItem
           icon="truck"
-          title="Driver's licence plate"
+          title={t('verification.plate')}
           verified={!!user?.plateVerified}
           verifiedValue={user?.licensePlate}
         >
@@ -178,13 +180,13 @@ export function VerificationScreen({ navigation }: any) {
               <Input
                 value={plate}
                 onChangeText={(v) => setPlate(v.toUpperCase())}
-                placeholder="ZH 123456"
+                placeholder={t('register.platePlaceholder')}
                 autoCapitalize="characters"
                 error={plateError}
                 style={styles.input}
               />
               <Button
-                title="Verify plate"
+                title={t('verification.verifyPlate')}
                 onPress={handleVerifyPlate}
                 loading={verify.isPending}
                 disabled={!plate.trim()}
@@ -228,6 +230,7 @@ function TrustItem({
   verifiedValue?: string;
   children?: React.ReactNode;
 }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.item}>
       <View style={styles.itemHead}>
@@ -243,7 +246,7 @@ function TrustItem({
         {verified ? (
           <View style={styles.verifiedPill}>
             <Feather name="check" size={13} color={colors.impact} />
-            <Text style={styles.verifiedText}>Verified</Text>
+            <Text style={styles.verifiedText}>{t('verification.verified')}</Text>
           </View>
         ) : null}
       </View>

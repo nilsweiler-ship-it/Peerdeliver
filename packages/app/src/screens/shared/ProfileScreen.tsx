@@ -68,11 +68,11 @@ export function ProfileScreen() {
             {user?.firstName} {user?.lastName}
           </Text>
           <Text style={styles.meta}>
-            ★ {rating} · Member since {memberYear}
+            ★ {rating} · {t('more.memberSince', { year: memberYear })}
           </Text>
           <View style={styles.stagePill}>
             <LeafMark size={11} color={colors.impact} />
-            <Text style={styles.stageText}>{stage.name}</Text>
+            <Text style={styles.stageText}>{t('growth.' + stage.index)}</Text>
           </View>
         </View>
         <TouchableOpacity style={styles.gear} activeOpacity={0.7}>
@@ -83,15 +83,15 @@ export function ProfileScreen() {
       {/* Growth progress */}
       <View style={styles.growthCard}>
         <View style={styles.growthHead}>
-          <Text style={styles.growthName}>{stage.name}</Text>
+          <Text style={styles.growthName}>{t('growth.' + stage.index)}</Text>
           <Text style={styles.growthNext}>
-            {stage.next ? `${toNext.toFixed(1)} kg to ${stage.next.name}` : 'Fully grown 🌳'}
+            {stage.next ? t('more.toNext', { kg: toNext.toFixed(1), name: t('growth.' + stage.next.index) }) : t('more.fullyGrown')}
           </Text>
         </View>
         <View style={styles.growthTrack}>
           <View style={[styles.growthFill, { width: `${Math.round(stage.progress * 100)}%` }]} />
         </View>
-        <Text style={styles.growthHint}>Your tree grows with every kg of CO₂ you save together.</Text>
+        <Text style={styles.growthHint}>{t('profileExtra.treeGrows')}</Text>
       </View>
 
       {/* Role — primary sender/driver toggle */}
@@ -126,24 +126,24 @@ export function ProfileScreen() {
           <RouteWatermark size={240} opacity={0.1} style={{ right: -50, top: -20 }} />
           <View style={styles.impactHead}>
             <LeafMark size={16} color={colors.impactLeaf} />
-            <Text style={styles.impactOverline}>LIFETIME IMPACT</Text>
+            <Text style={styles.impactOverline}>{t('profileExtra.lifetimeImpact').toUpperCase()}</Text>
           </View>
           <Text style={styles.impactAmount}>{co2Saved.toFixed(1)} kg</Text>
-          <Text style={styles.impactSub}>≈ {carTrips} car trips never made</Text>
+          <Text style={styles.impactSub}>{t('more.carTrips', { count: carTrips })}</Text>
           <View style={styles.impactStats}>
             <View style={styles.impactStat}>
               <Text style={styles.impactStatValue}>{totalDeliveries}</Text>
-              <Text style={styles.impactStatLabel}>Deliveries</Text>
+              <Text style={styles.impactStatLabel}>{t('profileExtra.deliveries')}</Text>
             </View>
             <View style={styles.impactDivider} />
             <View style={styles.impactStat}>
               <Text style={styles.impactStatValue}>{kmShared}</Text>
-              <Text style={styles.impactStatLabel}>km shared</Text>
+              <Text style={styles.impactStatLabel}>{t('more.kmShared')}</Text>
             </View>
             <View style={styles.impactDivider} />
             <View style={styles.impactStat}>
               <Text style={styles.impactStatValue}>{neighbours}</Text>
-              <Text style={styles.impactStatLabel}>Neighbours</Text>
+              <Text style={styles.impactStatLabel}>{t('profileExtra.neighbours')}</Text>
             </View>
           </View>
         </GradientSurface>
@@ -178,25 +178,35 @@ export function ProfileScreen() {
           <>
             <SettingsRow
               icon="credit-card"
-              label="Earnings & payouts"
+              label={t('profileExtra.earningsPayouts')}
               onPress={() => navigation.navigate('DriverStack', { screen: 'Earnings' })}
             />
             <SettingsRow
               icon="dollar-sign"
-              label="Payout setup"
+              label={t('profileExtra.payoutSetup')}
               onPress={() => navigation.navigate('DriverStack', { screen: 'PayoutOnboarding' })}
             />
           </>
         )}
         <SettingsRow
           icon="shield"
-          label="Verification & trust"
+          label={t('profileExtra.verificationTrust')}
           onPress={() => navigation.navigate('Verification')}
-          trailing={isVerified ? <Badge label="VERIFIED" variant="success" /> : undefined}
+          trailing={isVerified ? <Badge label={t('ui.verified').toUpperCase()} variant="success" /> : undefined}
+        />
+        <SettingsRow
+          icon="settings"
+          label={t('settings.title')}
+          onPress={() => navigation.navigate('Settings')}
+        />
+        <SettingsRow
+          icon="file-text"
+          label={t('profile.legal')}
+          onPress={() => navigation.navigate('LegalDoc', { doc: 'terms' })}
         />
         <SettingsRow
           icon="help-circle"
-          label="Help & support"
+          label={t('profileExtra.helpSupport')}
           onPress={() => navigation.navigate('HelpSupport')}
           last
         />

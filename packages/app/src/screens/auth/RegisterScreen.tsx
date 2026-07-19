@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, Input } from '../../components/ui';
 import { BackChip, Pill } from '../../components/brand';
 import { useRegister } from '../../queries/auth';
-import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
+import { colors, spacing, typography, borderRadius, shadow, fonts } from '../../theme';
 
 type RegisterRole = 'sender' | 'driver' | 'both' | 'recipient';
 
@@ -252,18 +252,25 @@ export function RegisterScreen({ navigation }: any) {
         )}
 
         {/* Terms */}
-        <TouchableOpacity
-          style={styles.termsRow}
-          onPress={() => setAgreed((v) => !v)}
-          activeOpacity={0.7}
-        >
-          <View style={[styles.checkbox, agreed && styles.checkboxOn]}>
+        <View style={styles.termsRow}>
+          <TouchableOpacity
+            style={[styles.checkbox, agreed && styles.checkboxOn]}
+            onPress={() => setAgreed((v) => !v)}
+            activeOpacity={0.7}
+          >
             {agreed && <Feather name="check" size={14} color={colors.textInverse} />}
-          </View>
+          </TouchableOpacity>
           <Text style={styles.termsText}>
-            I agree to the Shlep Terms of Service and Privacy Policy.
+            {t('legal.agree')}{' '}
+            <Text style={styles.termsLink} onPress={() => navigation.navigate('LegalDoc', { doc: 'terms' })}>
+              {t('settings.terms')}
+            </Text>
+            {'  ·  '}
+            <Text style={styles.termsLink} onPress={() => navigation.navigate('LegalDoc', { doc: 'privacy' })}>
+              {t('settings.privacy')}
+            </Text>
           </Text>
-        </TouchableOpacity>
+        </View>
 
         {register.error && (
           <Text style={styles.error}>
@@ -568,6 +575,11 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     color: colors.textSecondary,
     flex: 1,
+  },
+  termsLink: {
+    ...typography.bodySmall,
+    color: colors.primary,
+    fontFamily: fonts.bodySemi,
   },
   error: {
     ...typography.bodySmall,
