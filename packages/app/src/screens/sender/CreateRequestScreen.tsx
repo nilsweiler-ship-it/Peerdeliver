@@ -319,13 +319,13 @@ export function CreateRequestScreen({ navigation }: any) {
               {errors.budget && <Text style={styles.sliderError}>{errors.budget}</Text>}
               <View style={styles.breakdown}>
                 <View style={styles.breakdownRow}>
-                  <Text style={styles.breakdownLabel}>Platform fee (10%)</Text>
-                  <Text style={styles.breakdownValue}>CHF {(budget * 0.1).toFixed(2)}</Text>
+                  <Text style={styles.breakdownLabel}>Platform fee (8.1%)</Text>
+                  <Text style={styles.breakdownValue}>CHF {(budget * 0.081).toFixed(2)}</Text>
                 </View>
                 <View style={styles.breakdownRow}>
                   <Text style={styles.breakdownLabel}>Driver receives</Text>
                   <Text style={[styles.breakdownValue, styles.breakdownValueHighlight]}>
-                    CHF {(budget * 0.9).toFixed(2)}
+                    CHF {(budget * 0.919).toFixed(2)}
                   </Text>
                 </View>
               </View>

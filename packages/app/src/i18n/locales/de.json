@@ -301,7 +301,7 @@
   "createRequestExtra": {
     "marketplacePrompt": "Versand von einem Marktplatz?",
     "autoFill": "Automatisch ausfüllen",
-    "platformFee": "Plattformgebühr (10 %)",
+    "platformFee": "Plattformgebühr (8.1 %)",
     "driverReceives": "Fahrende Person erhält"
   },
   "searchExtra": {

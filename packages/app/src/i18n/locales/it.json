@@ -301,7 +301,7 @@
   "createRequestExtra": {
     "marketplacePrompt": "Spedizione da un marketplace?",
     "autoFill": "Compilazione automatica",
-    "platformFee": "Commissione della piattaforma (10%)",
+    "platformFee": "Commissione della piattaforma (8.1%)",
     "driverReceives": "Il conducente riceve"
   },
   "searchExtra": {

@@ -301,7 +301,7 @@
   "createRequestExtra": {
     "marketplacePrompt": "Shipping from a marketplace?",
     "autoFill": "Auto-fill",
-    "platformFee": "Platform fee (10%)",
+    "platformFee": "Platform fee (8.1%)",
     "driverReceives": "Driver receives"
   },
   "searchExtra": {
