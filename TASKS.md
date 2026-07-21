@@ -6,6 +6,7 @@
   - Blocked by: legal entity + live shlep.ch website
   - Register: https://dashboard.stripe.com/register → enable Connect (Express): https://dashboard.stripe.com/connect → enable TWINT: https://dashboard.stripe.com/settings/payment_methods
   - Info/pricing: https://stripe.com/en-ch/pricing · https://stripe.com/en-ch/connect · https://stripe.com/en-ch/payments/twint
+  - Business website field: enter **https://shlep.ch** — but deploy the site there FIRST. Stripe's reviewers actually open it and check: publicly reachable, describes what you sell (the landing page does), pricing visible, terms/privacy/Impressum with real entity details (fill the [bracketed] placeholders before applying), and a working contact (kontakt.html / hello@shlep.ch). Don't use a placeholder page, a social profile, or an unrelated domain — mismatches between the site and the application are a common rejection reason.
   - How important for the MVP: **not needed to build, demo, or test — mandatory the moment real money moves.**
     - Without it, everything still works in simulated-payment mode: full app flow, investor demos, TestFlight testing with friendly users. Nothing blocks development.
     - With real users it's non-negotiable: it IS the escrow ("payment captured only on code-verified delivery"), the driver payouts incl. their KYC/IBAN, the 9%-fee capture, and TWINT itself. No Stripe = no revenue, no payout, and the trust promise on the website isn't true.
