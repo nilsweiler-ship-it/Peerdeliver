@@ -36,7 +36,7 @@
   - Alternative: Vonage Verify: https://www.vonage.com/communications-apis/verify/
 - [ ] **Redeploy shlep.ch — live site is outdated** - shows old design, 10% fee, old copy; must show the current version before the Stripe application
   - Ready to upload: **`shlep_ch_deploy.zip`** in the Peerdeliver folder (index, legal, kontakt, JS, assets, .htaccess)
-  - Hostpoint steps: https://admin.hostpoint.ch → login → **Server → File Manager** → open the webroot of shlep.ch (usually `www/shlep.ch/` or the folder shown under Websites → shlep.ch → document root)
+  - Hostpoint steps: https://admin.hostpoint.ch → login → menu item **"Explorer"** (in some panel versions under "Explorer/Web-Einstellungen") → navigate to shlep.ch's webroot — the folder containing the current `index.html`, usually `www/shlep.ch/` (the exact document root is shown under Websites/Domains → shlep.ch)
   - Delete the old files in that folder (or move them into a `_old/` subfolder as backup), then upload `shlep_ch_deploy.zip` and use the File Manager's **Extract/Entpacken** on it (files must land directly in the webroot, not in a subfolder); delete the zip afterwards
   - Alternative: SFTP with the FTP user from My Panel → Server → FTP (host = your server name, e.g. `xyz.hostpoint.ch`) and copy the contents of the repo's `website/` folder in
   - Check after upload: shlep.ch shows the amber/new design and "9 %"; shlep.ch/legal?doc=impressum shows DeltaSci Solutions GmbH + UID; shlep.ch/kontakt.html loads; language switcher works
