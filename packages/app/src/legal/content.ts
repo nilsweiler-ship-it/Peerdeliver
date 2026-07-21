@@ -1,11 +1,9 @@
 /**
- * Legal document templates for Shlep, in the app's four languages.
+ * Legal documents for Shlep, in the app's four languages.
  *
- * IMPORTANT: these are concise TEMPLATES to make the screens functional and
- * localized. They are NOT legal advice and MUST be reviewed and completed by a
- * qualified Swiss lawyer (and the [bracketed] Impressum fields filled in)
- * before public launch. The company operates under Swiss law (revised FADP for
- * data protection).
+ * Entity details (DeltaSci Solutions GmbH, UID CHE-347.257.714) are filled in.
+ * Dev note: drafted in-house under Swiss law (revised FADP); a review by a
+ * Swiss lawyer before public launch is still tracked in TASKS.md.
  */
 
 export type LegalKey = 'terms' | 'privacy' | 'impressum';
@@ -36,7 +34,7 @@ const en: Record<LegalKey, LegalDoc> = {
     intro:
       'This policy explains how Shlep processes your personal data under the revised Swiss Federal Act on Data Protection (FADP) and, where applicable, the GDPR.',
     sections: [
-      { h: '1. Who is responsible', p: 'The data controller is DeltaSCI Solutions GmbH, Jonas-Furrer-Strasse 104, 8400 Winterthur, contact privacy@shlep.ch.' },
+      { h: '1. Who is responsible', p: 'The data controller is DeltaSci Solutions GmbH, Jonas-Furrer-Strasse 104, 8400 Winterthur, contact privacy@shlep.ch.' },
       { h: '2. Data we process', p: 'Account data (name, email), delivery data (addresses, package details, codes), approximate and live location during an active delivery, chat messages, ratings, and payment status. Payment card data is handled by our payment provider, not stored by us.' },
       { h: '3. Why we process it', p: 'To operate the service (contract), match deliveries, enable tracking and communication, process payments, ensure safety and prevent fraud (legitimate interests), and meet legal obligations.' },
       { h: '4. Sharing', p: 'We share the minimum necessary data between matched senders, drivers and recipients, and with service providers (hosting, payments, email). We do not sell your data.' },
@@ -49,10 +47,10 @@ const en: Record<LegalKey, LegalDoc> = {
     title: 'Legal Notice',
     intro: 'Information about the operator of the Shlep app, as required under Swiss law.',
     sections: [
-      { h: 'Operator', p: 'DeltaSCI Solutions GmbH' },
+      { h: 'Operator', p: 'DeltaSci Solutions GmbH' },
       { h: 'Address', p: 'Jonas-Furrer-Strasse 104, 8400 Winterthur, Switzerland' },
-      { h: 'Commercial register', p: 'UID: [CHE-xxx.xxx.xxx]' },
-      { h: 'Represented by', p: '[Name(s) of authorised signatory]' },
+      { h: 'Commercial register', p: 'UID: CHE-347.257.714 · VAT: CHE-347.257.714 MWST' },
+      { h: 'Represented by', p: 'Nils Weiler' },
       { h: 'Contact', p: 'Email: hello@shlep.ch · Phone: +41 76 460 77 24' },
       { h: 'Disclaimer', p: 'Despite careful review we assume no liability for the content of external links; their operators are solely responsible.' },
     ],
@@ -79,7 +77,7 @@ const de: Record<LegalKey, LegalDoc> = {
     intro:
       'Diese Erklärung beschreibt, wie Shlep deine Personendaten gemäss dem revidierten Schweizer Datenschutzgesetz (DSG) und, soweit anwendbar, der DSGVO bearbeitet.',
     sections: [
-      { h: '1. Verantwortliche Stelle', p: 'Verantwortlich ist DeltaSCI Solutions GmbH, Jonas-Furrer-Strasse 104, 8400 Winterthur, Kontakt privacy@shlep.ch.' },
+      { h: '1. Verantwortliche Stelle', p: 'Verantwortlich ist DeltaSci Solutions GmbH, Jonas-Furrer-Strasse 104, 8400 Winterthur, Kontakt privacy@shlep.ch.' },
       { h: '2. Bearbeitete Daten', p: 'Kontodaten (Name, E-Mail), Lieferdaten (Adressen, Paketangaben, Codes), ungefährer und Live-Standort während einer aktiven Lieferung, Chat-Nachrichten, Bewertungen und Zahlungsstatus. Kartendaten werden durch unseren Zahlungsdienstleister verarbeitet, nicht von uns gespeichert.' },
       { h: '3. Zwecke', p: 'Zum Betrieb des Dienstes (Vertrag), zur Vermittlung von Lieferungen, für Tracking und Kommunikation, zur Zahlungsabwicklung, für Sicherheit und Betrugsprävention (berechtigte Interessen) sowie zur Erfüllung gesetzlicher Pflichten.' },
       { h: '4. Weitergabe', p: 'Wir geben nur die nötigsten Daten zwischen zugeordneten Sendenden, Fahrenden und Empfangenden sowie an Dienstleister (Hosting, Zahlung, E-Mail) weiter. Wir verkaufen deine Daten nicht.' },
@@ -92,10 +90,10 @@ const de: Record<LegalKey, LegalDoc> = {
     title: 'Impressum',
     intro: 'Angaben zur Betreiberin der Shlep-App gemäss Schweizer Recht.',
     sections: [
-      { h: 'Betreiberin', p: 'DeltaSCI Solutions GmbH' },
+      { h: 'Betreiberin', p: 'DeltaSci Solutions GmbH' },
       { h: 'Adresse', p: 'Jonas-Furrer-Strasse 104, 8400 Winterthur, Schweiz' },
-      { h: 'Handelsregister', p: 'UID: [CHE-xxx.xxx.xxx]' },
-      { h: 'Vertreten durch', p: '[Name(n) der zeichnungsberechtigten Person(en)]' },
+      { h: 'Handelsregister', p: 'UID: CHE-347.257.714 · MWST: CHE-347.257.714 MWST' },
+      { h: 'Vertreten durch', p: 'Nils Weiler' },
       { h: 'Kontakt', p: 'E-Mail: hello@shlep.ch · Telefon: +41 76 460 77 24' },
       { h: 'Haftungsausschluss', p: 'Trotz sorgfältiger Prüfung übernehmen wir keine Haftung für Inhalte externer Links; für diese sind ausschliesslich deren Betreiber verantwortlich.' },
     ],
@@ -122,7 +120,7 @@ const fr: Record<LegalKey, LegalDoc> = {
     intro:
       "Cette politique explique comment Shlep traite vos données personnelles conformément à la loi fédérale suisse révisée sur la protection des données (LPD) et, le cas échéant, au RGPD.",
     sections: [
-      { h: '1. Responsable', p: 'Le responsable du traitement est DeltaSCI Solutions GmbH, Jonas-Furrer-Strasse 104, 8400 Winterthur, contact privacy@shlep.ch.' },
+      { h: '1. Responsable', p: 'Le responsable du traitement est DeltaSci Solutions GmbH, Jonas-Furrer-Strasse 104, 8400 Winterthur, contact privacy@shlep.ch.' },
       { h: '2. Données traitées', p: 'Données de compte (nom, e-mail), données de livraison (adresses, détails du colis, codes), position approximative et en temps réel pendant une livraison active, messages de chat, évaluations et statut de paiement. Les données de carte sont gérées par notre prestataire de paiement et non stockées par nous.' },
       { h: '3. Finalités', p: 'Pour exploiter le service (contrat), associer les livraisons, permettre le suivi et la communication, traiter les paiements, assurer la sécurité et prévenir la fraude (intérêts légitimes), et respecter les obligations légales.' },
       { h: '4. Partage', p: 'Nous partageons le minimum de données nécessaires entre expéditeurs, conducteurs et destinataires associés, et avec nos prestataires (hébergement, paiement, e-mail). Nous ne vendons pas vos données.' },
@@ -135,10 +133,10 @@ const fr: Record<LegalKey, LegalDoc> = {
     title: 'Mentions légales',
     intro: "Informations sur l'exploitant de l'application Shlep, conformément au droit suisse.",
     sections: [
-      { h: 'Exploitant', p: 'DeltaSCI Solutions GmbH' },
+      { h: 'Exploitant', p: 'DeltaSci Solutions GmbH' },
       { h: 'Adresse', p: 'Jonas-Furrer-Strasse 104, 8400 Winterthur, Suisse' },
-      { h: 'Registre du commerce', p: 'IDE : [CHE-xxx.xxx.xxx]' },
-      { h: 'Représenté par', p: '[Nom(s) de la personne autorisée à signer]' },
+      { h: 'Registre du commerce', p: 'IDE : CHE-347.257.714 · TVA : CHE-347.257.714 MWST' },
+      { h: 'Représenté par', p: 'Nils Weiler' },
       { h: 'Contact', p: 'E-mail : hello@shlep.ch · Téléphone : +41 76 460 77 24' },
       { h: 'Clause de non-responsabilité', p: 'Malgré un contrôle attentif, nous déclinons toute responsabilité quant au contenu des liens externes ; leurs exploitants en sont seuls responsables.' },
     ],
@@ -165,7 +163,7 @@ const it: Record<LegalKey, LegalDoc> = {
     intro:
       "Questa informativa spiega come Shlep tratta i tuoi dati personali ai sensi della legge federale svizzera riveduta sulla protezione dei dati (LPD) e, ove applicabile, del GDPR.",
     sections: [
-      { h: '1. Titolare', p: 'Il titolare del trattamento è DeltaSCI Solutions GmbH, Jonas-Furrer-Strasse 104, 8400 Winterthur, contatto privacy@shlep.ch.' },
+      { h: '1. Titolare', p: 'Il titolare del trattamento è DeltaSci Solutions GmbH, Jonas-Furrer-Strasse 104, 8400 Winterthur, contatto privacy@shlep.ch.' },
       { h: '2. Dati trattati', p: 'Dati dell\'account (nome, e-mail), dati di consegna (indirizzi, dettagli del pacco, codici), posizione approssimativa e in tempo reale durante una consegna attiva, messaggi in chat, valutazioni e stato dei pagamenti. I dati della carta sono gestiti dal nostro fornitore di pagamento e non memorizzati da noi.' },
       { h: '3. Finalità', p: 'Per gestire il servizio (contratto), abbinare le consegne, consentire tracciamento e comunicazione, elaborare i pagamenti, garantire la sicurezza e prevenire le frodi (interessi legittimi) e adempiere agli obblighi di legge.' },
       { h: '4. Condivisione', p: 'Condividiamo i dati minimi necessari tra mittenti, conducenti e destinatari abbinati e con i nostri fornitori (hosting, pagamenti, e-mail). Non vendiamo i tuoi dati.' },
@@ -178,10 +176,10 @@ const it: Record<LegalKey, LegalDoc> = {
     title: 'Note legali',
     intro: "Informazioni sul gestore dell'app Shlep, come richiesto dal diritto svizzero.",
     sections: [
-      { h: 'Gestore', p: 'DeltaSCI Solutions GmbH' },
+      { h: 'Gestore', p: 'DeltaSci Solutions GmbH' },
       { h: 'Indirizzo', p: 'Jonas-Furrer-Strasse 104, 8400 Winterthur, Svizzera' },
-      { h: 'Registro di commercio', p: 'IDI: [CHE-xxx.xxx.xxx]' },
-      { h: 'Rappresentato da', p: '[Nome/i della persona autorizzata a firmare]' },
+      { h: 'Registro di commercio', p: 'IDI: CHE-347.257.714 · IVA: CHE-347.257.714 MWST' },
+      { h: 'Rappresentato da', p: 'Nils Weiler' },
       { h: 'Contatto', p: 'E-mail: hello@shlep.ch · Telefono: +41 76 460 77 24' },
       { h: 'Esclusione di responsabilità', p: 'Nonostante un attento controllo, non ci assumiamo alcuna responsabilità per i contenuti dei link esterni; i rispettivi gestori ne sono gli unici responsabili.' },
     ],

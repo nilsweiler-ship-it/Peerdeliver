@@ -42,7 +42,6 @@
   .sec{margin-bottom:22px;}
   .sec h2{font-size:18px;font-family:var(--display);margin-bottom:6px;}
   .sec p{color:var(--ink2);font-size:15.5px;}
-  .disclaimer{display:flex;gap:10px;background:var(--marigoldSoft);color:var(--marigoldText);border-radius:14px;padding:16px;margin:30px 0 60px;font-size:14px;}
 
   footer{background:var(--ink);color:#c8c4ba;margin-top:40px;}
   .footrow{max-width:760px;margin:0 auto;padding:24px;display:flex;flex-wrap:wrap;gap:14px 26px;justify-content:space-between;align-items:center;}
@@ -71,7 +70,6 @@
   <a class="backlink" href="index.html" id="backlink">← Back</a>
   <div class="tabs" id="tabs"></div>
   <article id="doc"></article>
-  <div class="disclaimer"><span>ⓘ</span><span id="disclaimer"></span></div>
 </div>
 
 <footer>
@@ -126,7 +124,6 @@
       html += '<div class="sec"><h2>' + s.h + '</h2><p>' + s.p + '</p></div>';
     });
     wrap.innerHTML = html;
-    document.getElementById('disclaimer').textContent = ui.disclaimer;
     document.title = 'Shlep — ' + doc.title;
   }
 

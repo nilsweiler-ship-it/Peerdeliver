@@ -39,11 +39,6 @@ export function LegalDocScreen({ navigation, route }: any) {
             <Text style={styles.p}>{s.p}</Text>
           </View>
         ))}
-
-        <View style={styles.disclaimer}>
-          <Ionicons name="information-circle-outline" size={18} color={colors.signalText} />
-          <Text style={styles.disclaimerText}>{t('legal.disclaimer')}</Text>
-        </View>
       </ScrollView>
     </View>
   );
@@ -72,13 +67,4 @@ const styles = StyleSheet.create({
   section: { marginBottom: spacing.md },
   h: { ...typography.h3, color: colors.text, marginBottom: 4 },
   p: { ...typography.body, color: colors.textSecondary, lineHeight: 22 },
-  disclaimer: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    backgroundColor: colors.signalSoft,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    marginTop: spacing.sm,
-  },
-  disclaimerText: { ...typography.bodySmall, color: colors.signalText, flex: 1 },
 });

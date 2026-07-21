@@ -34,11 +34,9 @@
 - [ ] **Sign up Twilio Verify (or Vonage)** - SMS OTP for phone verification, currently simulated
   - Twilio: https://www.twilio.com/try-twilio → then create a Verify service: https://console.twilio.com/us1/develop/verify/services (pricing: https://www.twilio.com/en-us/verify/pricing)
   - Alternative: Vonage Verify: https://www.vonage.com/communications-apis/verify/
-- [ ] **Fill in legal entity details for shlep.ch** - needed before TWINT/Stripe application
-  - Impressum: legal entity name + form (GmbH/AG/Einzelfirma), registered address, UID (CHE-…), authorised signatory
-  - Privacy: data controller entity + address, set up a real privacy@shlep.ch (or similar) inbox
-  - Terms: confirm place of jurisdiction
-  - Files: `website/legal.js` and `packages/app/src/legal/content.ts` (search for `[bracketed]` placeholders)
+- [ ] **Redeploy shlep.ch — live site is outdated** - shows old design, 10% fee, old copy; must show the current version before the Stripe application
+  - The current site (new brand, 9% + min fee, Kontakt page, filled Impressum) lives in `website/` in the repo, ready to upload
+  - Tell Claude which host shlep.ch runs on (Cloudflare Pages / Netlify / other) for exact redeploy steps — or drag-and-drop the `website/` folder in the host's dashboard
 
 ## Waiting On
 
@@ -47,5 +45,9 @@
 - [ ] **Validate insurance cost with a Swiss broker** - AXA / Helvetia sharing-economy group policies; the ~CHF 0.40/delivery estimate in Shlep_Cost_Summary.md is US-benchmarked
   - AXA business contact: https://www.axa.ch/en/corporate-customers.html · Helvetia: https://www.helvetia.com/ch/web/en/business-customers.html
 - [ ] **Activate formsubmit relay** - submit waitlist + contact form once after deploying shlep.ch, click confirmation link sent to hello@shlep.ch
+- [ ] **Have AGB/Datenschutz reviewed by a Swiss lawyer before public launch** - drafted in-house; the visible "template" disclaimer was removed on 2026-07-21, so treat review as due diligence, not optional forever
+- [ ] **Verify authorised signatory in Impressum matches HR entry** - "Nils Weiler" was filled in; cross-check with the Handelsregister excerpt (ref CH-020.4.069.680-8)
 
 ## Done
+
+- [x] ~~Fill in legal entity details for shlep.ch~~ (2026-07-21) - DeltaSci Solutions GmbH, Jonas-Furrer-Strasse 104, 8400 Winterthur, UID/MWST CHE-347.257.714 (verified against uid.admin.ch), signatory Nils Weiler; lawyer-review disclaimers removed from site + app
