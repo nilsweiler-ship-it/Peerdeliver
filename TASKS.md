@@ -5,6 +5,11 @@
 - [ ] **Apply for Stripe account (Payments + Connect Express + TWINT)** - critical path, longest lead time
   - Blocked by: legal entity + live shlep.ch website
   - dashboard.stripe.com/register → enable Connect (Express) → enable TWINT payment method
+  - How important for the MVP: **not needed to build, demo, or test — mandatory the moment real money moves.**
+    - Without it, everything still works in simulated-payment mode: full app flow, investor demos, TestFlight testing with friendly users. Nothing blocks development.
+    - With real users it's non-negotiable: it IS the escrow ("payment captured only on code-verified delivery"), the driver payouts incl. their KYC/IBAN, the 9%-fee capture, and TWINT itself. No Stripe = no revenue, no payout, and the trust promise on the website isn't true.
+    - It's also a validation gate: the pilot is supposed to prove people *pay through the product* — cash/personal-TWINT workarounds would invalidate exactly that (see Shlep_Validation_Protocol Phase 2).
+    - Why start now anyway: it's the only signup with a real review process (entity check, TWINT enablement) — weeks, not minutes. Applying early means it's ready when the first real delivery is.
 - [ ] **Enroll Apple Developer Program ($99/yr) + Google Play ($25)** - D-U-N-S/company verification can take 1-2 weeks; needed for TestFlight
 - [ ] **Sign up transactional email (Resend or Postmark)** - so the app can actually send verification emails, receipts & delivery notifications (the screens exist, but no email service is connected yet)
   - What it is: a service with an API the backend calls to send email ("resend.emails.send(...)") — reliable delivery, no own mail server. Recommendation: **Resend** (simplest, free up to 3k emails/mo, enough for pilot)
