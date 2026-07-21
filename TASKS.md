@@ -35,8 +35,12 @@
   - Twilio: https://www.twilio.com/try-twilio → then create a Verify service: https://console.twilio.com/us1/develop/verify/services (pricing: https://www.twilio.com/en-us/verify/pricing)
   - Alternative: Vonage Verify: https://www.vonage.com/communications-apis/verify/
 - [ ] **Redeploy shlep.ch — live site is outdated** - shows old design, 10% fee, old copy; must show the current version before the Stripe application
-  - The current site (new brand, 9% + min fee, Kontakt page, filled Impressum) lives in `website/` in the repo, ready to upload
-  - Tell Claude which host shlep.ch runs on (Cloudflare Pages / Netlify / other) for exact redeploy steps — or drag-and-drop the `website/` folder in the host's dashboard
+  - Ready to upload: **`shlep_ch_deploy.zip`** in the Peerdeliver folder (index, legal, kontakt, JS, assets, .htaccess)
+  - Hostpoint steps: https://admin.hostpoint.ch → login → **Server → File Manager** → open the webroot of shlep.ch (usually `www/shlep.ch/` or the folder shown under Websites → shlep.ch → document root)
+  - Delete the old files in that folder (or move them into a `_old/` subfolder as backup), then upload `shlep_ch_deploy.zip` and use the File Manager's **Extract/Entpacken** on it (files must land directly in the webroot, not in a subfolder); delete the zip afterwards
+  - Alternative: SFTP with the FTP user from My Panel → Server → FTP (host = your server name, e.g. `xyz.hostpoint.ch`) and copy the contents of the repo's `website/` folder in
+  - Check after upload: shlep.ch shows the amber/new design and "9 %"; shlep.ch/legal?doc=impressum shows DeltaSci Solutions GmbH + UID; shlep.ch/kontakt.html loads; language switcher works
+  - Then: submit the waitlist form once → confirmation email to hello@shlep.ch → click it (activates the formsubmit relay)
 
 ## Waiting On
 
