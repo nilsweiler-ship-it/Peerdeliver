@@ -15,7 +15,13 @@
   - 5. Test: send yourself a verification email from staging; check it arrives in Gmail inbox (not spam)
   - Prerequisite: you control shlep.ch DNS — same registrar access you'll need for the website deploy anyway
   - No entity needed, no review process — 15 min of clicking + DNS wait
-- [ ] **Create Expo account** - push notifications (free); match/code/delivered alerts not yet implemented
+- [ ] **Create Expo account** - unlocks push notifications + app builds for the stores
+  - What it is: the Shlep app is built on Expo (the React Native framework in `packages/app`). An Expo account gives you two things: **Expo Push** (free notification service — "match found", "code needed", "delivered" alerts, currently not implemented) and **EAS Build** (cloud service that produces the installable iOS/Android binaries for TestFlight / Play Store — no Mac or Xcode setup needed)
+  - 1. Create account at expo.dev/signup (free plan is enough for the pilot; builds cost ~$1-4 each on free tier or come with a paid plan)
+  - 2. Tell Claude the account exists → Claude runs `eas init` to link the project (creates a projectId in app config) and implements `expo-notifications` (ask permission, register device token, server sends via Expo's push API — no extra signup)
+  - 3. Only wrinkle: iOS push needs an APNs key and store builds need signing — both come from the **Apple Developer account** (see task above), Android's push credential from a free Firebase project. EAS walks through all of it interactively at first build
+  - Order: can be done today; becomes fully useful once the Apple/Google developer accounts exist
+  - No entity needed, ~5 min signup
 - [ ] **Sign up Twilio Verify (or Vonage)** - SMS OTP for phone verification, currently simulated
 - [ ] **Fill in legal entity details for shlep.ch** - needed before TWINT/Stripe application
   - Impressum: legal entity name + form (GmbH/AG/Einzelfirma), registered address, UID (CHE-…), authorised signatory
