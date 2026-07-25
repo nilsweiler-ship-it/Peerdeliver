@@ -233,13 +233,21 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(payload),
-    }).catch(function () {
-      location.href = 'mailto:hello@shlep.ch?subject=' +
-        encodeURIComponent('Shlep Lieferung') + '&body=' + encodeURIComponent(JSON.stringify(payload, null, 2));
-    });
-
-    document.getElementById('f').style.display = 'none';
-    document.getElementById('ok').classList.add('on');
+    })
+      .then(function (r) { return r.json().catch(function () { return {}; }); })
+      .then(function (res) {
+        var ok = res && (res.success === true || res.success === 'true');
+        if (!ok) throw new Error((res && (res.message || res.error)) || 'relay rejected');
+        document.getElementById('f').style.display = 'none';
+        document.getElementById('ok').classList.add('on');
+      })
+      .catch(function (e) {
+        console.error('[shlep new]', e && e.message);
+        err.innerHTML = 'Konnte gerade nicht übermittelt werden — schreib uns direkt: ' +
+          '<a href="mailto:hello@shlep.ch?subject=' + encodeURIComponent('Shlep Lieferung') +
+          '&body=' + encodeURIComponent(JSON.stringify(payload, null, 2)) +
+          '" style="color:inherit;text-decoration:underline;">hello@shlep.ch</a>';
+      });
   });
 })();
 </script>

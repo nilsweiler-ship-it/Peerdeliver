@@ -658,16 +658,30 @@
       var err = document.getElementById('formErr');
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { err.textContent = t('cta.err'); return; }
       err.textContent = '';
-      // Waitlist backend: formsubmit.co relay to hello@shlep.ch (activate by first submission), mailto fallback.
+      // Waitlist relay → hello@shlep.ch. Only show success if the relay really accepted it;
+      // a silent failure here would mean lost signups.
+      var btn = document.querySelector('#waitform button');
+      if (btn) btn.disabled = true;
       fetch('https://formsubmit.co/ajax/hello@shlep.ch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({ email: email, role: role, source: 'shlep.ch waitlist', _subject: 'Shlep Warteliste: ' + email })
-      }).catch(function () {
-        location.href = 'mailto:hello@shlep.ch?subject=' + encodeURIComponent('Shlep Warteliste') + '&body=' + encodeURIComponent(email + ' (' + role + ')');
-      });
-      document.getElementById('waitbox').style.display = 'none';
-      document.getElementById('waitok').classList.add('on');
+      })
+        .then(function (r) { return r.json().catch(function () { return {}; }); })
+        .then(function (res) {
+          var ok = res && (res.success === true || res.success === 'true');
+          if (!ok) throw new Error((res && (res.message || res.error)) || 'relay rejected');
+          document.getElementById('waitbox').style.display = 'none';
+          document.getElementById('waitok').classList.add('on');
+        })
+        .catch(function (e) {
+          if (btn) btn.disabled = false;
+          console.error('[shlep waitlist]', e && e.message);
+          err.textContent = t('cta.errSend');
+          err.innerHTML += ' <a href="mailto:hello@shlep.ch?subject=' +
+            encodeURIComponent('Shlep Warteliste') + '&body=' + encodeURIComponent(email + ' (' + role + ')') +
+            '" style="color:inherit;text-decoration:underline;">hello@shlep.ch</a>';
+        });
     });
   })();
 

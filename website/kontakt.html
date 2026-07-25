@@ -193,11 +193,20 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify({ name: name, email: email, topic: topic, message: msg, source: 'shlep.ch kontakt', _subject: 'Shlep Kontakt (' + topic + '): ' + name })
-    }).catch(function () {
-      location.href = 'mailto:hello@shlep.ch?subject=' + encodeURIComponent('Shlep Kontakt: ' + topic) + '&body=' + encodeURIComponent(msg + '\n\n— ' + name + ' (' + email + ')');
-    });
-    document.getElementById('contactForm').style.display = 'none';
-    document.getElementById('cOk').classList.add('on');
+    })
+      .then(function (r) { return r.json().catch(function () { return {}; }); })
+      .then(function (res) {
+        var ok = res && (res.success === true || res.success === 'true');
+        if (!ok) throw new Error((res && (res.message || res.error)) || 'relay rejected');
+        document.getElementById('contactForm').style.display = 'none';
+        document.getElementById('cOk').classList.add('on');
+      })
+      .catch(function (e) {
+        console.error('[shlep kontakt]', e && e.message);
+        err.innerHTML = t('contact.errSend') + ' <a href="mailto:hello@shlep.ch?subject=' +
+          encodeURIComponent('Shlep Kontakt: ' + topic) + '&body=' + encodeURIComponent(msg + '\n\n— ' + name + ' (' + email + ')') +
+          '" style="color:inherit;text-decoration:underline;">hello@shlep.ch</a>';
+      });
   });
   applyLang(getLang());
 </script>
