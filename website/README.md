@@ -28,7 +28,11 @@ Any static host works. Fastest:
 **DNS note:** shlep.ch's nameservers point at Netlify (`dns1-4.p04.nsone.net`), so ALL DNS records (MX, SPF/DKIM, api subdomain) must be edited in Netlify → Domains → shlep.ch → DNS. The Hostpoint DNS zone is inactive and ignored.
 
 ## Waitlist backend
-The signup form POSTs to `formsubmit.co/ajax/hello@shlep.ch` (free relay, no account). **One-time activation:** submit the form once after deploying — formsubmit sends a confirmation link to hello@shlep.ch; click it and all further signups arrive by email (address, role: send/drive/both). If the request fails (e.g. offline), the form falls back to a prefilled mailto.
+The signup form POSTs to `formsubmit.co/ajax/hello@shlep.ch` (free relay, no account). **Activated 2026-07-25** — signups, Kontakt messages and `/new` delivery requests all arrive at hello@shlep.ch (forwarded to Gmail).
+
+⚠️ **Deliverability:** formsubmit sends from its own domain, so Gmail tends to file the notifications as spam. Whitelist `formsubmit.co` in Gmail. Longer term, move the forms server-side (own endpoint + Resend) — see TASKS.md.
+
+The forms check the relay's response and only show the success state if it actually accepted the submission; otherwise they surface an error plus a direct mailto link.
 
 ## Before submitting to TWINT / Stripe — fill these in
 The legal pages contain `[bracketed]` placeholders that MUST be completed with your real details:

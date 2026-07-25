@@ -36,10 +36,6 @@
   - Twilio: https://www.twilio.com/try-twilio → then create a Verify service: https://console.twilio.com/us1/develop/verify/services (pricing: https://www.twilio.com/en-us/verify/pricing)
   - Alternative: Vonage Verify: https://www.vonage.com/communications-apis/verify/
 - [ ] **Verify Impressum entity text in browser** - open https://shlep.ch/legal?doc=impressum and confirm "DeltaSci Solutions GmbH" + UID CHE-347.257.714 render (page text is JS-rendered, couldn't auto-verify)
-- [ ] **Activate the waitlist/contact relay** - UNBLOCKED (mail works since 2026-07-25)
-  - Go to https://shlep.ch → scroll to "Sei von Anfang an dabei" → enter your own email → Eintragen
-  - formsubmit sends a confirmation link to hello@shlep.ch → forwards to your Gmail → click it
-  - After that, every waitlist signup + Kontakt message + /new delivery request arrives by email. Test once more afterwards to confirm.
 
 - [ ] **Deploy the API to api.shlep.ch** - last blocker before a partner can integrate live (widget currently falls back to local price estimates)
   - Repo now has `render.yaml` + `packages/server/Dockerfile` — Render reads them automatically
@@ -53,11 +49,14 @@
 
 ## Waiting On
 
+- [ ] **Stop form notifications landing in junk** - the relay works, but formsubmit mail hits Gmail's spam folder (it sends from their domain, not shlep.ch, so it fails DMARC alignment)
+  - Interim: in Gmail mark the notification as "Not spam" + create a filter for `from:formsubmit.co` → never send to spam. Do this now so you don't miss real signups.
+  - Proper fix: once Resend is verified + the API is deployed, move the waitlist/contact forms server-side (POST to our own endpoint → store in DB → notify via Resend from hello@shlep.ch). Removes the third-party dependency AND gives you the signups as data instead of emails.
+
 ## Someday
 
 - [ ] **Validate insurance cost with a Swiss broker** - AXA / Helvetia sharing-economy group policies; the ~CHF 0.40/delivery estimate in Shlep_Cost_Summary.md is US-benchmarked
   - AXA business contact: https://www.axa.ch/en/corporate-customers.html · Helvetia: https://www.helvetia.com/ch/web/en/business-customers.html
-- [ ] **Activate formsubmit relay** - submit waitlist + contact form once after deploying shlep.ch, click confirmation link sent to hello@shlep.ch
 - [ ] **Have AGB/Datenschutz reviewed by a Swiss lawyer before public launch** - drafted in-house; the visible "template" disclaimer was removed on 2026-07-21, so treat review as due diligence, not optional forever
 - [ ] **Verify authorised signatory in Impressum matches HR entry** - "Nils Weiler" was filled in; cross-check with the Handelsregister excerpt (ref CH-020.4.069.680-8)
 
