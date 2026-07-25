@@ -22,7 +22,8 @@
   - 3. Add those records in **Netlify → Domains → shlep.ch → DNS panel** (that's where shlep.ch DNS actually lives — NOT Hostpoint). Verification usually turns green in minutes-to-hours
   - 4. In Resend: create an API key → goes into `packages/server/.env` as e.g. `RESEND_API_KEY=...` (Claude wires the send calls into the backend once the key exists)
   - 5. Test: send yourself a verification email from staging; check it arrives in Gmail inbox (not spam)
-  - Prerequisite: you control shlep.ch DNS — same registrar access you'll need for the website deploy anyway
+  - **Current state: the shlep.ch domain in Resend shows "Failed"** — its records were added to the dead Hostpoint zone. Re-copy them into Netlify DNS and hit Verify again.
+  - ⚠️ SPF: the root already has `v=spf1 redirect=spf.mail.hostpoint.ch` (for Hostpoint mail). If Resend wants its own SPF on the root, do NOT add a second TXT — send Claude both values and they get merged into one valid record.
   - No entity needed, no review process — 15 min of clicking + DNS wait
 - [ ] **Create Expo account** - unlocks push notifications + app builds for the stores
   - What it is: the Shlep app is built on Expo (the React Native framework in `packages/app`). An Expo account gives you two things: **Expo Push** (free notification service — "match found", "code needed", "delivered" alerts, currently not implemented) and **EAS Build** (cloud service that produces the installable iOS/Android binaries for TestFlight / Play Store — no Mac or Xcode setup needed)
@@ -35,26 +36,10 @@
   - Twilio: https://www.twilio.com/try-twilio → then create a Verify service: https://console.twilio.com/us1/develop/verify/services (pricing: https://www.twilio.com/en-us/verify/pricing)
   - Alternative: Vonage Verify: https://www.vonage.com/communications-apis/verify/
 - [ ] **Verify Impressum entity text in browser** - open https://shlep.ch/legal?doc=impressum and confirm "DeltaSci Solutions GmbH" + UID CHE-347.257.714 render (page text is JS-rendered, couldn't auto-verify)
-- [ ] **Activate the waitlist/contact relay** - submit the waitlist form once on the live site → confirmation email lands at hello@shlep.ch → click the link (one-time formsubmit activation, then signups + contact messages arrive by email)
-  - BLOCKED until the MX fix above — hello@shlep.ch cannot receive mail right now
-
-- [ ] **FIX DNS: shlep.ch is served by NETLIFY, not Hostpoint** - discovered 2026-07-25; the Hostpoint DNS zone is inactive, so anything added there does nothing
-  - Live nameservers: `dns1–4.p04.nsone.net` (Netlify DNS). Edit records at: Netlify → Domains → shlep.ch → **DNS panel** (NOT Hostpoint "Domain-Zugriff")
-  - [x] ~~**1. Restore mail**~~ DONE 2026-07-25 — MX + SPF verified live in DNS:
-    `10 mx1.mail.hostpoint.ch` / `10 mx2.mail.hostpoint.ch`, TXT `v=spf1 redirect=spf.mail.hostpoint.ch`
-    (records that were added in Netlify DNS:)
-    | Type | Name | Value | Priority |
-    |---|---|---|---|
-    | MX | @ (shlep.ch) | `mx1.mail.hostpoint.ch` | 10 |
-    | MX | @ (shlep.ch) | `mx2.mail.hostpoint.ch` | 10 |
-    | TXT | @ (shlep.ch) | `v=spf1 redirect=spf.mail.hostpoint.ch` | — |
-    - optional (mail client autoconfig): CNAME `autoconfig` → `autoconfig.mail.hostpoint.ch`, CNAME `autodiscover` → `autoconfig-nonssl.mail.hostpoint.ch`
-    - NEXT: create the `hello@shlep.ch` mailbox/forwarding alias in **Hostpoint → E-Mail**, then send a test mail from Gmail to confirm delivery
-  - **2. Re-do Resend domain verification** (currently "Failed" because its records went into the dead Hostpoint zone):
-    Resend → Domains → shlep.ch → copy the DKIM/SPF/return-path records → paste them into **Netlify DNS** → click Verify again
-    - note: if Resend also wants an SPF TXT on the root, MERGE it with the Hostpoint SPF above into ONE record — two SPF TXT records on the same name break both
-  - **3. Later, for the API:** the `api.shlep.ch` CNAME from Render also goes into Netlify DNS
-  - Also: set up the `hello@shlep.ch` forwarding alias in Hostpoint (E-Mail section) once MX resolves again
+- [ ] **Activate the waitlist/contact relay** - UNBLOCKED (mail works since 2026-07-25)
+  - Go to https://shlep.ch → scroll to "Sei von Anfang an dabei" → enter your own email → Eintragen
+  - formsubmit sends a confirmation link to hello@shlep.ch → forwards to your Gmail → click it
+  - After that, every waitlist signup + Kontakt message + /new delivery request arrives by email. Test once more afterwards to confirm.
 
 - [ ] **Deploy the API to api.shlep.ch** - last blocker before a partner can integrate live (widget currently falls back to local price estimates)
   - Repo now has `render.yaml` + `packages/server/Dockerfile` — Render reads them automatically
@@ -77,6 +62,8 @@
 - [ ] **Verify authorised signatory in Impressum matches HR entry** - "Nils Weiler" was filled in; cross-check with the Handelsregister excerpt (ref CH-020.4.069.680-8)
 
 ## Done
+
+- [x] ~~Restore mail routing for shlep.ch~~ (2026-07-25) - root cause: DNS is served by **Netlify** (`dns1-4.p04.nsone.net`), not Hostpoint — the Hostpoint zone is inactive and ignored. Added MX (`mx1`/`mx2.mail.hostpoint.ch`, prio 10) + SPF in Netlify DNS, verified live; hello@shlep.ch forwarding to Gmail confirmed working. **All future DNS changes (Resend records, api.shlep.ch CNAME) go in Netlify → Domains → shlep.ch → DNS.**
 
 - [x] ~~Redeploy shlep.ch with the current site~~ (2026-07-25) - hosting is **Netlify** (project "shlep.ch", team Shlep), NOT Hostpoint — updated via Netlify Drop → Deploys → drag `website/` folder. Verified live: new design, 9%/min-fee pricing, packaging USP, Switzerland-wide copy, Kontakt page. NOTE: shlep.ch DNS is still managed at Hostpoint (Domain-Zugriff → DNS zone) — that's where Resend email records go later, but the website itself lives on Netlify (redeploy = drag folder onto the Netlify project, no Hostpoint involved).
 - [x] ~~Fill in legal entity details for shlep.ch~~ (2026-07-21) - DeltaSci Solutions GmbH, Jonas-Furrer-Strasse 104, 8400 Winterthur, UID/MWST CHE-347.257.714 (verified against uid.admin.ch), signatory Nils Weiler; lawyer-review disclaimers removed from site + app
