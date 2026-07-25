@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 260">
+  
+  <svg x="96" y="58" width="116" height="139" viewBox="14 8 20 24" overflow="visible">
+    <path d="M30 12 C 17 12, 17 20, 24 20 C 31 20, 31 28, 18 28"
+          stroke="#E0A32E" stroke-width="3.7" stroke-linecap="round" fill="none"/>
+    <circle cx="30" cy="12" r="2.7" fill="#E0A32E"/>
+    <circle cx="18" cy="28" r="3.6" fill="#E0A32E"/>
+  </svg>
+  <text x="206" y="182" font-family="Bricolage Grotesque, Arial Black, Helvetica, sans-serif"
+        font-size="150" font-weight="800" letter-spacing="-6" fill="#17160F">hlep</text>
+</svg>
