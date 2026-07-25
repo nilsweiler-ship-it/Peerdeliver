@@ -64,6 +64,7 @@
       medium: 'Fahrten auf dieser Strecke',
       low: 'Wenige Fahrten — etwas Geduld',
       none: 'Noch keine Fahrten — trag dich ein',
+      unknown: 'Verfügbarkeit wird geprüft',
       unavailable: 'Für diese Strecke noch nicht verfügbar.',
       err: 'Shlep-Lieferung gerade nicht verfügbar.',
       approx: 'ca.',
@@ -79,6 +80,7 @@
       medium: 'Trips on this route',
       low: 'Few trips — may take longer',
       none: 'No trips yet — join the list',
+      unknown: 'Checking availability',
       unavailable: 'Not available for this route yet.',
       err: 'Shlep delivery unavailable right now.',
       approx: 'approx.',
@@ -112,12 +114,12 @@
   }
 
   function coverageDot(level) {
-    var c = { high: '#14532D', medium: '#E0A32E', low: '#B98114', none: '#8a867c' }[level] || '#8a867c';
+    var c = { high: '#14532D', medium: '#E0A32E', low: '#B98114', none: '#8a867c', unknown: '#8a867c' }[level] || '#8a867c';
     return '<span class="shlepw__dot" style="background:' + c + '"></span>';
   }
 
   function render(el, quote, L) {
-    if (!quote.available || quote.coverage.level === 'none') {
+    if (!quote.available || (quote.coverage.level === 'none' && !quote.estimated)) {
       el.innerHTML =
         '<div class="shlepw__mark">' + MARK + '</div>' +
         '<div class="shlepw__body"><div class="shlepw__title">' + L.title + '</div>' +
@@ -158,6 +160,47 @@
         );
       });
     }
+  }
+
+  /**
+   * Offline fallback.
+   *
+   * If the quote API is unreachable (network blip, or a partner integrating
+   * before their key is live) we still render a usable option using the same
+   * deterministic pricing formula the server uses. We deliberately omit the
+   * coverage signal — supply data only exists server-side, and guessing it
+   * would be dishonest. The CTA still works via the deep link.
+   */
+  function localQuote(body) {
+    var R = 6371, r = function (d) { return d * Math.PI / 180; };
+    var dLat = r(body.toLat - body.fromLat), dLng = r(body.toLng - body.fromLng);
+    var h = Math.pow(Math.sin(dLat / 2), 2) +
+      Math.pow(Math.sin(dLng / 2), 2) * Math.cos(r(body.fromLat)) * Math.cos(r(body.toLat));
+    var km = Math.round(2 * R * Math.asin(Math.sqrt(h)) * 10) / 10;
+    var F = { small: 1, medium: 1.35, large: 1.9 }[body.size || 'small'] || 1;
+    var price = Math.min(Math.max(Math.round((8 + km * 0.55) * F), 8), 200);
+    var fee = Math.min(Math.round(Math.max(price * 0.09, 1.5) * 100) / 100, price);
+
+    var p = new URLSearchParams({
+      fromLat: body.fromLat.toFixed(5), fromLng: body.fromLng.toFixed(5),
+      toLat: body.toLat.toFixed(5), toLng: body.toLng.toFixed(5),
+      price: String(price), size: body.size || 'small', src: 'partner',
+    });
+    if (body.declaredValueCHF) p.set('value', String(body.declaredValueCHF));
+
+    return {
+      available: km <= 150,
+      currency: 'CHF',
+      priceCHF: price,
+      distanceKm: km,
+      platformFeeCHF: fee,
+      driverPayoutCHF: Math.round((price - fee) * 100) / 100,
+      coverage: { level: 'unknown', matchingRoutes: null, estimatedMatchHours: null },
+      insuredUpToCHF: 1000,
+      co2SavedKg: Math.round(km * 0.18 * 10) / 10,
+      deepLink: 'https://shlep.ch/new?' + p.toString(),
+      estimated: true,
+    };
   }
 
   function mount(el) {
@@ -214,10 +257,16 @@
       })
       .catch(function () {
         el.className = el.className.replace(' shlepw--loading', '');
-        el.innerHTML =
-          '<div class="shlepw__mark">' + MARK + '</div><div class="shlepw__body">' +
-          '<div class="shlepw__title">' + L.title + '</div>' +
-          '<div class="shlepw__err">' + L.err + '</div></div>';
+        try {
+          var q = localQuote(body);
+          render(el, q, L);
+          el.dispatchEvent(new CustomEvent('shlep:quote', { bubbles: true, detail: q }));
+        } catch (e) {
+          el.innerHTML =
+            '<div class="shlepw__mark">' + MARK + '</div><div class="shlepw__body">' +
+            '<div class="shlepw__title">' + L.title + '</div>' +
+            '<div class="shlepw__err">' + L.err + '</div></div>';
+        }
       });
   }
 

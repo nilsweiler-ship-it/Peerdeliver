@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Shlep — Lieferung starten</title>
+<meta name="description" content="Deine Shlep-Lieferung ist vorbereitet. Trag dich ein und wir melden uns, sobald eine fahrende Person auf deiner Strecke unterwegs ist." />
+<meta name="theme-color" content="#F3EFE6" />
+<meta name="robots" content="noindex" />
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="12 6 24 28"><path d="M30 12 C 17 12, 17 20, 24 20 C 31 20, 31 28, 18 28" stroke="%23E0A32E" stroke-width="3.7" stroke-linecap="round" fill="none"/><circle cx="30" cy="12" r="2.7" fill="%23E0A32E"/><circle cx="18" cy="28" r="3.6" fill="%23E0A32E"/></svg>' />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --accent:#E0A32E; --accent-deep:#B98114; --green:#14532D; --green-light:#81A18E;
+    --paper:#F3EFE6; --paper2:#EFEADF; --card:#FBFAF4;
+    --ink:#17160F; --ink2:#57534A; --ink3:#8a867c; --dark:#17160F;
+    --line:rgba(23,22,15,.13);
+    --display:'Bricolage Grotesque',sans-serif; --body:'IBM Plex Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--body);color:var(--ink);background:var(--paper);line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column;}
+  a{color:inherit;text-decoration:none;}
+  button,input{font-family:inherit;}
+  .wrap{max-width:680px;margin:0 auto;padding:0 clamp(20px,5vw,32px);width:100%;}
+  @keyframes pop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+  header.nav{border-bottom:1px solid var(--line);background:rgba(243,239,230,.9);}
+  .navrow{display:flex;align-items:center;justify-content:space-between;padding:14px 0;}
+  .brand{font-family:var(--display);font-weight:800;font-size:24px;letter-spacing:-.03em;display:inline-flex;align-items:center;}
+  .brand svg{display:block;margin-right:-1px;transform:translateY(1px);}
+  .src{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--ink3);}
+  main{flex:1;padding:clamp(28px,5vw,48px) 0;}
+  .eyebrow{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.12em;color:var(--accent-deep);}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(28px,4vw,40px);line-height:1.06;letter-spacing:-.03em;margin:12px 0 0;}
+  .lead{font-size:16.5px;color:var(--ink2);margin:14px 0 0;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:clamp(20px,3vw,28px);margin-top:26px;}
+  .route{display:flex;align-items:center;gap:14px;}
+  .route .col{flex:1;min-width:0;}
+  .route .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--ink3);}
+  .route .v{font-weight:700;font-size:16px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .route .line{flex:none;width:64px;height:2px;background:repeating-linear-gradient(90deg,var(--accent) 0 4px,transparent 4px 9px);position:relative;}
+  .route .line::before,.route .line::after{content:"";position:absolute;top:50%;transform:translateY(-50%);border-radius:50%;}
+  .route .line::before{left:-8px;width:9px;height:9px;background:var(--accent);}
+  .route .line::after{right:-9px;width:9px;height:9px;border:2.5px solid var(--green);background:var(--paper);}
+  .facts{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;padding-top:18px;border-top:1px solid var(--line);}
+  .fact{background:var(--paper2);border:1px solid var(--line);border-radius:999px;padding:6px 13px;font-size:13px;font-weight:600;}
+  .fact.eco{background:#E7F0E9;border-color:#c3ddc9;color:var(--green);}
+  .pricerow{display:flex;justify-content:space-between;align-items:baseline;margin-top:20px;padding-top:18px;border-top:1px solid var(--line);}
+  .pricerow .l{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;color:var(--ink2);}
+  .pricerow .p{font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:-.02em;}
+  .note{font-size:13px;color:var(--ink3);margin-top:8px;}
+  form{margin-top:24px;}
+  .fieldrow{display:flex;gap:10px;flex-wrap:wrap;}
+  input[type=email]{flex:1;min-width:220px;padding:15px 18px;border-radius:999px;border:1.5px solid rgba(23,22,15,.18);font-size:15.5px;background:#fff;color:var(--ink);outline:none;}
+  input[type=email]:focus{border-color:var(--accent);}
+  button.go{background:var(--accent);color:var(--ink);border:none;padding:15px 26px;border-radius:999px;font-size:15.5px;font-weight:700;cursor:pointer;box-shadow:0 10px 26px -12px rgba(224,163,46,.8);}
+  button.go:hover{background:#d69922;}
+  .err{min-height:20px;margin-top:10px;font-size:13.5px;color:#a33b1f;font-weight:600;}
+  .ok{display:none;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:clamp(24px,4vw,34px);margin-top:26px;text-align:center;}
+  .ok.on{display:block;}
+  .ok .badge{display:inline-flex;width:52px;height:52px;border-radius:999px;background:var(--green);align-items:center;justify-content:center;margin-bottom:14px;animation:pop .4s both;}
+  .ok h2{font-family:var(--display);font-weight:800;font-size:24px;}
+  .ok p{font-size:15px;color:var(--ink2);margin-top:8px;}
+  .steps{margin-top:30px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;}
+  .step .n{width:26px;height:26px;border-radius:8px;background:var(--accent);color:var(--ink);font-family:var(--display);font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step h3{font-family:var(--display);font-weight:700;font-size:15px;margin:10px 0 4px;}
+  .step p{font-size:13px;color:var(--ink2);line-height:1.45;}
+  footer{background:var(--dark);color:#c8c4ba;font-size:13px;margin-top:40px;}
+  .footrow{display:flex;flex-wrap:wrap;gap:12px 22px;justify-content:space-between;padding:20px 0;}
+  .footrow a{color:#c8c4ba;}
+  @media(max-width:560px){.steps{grid-template-columns:1fr;}.route{flex-direction:column;align-items:stretch;gap:10px;}.route .line{width:100%;height:2px;}}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap navrow">
+    <a class="brand" href="index.html">
+      <svg height="22" viewBox="14 8 20 24" fill="none"><path d="M30 12 C 17 12, 17 20, 24 20 C 31 20, 31 28, 18 28" stroke="var(--accent)" stroke-width="3.7" stroke-linecap="round"/><circle cx="30" cy="12" r="2.7" fill="var(--accent)"/><circle cx="18" cy="28" r="3.6" fill="var(--accent)"/></svg><span>hlep</span>
+    </a>
+    <span class="src" id="srcLabel"></span>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="eyebrow">LIEFERUNG VORBEREITET</div>
+    <h1 id="headline">Fast geschafft.</h1>
+    <p class="lead" id="lead">Wir haben deine Strecke übernommen. Trag deine E-Mail ein — wir melden uns, sobald jemand diese Route fährt, und du schliesst die Lieferung in der App ab.</p>
+
+    <div class="card" id="summary">
+      <div class="route">
+        <div class="col"><div class="k">VON</div><div class="v" id="fromV">—</div></div>
+        <div class="line" aria-hidden="true"></div>
+        <div class="col"><div class="k">NACH</div><div class="v" id="toV">—</div></div>
+      </div>
+      <div class="facts" id="facts"></div>
+      <div class="pricerow">
+        <span class="l">RICHTPREIS</span>
+        <span class="p" id="priceV">—</span>
+      </div>
+      <div class="note" id="priceNote">Den endgültigen Preis bestätigst du selbst — 91 % gehen an die fahrende Person.</div>
+    </div>
+
+    <form id="f" novalidate>
+      <div class="fieldrow">
+        <input type="email" id="email" placeholder="deine@email.ch" required />
+        <button class="go" type="submit">Lieferung vormerken</button>
+      </div>
+      <div class="err" id="err"></div>
+    </form>
+
+    <div class="ok" id="ok">
+      <div class="badge"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#F3EFE6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg></div>
+      <h2>Vorgemerkt!</h2>
+      <p>Wir melden uns per E-Mail, sobald deine Strecke bedient wird. Bis dann, Nachbar.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h3>Vormerken</h3><p>Route und Richtpreis sind schon übernommen — du gibst nur deine E-Mail an.</p></div>
+      <div class="step"><div class="n">2</div><h3>Zuordnen</h3><p>Jemand, der die Strecke ohnehin fährt, nimmt die Lieferung an.</p></div>
+      <div class="step"><div class="n">3</div><h3>Liefern</h3><p>Abholung und Zustellung per 6-stelligem Code bestätigt, versichert bis CHF 1'000.</p></div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap footrow">
+    <span>© 2026 Shlep · DeltaSci Solutions GmbH</span>
+    <span><a href="index.html">Über Shlep</a> · <a href="legal.html?doc=terms">AGB</a> · <a href="kontakt.html">Kontakt</a></span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var num = function (k) { var v = parseFloat(q.get(k)); return isNaN(v) ? null : v; };
+
+  var from = { lat: num('fromLat'), lng: num('fromLng') };
+  var to = { lat: num('toLat'), lng: num('toLng') };
+  var price = num('price');
+  var size = q.get('size') || 'small';
+  var value = num('value');
+  var src = q.get('src');
+
+  if (src) document.getElementById('srcLabel').textContent = 'VIA ' + src.toUpperCase();
+
+  // ---- distance + facts -------------------------------------------------
+  function haversineKm(a, b) {
+    if (!a.lat || !b.lat) return null;
+    var R = 6371, r = function (d) { return d * Math.PI / 180; };
+    var dLat = r(b.lat - a.lat), dLng = r(b.lng - a.lng);
+    var h = Math.pow(Math.sin(dLat / 2), 2) +
+      Math.pow(Math.sin(dLng / 2), 2) * Math.cos(r(a.lat)) * Math.cos(r(b.lat));
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+
+  var km = haversineKm(from, to);
+  var SIZE_LABEL = { small: 'Klein', medium: 'Mittel', large: 'Gross / sperrig' };
+
+  if (price == null && km != null) {
+    var F = { small: 1, medium: 1.35, large: 1.9 }[size] || 1;
+    price = Math.min(Math.max(Math.round((8 + km * 0.55) * F), 8), 200);
+  }
+
+  document.getElementById('priceV').textContent = price != null ? 'CHF ' + price.toFixed(2) : '—';
+
+  var facts = [];
+  if (km != null) facts.push({ t: Math.round(km * 10) / 10 + ' km' });
+  facts.push({ t: SIZE_LABEL[size] || 'Klein' });
+  if (value) facts.push({ t: 'Warenwert CHF ' + value });
+  facts.push({ t: 'Versichert bis CHF 1’000' });
+  facts.push({ t: 'Code-verifizierte Übergabe' });
+  if (km != null) facts.push({ t: (Math.round(km * 0.18 * 10) / 10) + ' kg CO₂ gespart', eco: true });
+
+  document.getElementById('facts').innerHTML = facts
+    .map(function (f) { return '<span class="fact' + (f.eco ? ' eco' : '') + '">' + f.t + '</span>'; })
+    .join('');
+
+  // ---- place names via the free Swiss federal geo API --------------------
+  function placeName(pt, el) {
+    if (!pt.lat) { el.textContent = '—'; return; }
+    el.textContent = pt.lat.toFixed(3) + ', ' + pt.lng.toFixed(3);
+    var url = 'https://api3.geo.admin.ch/rest/services/api/MapServer/identify' +
+      '?geometryType=esriGeometryPoint&geometry=' + pt.lng + ',' + pt.lat +
+      '&sr=4326&tolerance=500&layers=all:ch.swisstopo.swissboundaries3d-gemeinde-flaeche&returnGeometry=false';
+    fetch(url)
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var n = d && d.results && d.results[0] && d.results[0].attributes &&
+          (d.results[0].attributes.gemname || d.results[0].attributes.name);
+        if (n) el.textContent = n;
+      })
+      .catch(function () { /* keep coordinates */ });
+  }
+  placeName(from, document.getElementById('fromV'));
+  placeName(to, document.getElementById('toV'));
+
+  // No route in the link at all → send them to the normal landing page copy.
+  if (!from.lat || !to.lat) {
+    document.getElementById('headline').textContent = 'Lieferung starten';
+    document.getElementById('lead').textContent =
+      'Shlep startet 2026 in der ganzen Schweiz. Trag dich ein — wir melden uns, sobald es losgeht.';
+    document.getElementById('summary').style.display = 'none';
+  }
+
+  // ---- waitlist submit (same relay as the rest of the site) --------------
+  document.getElementById('f').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var email = document.getElementById('email').value.trim();
+    var err = document.getElementById('err');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      err.textContent = 'Bitte gib eine gültige E-Mail-Adresse ein.';
+      return;
+    }
+    err.textContent = '';
+
+    var payload = {
+      email: email,
+      source: 'shlep.ch/new' + (src ? ' via ' + src : ''),
+      route: (document.getElementById('fromV').textContent || '?') + ' → ' +
+             (document.getElementById('toV').textContent || '?'),
+      distanceKm: km != null ? Math.round(km * 10) / 10 : null,
+      priceCHF: price,
+      size: size,
+      declaredValueCHF: value,
+      _subject: 'Shlep Lieferungs-Vormerkung: ' + email,
+    };
+
+    fetch('https://formsubmit.co/ajax/hello@shlep.ch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload),
+    }).catch(function () {
+      location.href = 'mailto:hello@shlep.ch?subject=' +
+        encodeURIComponent('Shlep Lieferung') + '&body=' + encodeURIComponent(JSON.stringify(payload, null, 2));
+    });
+
+    document.getElementById('f').style.display = 'none';
+    document.getElementById('ok').classList.add('on');
+  });
+})();
+</script>
+</body>
+</html>

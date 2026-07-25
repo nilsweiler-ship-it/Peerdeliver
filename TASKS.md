@@ -37,6 +37,16 @@
 - [ ] **Verify Impressum entity text in browser** - open https://shlep.ch/legal?doc=impressum and confirm "DeltaSci Solutions GmbH" + UID CHE-347.257.714 render (page text is JS-rendered, couldn't auto-verify)
 - [ ] **Activate the waitlist/contact relay** - submit the waitlist form once on the live site → confirmation email lands at hello@shlep.ch → click the link (one-time formsubmit activation, then signups + contact messages arrive by email)
 
+- [ ] **Deploy the API to api.shlep.ch** - last blocker before a partner can integrate live (widget currently falls back to local price estimates)
+  - Repo now has `render.yaml` + `packages/server/Dockerfile` — Render reads them automatically
+  - 1. Push this repo to GitHub (private is fine)
+  - 2. https://dashboard.render.com → New → **Blueprint** → select the repo → Apply. Creates `shlep-api` (Frankfurt) + Postgres `shlep-db`
+  - 3. In the DB shell run once: `CREATE EXTENSION IF NOT EXISTS postgis;` (driver-route matching needs it)
+  - 4. Set env var `PARTNER_API_KEYS` = `demo:pk_demo_shlep_2026` (add real partners later as `name:key` pairs)
+  - 5. Render → shlep-api → Settings → **Custom Domain** → `api.shlep.ch` → add the CNAME it shows to the Hostpoint DNS zone (Domain-Zugriff)
+  - 6. Verify: `curl https://api.shlep.ch/health` → `{"status":"ok"}`, then reload shlep.ch/partner.html — the demo widget should show live coverage instead of an estimate
+  - Cost: ~USD 7/mo web + ~USD 6/mo DB on starter plans
+
 ## Waiting On
 
 ## Someday

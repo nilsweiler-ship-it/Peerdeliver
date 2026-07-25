@@ -50,6 +50,8 @@ Ein Script-Tag rendert die Lieferoption inklusive **Live-Preis, Verfügbarkeit a
 
 Front-end only — **kein Backend-Aufwand auf eurer Seite**. Events `shlep:quote` und `shlep:select` für euer Tracking; `data-lang` für DE/EN; `Shlep.refresh()` für SPA-Checkouts.
 
+**Ausfallsicher:** ist die Quote-API kurz nicht erreichbar, zeigt das Widget einen Preis-Schätzwert statt einer Fehlermeldung. Euer Checkout bricht nie wegen uns.
+
 Live ansehen: **shlep.ch/partner.html**
 
 ### Stufe 3 — REST-API & Webhooks · auf Anfrage, Server-Key

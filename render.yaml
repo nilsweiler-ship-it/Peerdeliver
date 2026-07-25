@@ -1,0 +1,59 @@
+# Render blueprint for the Shlep API (api.shlep.ch).
+#
+# Deploy:
+#   1. Push this repo to GitHub.
+#   2. Render → New → Blueprint → pick the repo. Render reads this file.
+#   3. Set the secret env vars marked `sync: false` in the dashboard.
+#   4. Render → shlep-api → Settings → Custom Domain → api.shlep.ch,
+#      then add the CNAME it shows to the shlep.ch DNS zone at Hostpoint.
+#
+# Note: PostGIS is required (driver routes use geography queries). Render's
+# managed Postgres supports it — run `CREATE EXTENSION postgis;` once, or let
+# the Prisma migration do it.
+services:
+  - type: web
+    name: shlep-api
+    runtime: docker
+    dockerfilePath: ./packages/server/Dockerfile
+    dockerContext: .
+    plan: starter
+    region: frankfurt
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: DATABASE_URL
+        fromDatabase:
+          name: shlep-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: PLATFORM_FEE_PERCENT
+        value: 9
+      - key: PLATFORM_FEE_MIN_CHF
+        value: 1.5
+      - key: PARTNER_DEEPLINK_BASE
+        value: https://shlep.ch
+      - key: PARTNER_MAX_DISTANCE_KM
+        value: 150
+      # Partner widget keys — format: name:key,name2:key2
+      - key: PARTNER_API_KEYS
+        sync: false
+      # Stripe (leave unset to keep simulated payments)
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+
+databases:
+  - name: shlep-db
+    plan: basic-256mb
+    region: frankfurt
+    postgresMajorVersion: "16"
