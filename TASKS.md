@@ -19,7 +19,7 @@
   - What it is: a service with an API the backend calls to send email ("resend.emails.send(...)") — reliable delivery, no own mail server. Recommendation: **Resend** (simplest, free up to 3k emails/mo, enough for pilot)
   - 1. Create account at https://resend.com/signup (alternative: https://account.postmarkapp.com/sign_up) — use nils.weiler@gmail.com for now; switch to hello@shlep.ch later
   - 2. In Resend: "Domains" → Add Domain → `shlep.ch`. It shows 3-4 DNS records (SPF, DKIM, return-path) — these prove to Gmail & co. that Shlep is allowed to send from @shlep.ch, otherwise everything lands in spam
-  - 3. Add those records at your domain registrar (wherever shlep.ch DNS is managed, e.g. Infomaniak/Hostpoint/Cloudflare): DNS settings → paste each record type/name/value exactly. Verification usually turns green in minutes-to-hours
+  - 3. Add those records in **Netlify → Domains → shlep.ch → DNS panel** (that's where shlep.ch DNS actually lives — NOT Hostpoint). Verification usually turns green in minutes-to-hours
   - 4. In Resend: create an API key → goes into `packages/server/.env` as e.g. `RESEND_API_KEY=...` (Claude wires the send calls into the backend once the key exists)
   - 5. Test: send yourself a verification email from staging; check it arrives in Gmail inbox (not spam)
   - Prerequisite: you control shlep.ch DNS — same registrar access you'll need for the website deploy anyway
@@ -36,6 +36,24 @@
   - Alternative: Vonage Verify: https://www.vonage.com/communications-apis/verify/
 - [ ] **Verify Impressum entity text in browser** - open https://shlep.ch/legal?doc=impressum and confirm "DeltaSci Solutions GmbH" + UID CHE-347.257.714 render (page text is JS-rendered, couldn't auto-verify)
 - [ ] **Activate the waitlist/contact relay** - submit the waitlist form once on the live site → confirmation email lands at hello@shlep.ch → click the link (one-time formsubmit activation, then signups + contact messages arrive by email)
+  - BLOCKED until the MX fix above — hello@shlep.ch cannot receive mail right now
+
+- [ ] **FIX DNS: shlep.ch is served by NETLIFY, not Hostpoint** - discovered 2026-07-25; the Hostpoint DNS zone is inactive, so anything added there does nothing
+  - Live nameservers: `dns1–4.p04.nsone.net` (Netlify DNS). Edit records at: Netlify → Domains → shlep.ch → **DNS panel** (NOT Hostpoint "Domain-Zugriff")
+  - **1. Restore mail (urgent — hello@shlep.ch currently receives nothing, no MX on the live zone):**
+    add in Netlify DNS, so the existing Hostpoint mailbox keeps working:
+    | Type | Name | Value | Priority |
+    |---|---|---|---|
+    | MX | @ (shlep.ch) | `mx1.mail.hostpoint.ch` | 10 |
+    | MX | @ (shlep.ch) | `mx2.mail.hostpoint.ch` | 10 |
+    | TXT | @ (shlep.ch) | `v=spf1 redirect=spf.mail.hostpoint.ch` | — |
+    - optional (mail client autoconfig): CNAME `autoconfig` → `autoconfig.mail.hostpoint.ch`, CNAME `autodiscover` → `autoconfig-nonssl.mail.hostpoint.ch`
+    - test after ~15 min: send a mail from Gmail to hello@shlep.ch and check it arrives
+  - **2. Re-do Resend domain verification** (currently "Failed" because its records went into the dead Hostpoint zone):
+    Resend → Domains → shlep.ch → copy the DKIM/SPF/return-path records → paste them into **Netlify DNS** → click Verify again
+    - note: if Resend also wants an SPF TXT on the root, MERGE it with the Hostpoint SPF above into ONE record — two SPF TXT records on the same name break both
+  - **3. Later, for the API:** the `api.shlep.ch` CNAME from Render also goes into Netlify DNS
+  - Also: set up the `hello@shlep.ch` forwarding alias in Hostpoint (E-Mail section) once MX resolves again
 
 - [ ] **Deploy the API to api.shlep.ch** - last blocker before a partner can integrate live (widget currently falls back to local price estimates)
   - Repo now has `render.yaml` + `packages/server/Dockerfile` — Render reads them automatically
@@ -43,7 +61,7 @@
   - 2. https://dashboard.render.com → New → **Blueprint** → select the repo → Apply. Creates `shlep-api` (Frankfurt) + Postgres `shlep-db`
   - 3. In the DB shell run once: `CREATE EXTENSION IF NOT EXISTS postgis;` (driver-route matching needs it)
   - 4. Set env var `PARTNER_API_KEYS` = `demo:pk_demo_shlep_2026` (add real partners later as `name:key` pairs)
-  - 5. Render → shlep-api → Settings → **Custom Domain** → `api.shlep.ch` → add the CNAME it shows to the Hostpoint DNS zone (Domain-Zugriff)
+  - 5. Render → shlep-api → Settings → **Custom Domain** → `api.shlep.ch` → add the CNAME it shows in **Netlify DNS** (shlep.ch DNS is served by Netlify)
   - 6. Verify: `curl https://api.shlep.ch/health` → `{"status":"ok"}`, then reload shlep.ch/partner.html — the demo widget should show live coverage instead of an estimate
   - Cost: ~USD 7/mo web + ~USD 6/mo DB on starter plans
 

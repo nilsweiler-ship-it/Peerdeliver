@@ -25,7 +25,7 @@ Any static host works. Fastest:
 - **Cloudflare Pages / Netlify / Vercel** — drag-and-drop this `website/` folder, or connect the repo. Then add the custom domain `shlep.ch`.
 - **GitHub Pages** — push the folder to a repo and enable Pages.
 
-Then point the `shlep.ch` DNS at the host (each provider shows the exact CNAME/records).
+**DNS note:** shlep.ch's nameservers point at Netlify (`dns1-4.p04.nsone.net`), so ALL DNS records (MX, SPF/DKIM, api subdomain) must be edited in Netlify → Domains → shlep.ch → DNS. The Hostpoint DNS zone is inactive and ignored.
 
 ## Waitlist backend
 The signup form POSTs to `formsubmit.co/ajax/hello@shlep.ch` (free relay, no account). **One-time activation:** submit the form once after deploying — formsubmit sends a confirmation link to hello@shlep.ch; click it and all further signups arrive by email (address, role: send/drive/both). If the request fails (e.g. offline), the form falls back to a prefilled mailto.
