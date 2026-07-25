@@ -7,6 +7,8 @@ A static, self-contained site to publish at **shlep.ch** — enough to satisfy t
 - `assets/` — hero & sender photos (webp).
 - `legal.html` — Terms, Privacy Policy, and Impressum (tabbed), reached from the footer.
 - `kontakt.html` — contact page (topic + message form via the same formsubmit relay, direct email aside).
+- `partner.html` — marketplace partner page: tiered integration options, live widget demo, quote-endpoint docs.
+- `shlep-widget.js` — embeddable checkout widget partners drop into their site (calls `POST /api/partner/quote`).
 - `i18n.js` — landing translations + language switcher (remembers choice, auto-detects browser language).
 - `legal.js` — legal document text in all four languages.
 

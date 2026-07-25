@@ -1,0 +1,3 @@
+# Netlify redirects — keep old extensionless URLs working (query string passes through automatically)
+/legal    /legal.html    200
+/kontakt  /kontakt.html  200

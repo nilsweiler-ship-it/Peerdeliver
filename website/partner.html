@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Shlep für Marktplätze — Lieferoption in 5 Minuten</title>
+<meta name="description" content="Shlep als Lieferoption im Checkout: ein Snippet, kein Backend. Live-Preis, Verfügbarkeit und versicherte Übergabe für Marktplätze." />
+<meta name="theme-color" content="#F3EFE6" />
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="12 6 24 28"><path d="M30 12 C 17 12, 17 20, 24 20 C 31 20, 31 28, 18 28" stroke="%23E0A32E" stroke-width="3.7" stroke-linecap="round" fill="none"/><circle cx="30" cy="12" r="2.7" fill="%23E0A32E"/><circle cx="18" cy="28" r="3.6" fill="%23E0A32E"/></svg>' />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --accent:#E0A32E; --accent-deep:#B98114; --green:#14532D; --green-light:#81A18E;
+    --paper:#F3EFE6; --paper2:#EFEADF; --card:#FBFAF4;
+    --ink:#17160F; --ink2:#57534A; --ink3:#8a867c; --dark:#17160F; --dark2:#201e17;
+    --line:rgba(23,22,15,.13);
+    --display:'Bricolage Grotesque',sans-serif; --body:'IBM Plex Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:var(--body);color:var(--ink);background:var(--paper);line-height:1.55;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .wrap{max-width:1000px;margin:0 auto;padding-left:clamp(20px,5vw,48px);padding-right:clamp(20px,5vw,48px);}
+  .brand{font-family:var(--display);font-weight:800;font-size:24px;letter-spacing:-.03em;display:inline-flex;align-items:center;text-decoration:none;}
+  .brand svg{display:block;margin-right:-1px;transform:translateY(1px);}
+  header.nav{position:sticky;top:0;z-index:50;background:rgba(243,239,230,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);}
+  .navrow{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:14px 0;}
+  .navcta{background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:999px;font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap;}
+  .eyebrow{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.12em;color:var(--accent-deep);text-transform:uppercase;}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(32px,4.6vw,52px);line-height:1.04;letter-spacing:-.03em;margin:14px 0 0;}
+  h2{font-family:var(--display);font-weight:800;font-size:clamp(24px,3vw,34px);line-height:1.1;letter-spacing:-.02em;margin:0 0 8px;}
+  h3{font-family:var(--display);font-weight:700;font-size:19px;margin:0 0 6px;}
+  .lead{font-size:17px;color:var(--ink2);margin:16px 0 0;max-width:60ch;}
+  section{padding:clamp(44px,6vw,72px) 0;}
+  .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:28px;}
+  .tier{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;display:flex;flex-direction:column;}
+  .tier--now{border:2px solid var(--accent);}
+  .tier .k{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--ink3);}
+  .tier p{font-size:14.5px;color:var(--ink2);margin-top:6px;}
+  .tier .effort{margin-top:auto;padding-top:14px;font-size:13px;font-weight:600;color:var(--green);}
+  .badge{display:inline-block;background:var(--accent);color:var(--ink);font-size:11px;font-weight:700;letter-spacing:.06em;padding:3px 9px;border-radius:999px;margin-bottom:8px;}
+  .demo{background:var(--paper2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+  .demogrid{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start;margin-top:24px;}
+  .fakecheckout{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;}
+  .fakecheckout .item{display:flex;gap:14px;align-items:center;padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:16px;}
+  .fakecheckout .thumb{width:60px;height:60px;border-radius:10px;background:linear-gradient(140deg,#3E7D5E,#14532D);flex:none;}
+  .fakecheckout .t{font-weight:700;font-size:15px;}
+  .fakecheckout .s{font-size:13px;color:var(--ink2);}
+  .optlabel{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--ink3);margin-bottom:10px;}
+  .alt{border:1px solid var(--line);border-radius:12px;padding:13px 16px;font-size:14px;color:var(--ink2);margin-top:10px;display:flex;justify-content:space-between;}
+  pre{background:var(--dark);color:#e8e4da;border-radius:14px;padding:20px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.65;}
+  pre .c{color:#8a867c;}
+  pre .a{color:var(--accent);}
+  code.inline{font-family:var(--mono);font-size:13px;background:var(--paper2);border:1px solid var(--line);border-radius:5px;padding:1px 6px;}
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:14.5px;}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;color:var(--ink3);text-transform:uppercase;font-weight:600;}
+  td code{font-family:var(--mono);font-size:13px;}
+  .why{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:24px;}
+  .why div{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;}
+  .why .n{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:-.02em;}
+  .why .l{font-size:13.5px;color:var(--ink2);margin-top:4px;}
+  .cta{background:var(--dark);color:var(--paper);}
+  .cta h2{color:var(--paper);}
+  .cta p{color:#c8c4ba;margin-top:12px;max-width:52ch;}
+  .cta a.btn{display:inline-block;margin-top:20px;background:var(--accent);color:var(--ink);font-weight:700;padding:14px 26px;border-radius:999px;text-decoration:none;}
+  footer{background:var(--dark2);color:#c8c4ba;font-size:13.5px;}
+  .footrow{display:flex;flex-wrap:wrap;gap:14px 24px;justify-content:space-between;padding:22px 0;}
+  .footrow a{color:#c8c4ba;text-decoration:none;}
+  @media(max-width:860px){.tiers,.why{grid-template-columns:1fr;}.demogrid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap navrow">
+    <a class="brand" href="index.html">
+      <svg height="22" viewBox="14 8 20 24" fill="none"><path d="M30 12 C 17 12, 17 20, 24 20 C 31 20, 31 28, 18 28" stroke="var(--accent)" stroke-width="3.7" stroke-linecap="round"/><circle cx="30" cy="12" r="2.7" fill="var(--accent)"/><circle cx="18" cy="28" r="3.6" fill="var(--accent)"/></svg><span>hlep</span>
+    </a>
+    <a class="navcta" href="kontakt.html">API-Key anfragen</a>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">Für Marktplätze &amp; Shops</div>
+    <h1>Eine Lieferoption, die dein Team in einer Kaffeepause einbaut.</h1>
+    <p class="lead">Shlep bringt sperrige, gebrauchte und lokale Artikel von Hand zu Hand — versichert, code-verifiziert und CO₂-arm. Für dich ist es ein <strong>Snippet im Checkout</strong>: kein Backend, keine Verträge mit Kurieren, keine Integrationswochen.</p>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="wrap">
+    <h2>Drei Integrationstiefen</h2>
+    <p class="lead" style="margin-top:8px;">Fang klein an. Geh tiefer, wenn es sich rechnet.</p>
+    <div class="tiers">
+      <div class="tier">
+        <div class="k">STUFE 1</div>
+        <h3>Deep-Link-Button</h3>
+        <p>Ein Link auf dem Inserat oder im Checkout öffnet Shlep mit vorausgefüllter Route und Preis. Reines HTML.</p>
+        <div class="effort">≈ 15 Minuten · kein API-Key</div>
+      </div>
+      <div class="tier tier--now">
+        <span class="badge">VERFÜGBAR</span>
+        <div class="k">STUFE 2</div>
+        <h3>Checkout-Widget</h3>
+        <p>Ein Script-Tag zeigt live Preis, Verfügbarkeit auf der Strecke und CO₂-Ersparnis direkt im Checkout — Front-end only.</p>
+        <div class="effort">≈ 1 Stunde · publishable Key</div>
+      </div>
+      <div class="tier">
+        <div class="k">STUFE 3</div>
+        <h3>REST-API &amp; Webhooks</h3>
+        <p>Lieferungen programmatisch anlegen, Status-Webhooks (<code class="inline">matched</code>, <code class="inline">delivered</code>) in dein System zurückspielen.</p>
+        <div class="effort">auf Anfrage · Server-Key</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="demo" id="demo">
+  <div class="wrap">
+    <div class="eyebrow">Live-Demo</div>
+    <h2 style="margin-top:12px;">So sieht es im Checkout aus.</h2>
+    <div class="demogrid">
+      <div class="fakecheckout">
+        <div class="optlabel">BEISPIEL-CHECKOUT · MARKTPLATZ</div>
+        <div class="item">
+          <div class="thumb"></div>
+          <div>
+            <div class="t">Vintage Sessel, Eiche</div>
+            <div class="s">CHF 450 · Zürich → Winterthur</div>
+          </div>
+        </div>
+        <div class="optlabel">LIEFEROPTIONEN</div>
+
+        <!-- ↓ das ist das Widget -->
+        <div data-shlep
+             data-key="pk_demo_shlep_2026"
+             data-from="47.3769,8.5417"
+             data-to="47.5001,8.7501"
+             data-size="large"
+             data-value="450"
+             data-lang="de"></div>
+
+        <div class="alt"><span>Selbstabholung</span><span>CHF 0.00</span></div>
+        <div class="alt"><span>Spedition (3–5 Tage)</span><span>CHF 89.00</span></div>
+      </div>
+
+      <div>
+        <h3>Das ganze Snippet</h3>
+        <pre><span class="c">&lt;!-- Platzhalter im Checkout --&gt;</span>
+&lt;div <span class="a">data-shlep</span>
+     <span class="a">data-key</span>="pk_live_deinkey"
+     <span class="a">data-from</span>="47.3769,8.5417"  <span class="c">// Verkäufer</span>
+     <span class="a">data-to</span>="47.5001,8.7501"    <span class="c">// Käufer</span>
+     <span class="a">data-size</span>="large"
+     <span class="a">data-value</span>="450"&gt;&lt;/div&gt;
+
+<span class="c">&lt;!-- einmal pro Seite --&gt;</span>
+&lt;script src="https://shlep.ch/shlep-widget.js" async&gt;&lt;/script&gt;</pre>
+        <p class="lead" style="font-size:15px;">Mehr braucht es nicht. Das Widget holt den Preis, prüft die Verfügbarkeit auf der Strecke und verlinkt die Käuferin direkt in Shlep — mit vorausgefüllter Lieferung.</p>
+        <p class="lead" style="font-size:14px;color:var(--ink3);">Events <code class="inline">shlep:quote</code> und <code class="inline">shlep:select</code> für dein Tracking. Sprache via <code class="inline">data-lang</code> (DE/EN). SPA? <code class="inline">Shlep.refresh()</code>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow">Endpoint</div>
+    <h2 style="margin-top:12px;">Wenn ihr lieber selbst rendert.</h2>
+    <p class="lead">Ein read-only Endpoint, CORS-offen, publishable Key. Keine Nutzerdaten — nur Koordinaten rein, Preis und Verfügbarkeit raus.</p>
+    <pre style="margin-top:18px;">POST https://api.shlep.ch/api/partner/quote
+<span class="a">X-Shlep-Key</span>: pk_live_deinkey
+
+{ "fromLat": 47.3769, "fromLng": 8.5417,
+  "toLat": 47.5001, "toLng": 8.7501,
+  "size": "large", "declaredValueCHF": 450 }
+
+<span class="c">→ 200 OK</span>
+{ "success": true, "data": {
+    "available": true,
+    "priceCHF": 32, "priceRangeCHF": { "min": 26, "max": 42 },
+    "distanceKm": 21.4,
+    "driverPayoutCHF": 29.12, "platformFeeCHF": 2.88,
+    "coverage": { "level": "medium", "matchingRoutes": 4, "estimatedMatchHours": 6 },
+    "insuredUpToCHF": 1000, "co2SavedKg": 3.9,
+    "deepLink": "https://shlep.ch/new?..." } }</pre>
+    <table>
+      <tr><th>Feld</th><th>Bedeutung</th></tr>
+      <tr><td><code>available</code></td><td>Strecke grundsätzlich bedienbar (Distanzlimit).</td></tr>
+      <tr><td><code>priceCHF</code></td><td>Empfohlener Preis für den Checkout. Sendende können in Shlep anpassen.</td></tr>
+      <tr><td><code>coverage.level</code></td><td><code>high</code> / <code>medium</code> / <code>low</code> / <code>none</code> — aus aktiven Fahrer-Routen auf der Strecke.</td></tr>
+      <tr><td><code>deepLink</code></td><td>Fertiger Link, öffnet Shlep mit vorausgefüllter Lieferung.</td></tr>
+    </table>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="wrap">
+    <div class="eyebrow">Warum das für euch rechnet</div>
+    <h2 style="margin-top:12px;">Besonders für Gebraucht- und Sperrgut.</h2>
+    <div class="why">
+      <div><div class="n">Sperrig</div><div class="l">Sessel, TV, Velo — was der Paketkanal nicht nimmt, fährt bei Shlep mit.</div></div>
+      <div><div class="n">Ohne Karton</div><div class="l">Von Hand zu Hand statt Förderband: Originalverpackung nicht nötig.</div></div>
+      <div><div class="n">CHF 1’000</div><div class="l">Jede Sendung versichert, Übergabe per 6-stelligem Code bestätigt.</div></div>
+      <div><div class="n">CO₂-arm</div><div class="l">Fahrten, die ohnehin stattfinden — messbar pro Lieferung ausgewiesen.</div></div>
+    </div>
+    <p class="lead" style="margin-top:22px;font-size:15px;color:var(--ink3);">Abrechnung läuft direkt zwischen Shlep und der sendenden Person (TWINT oder Karte) — ihr müsst kein Geld weiterleiten und tragt kein Inkasso-Risiko.</p>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="wrap">
+    <h2>API-Key in 24 Stunden.</h2>
+    <p>Schreib uns kurz, welcher Marktplatz ihr seid und welche Strecken typisch sind — wir schicken einen Test-Key, das Snippet und, wenn ihr wollt, eine Sandbox-Route zum Ausprobieren.</p>
+    <a class="btn" href="kontakt.html">Kontakt aufnehmen</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap footrow">
+    <span>© 2026 Shlep · DeltaSci Solutions GmbH</span>
+    <span><a href="index.html">Zur Hauptseite</a> · <a href="legal.html?doc=terms">AGB</a> · <a href="kontakt.html">Kontakt</a></span>
+  </div>
+</footer>
+
+<script>
+  // Demo page points at a local/staging API if one is configured.
+  window.SHLEP_API_BASE = window.SHLEP_API_BASE || 'https://api.shlep.ch';
+</script>
+<script src="shlep-widget.js" async></script>
+</body>
+</html>

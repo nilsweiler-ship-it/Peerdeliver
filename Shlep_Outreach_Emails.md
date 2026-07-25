@@ -1,6 +1,6 @@
 # Shlep — Outreach Email Drafts
 
-Four ready-to-send drafts: two for investors (cold + warm follow-up), two for partners (SME senders + driver/community supply). Swap the bracketed fields, attach `Shlep_Investor_Deck.pptx`, and send. Keep them short — these are written to get a reply, not to explain everything.
+Five ready-to-send drafts: two for investors (cold + warm follow-up), three for partners (marketplaces, SME senders, driver/community supply). Swap the bracketed fields, attach `Shlep_Investor_Deck.pptx`, and send. Keep them short — these are written to get a reply, not to explain everything.
 
 ---
 
@@ -77,6 +77,37 @@ Could we offer [Community/Group] early access and a small referral bonus for fou
 
 Best,
 Nils
+
+---
+
+## 5 · Partner — second-hand / classifieds marketplace (integration)
+
+*Best-fit target: Ricardo, tutti, Anibis, Facebook-Marketplace-Alternativen, Möbel- und Velo-Plattformen. Auf Deutsch, weil die Produktteams dort deutsch arbeiten.*
+
+**Subject:** Lieferoption für Sperrgut — ein Snippet, kein Backend
+
+Hallo [Vorname],
+
+bei [Marktplatz] scheitern viele Deals nicht am Preis, sondern an der Logistik: Der Sessel, der Fernseher, das Velo — zu sperrig für den Paketkanal, Originalkarton längst entsorgt, also bleibt „nur Selbstabholung". Damit fällt jede Käuferin ausserhalb der Region weg.
+
+Genau da setzt **Shlep** an: verifizierte Nachbarn nehmen den Artikel auf einer Fahrt mit, die sie ohnehin machen. Versichert bis CHF 1'000, Übergabe per 6-stelligem Code bestätigt, live verfolgbar — und weil von Hand zu Hand geliefert wird, braucht es keine Verpackung.
+
+Für euch ist die Integration bewusst klein gehalten:
+
+```html
+<div data-shlep data-key="…" data-from="47.3769,8.5417" data-to="47.5001,8.7501"></div>
+<script src="https://shlep.ch/shlep-widget.js" async></script>
+```
+
+Ein Script-Tag im Checkout zeigt Live-Preis, Verfügbarkeit auf der Strecke und die eingesparte CO₂-Menge. **Kein Backend-Aufwand, keine Kosten für euch** — abgerechnet wird direkt zwischen Shlep und der sendenden Person, ihr tragt kein Inkasso-Risiko.
+
+Live-Demo und Doku: **shlep.ch/partner.html**
+
+Hättet ihr 20 Minuten, um zu schauen, ob das auf euren Sperrgut-Kategorien Sinn ergibt? Einen Test-Key schicke ich innert 24 Stunden.
+
+Freundliche Grüsse
+Nils Weiler
+Gründer, Shlep · DeltaSci Solutions GmbH · hello@shlep.ch
 
 ---
 
