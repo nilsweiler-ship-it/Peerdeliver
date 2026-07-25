@@ -40,15 +40,16 @@
 
 - [ ] **FIX DNS: shlep.ch is served by NETLIFY, not Hostpoint** - discovered 2026-07-25; the Hostpoint DNS zone is inactive, so anything added there does nothing
   - Live nameservers: `dns1–4.p04.nsone.net` (Netlify DNS). Edit records at: Netlify → Domains → shlep.ch → **DNS panel** (NOT Hostpoint "Domain-Zugriff")
-  - **1. Restore mail (urgent — hello@shlep.ch currently receives nothing, no MX on the live zone):**
-    add in Netlify DNS, so the existing Hostpoint mailbox keeps working:
+  - [x] ~~**1. Restore mail**~~ DONE 2026-07-25 — MX + SPF verified live in DNS:
+    `10 mx1.mail.hostpoint.ch` / `10 mx2.mail.hostpoint.ch`, TXT `v=spf1 redirect=spf.mail.hostpoint.ch`
+    (records that were added in Netlify DNS:)
     | Type | Name | Value | Priority |
     |---|---|---|---|
     | MX | @ (shlep.ch) | `mx1.mail.hostpoint.ch` | 10 |
     | MX | @ (shlep.ch) | `mx2.mail.hostpoint.ch` | 10 |
     | TXT | @ (shlep.ch) | `v=spf1 redirect=spf.mail.hostpoint.ch` | — |
     - optional (mail client autoconfig): CNAME `autoconfig` → `autoconfig.mail.hostpoint.ch`, CNAME `autodiscover` → `autoconfig-nonssl.mail.hostpoint.ch`
-    - test after ~15 min: send a mail from Gmail to hello@shlep.ch and check it arrives
+    - NEXT: create the `hello@shlep.ch` mailbox/forwarding alias in **Hostpoint → E-Mail**, then send a test mail from Gmail to confirm delivery
   - **2. Re-do Resend domain verification** (currently "Failed" because its records went into the dead Hostpoint zone):
     Resend → Domains → shlep.ch → copy the DKIM/SPF/return-path records → paste them into **Netlify DNS** → click Verify again
     - note: if Resend also wants an SPF TXT on the root, MERGE it with the Hostpoint SPF above into ONE record — two SPF TXT records on the same name break both
