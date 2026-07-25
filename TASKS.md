@@ -34,13 +34,8 @@
 - [ ] **Sign up Twilio Verify (or Vonage)** - SMS OTP for phone verification, currently simulated
   - Twilio: https://www.twilio.com/try-twilio → then create a Verify service: https://console.twilio.com/us1/develop/verify/services (pricing: https://www.twilio.com/en-us/verify/pricing)
   - Alternative: Vonage Verify: https://www.vonage.com/communications-apis/verify/
-- [ ] **Redeploy shlep.ch — live site is outdated** - shows old design, 10% fee, old copy; must show the current version before the Stripe application
-  - Ready to upload: **`shlep_ch_deploy.zip`** in the Peerdeliver folder (index, legal, kontakt, JS, assets, .htaccess)
-  - Hostpoint steps: https://admin.hostpoint.ch → login → menu item **"Explorer"** (in some panel versions under "Explorer/Web-Einstellungen") → navigate to shlep.ch's webroot — the folder containing the current `index.html`, usually `www/shlep.ch/` (the exact document root is shown under Websites/Domains → shlep.ch)
-  - Delete the old files in that folder (or move them into a `_old/` subfolder as backup), then upload `shlep_ch_deploy.zip` and use the File Manager's **Extract/Entpacken** on it (files must land directly in the webroot, not in a subfolder); delete the zip afterwards
-  - Alternative: SFTP with the FTP user from My Panel → Server → FTP (host = your server name, e.g. `xyz.hostpoint.ch`) and copy the contents of the repo's `website/` folder in
-  - Check after upload: shlep.ch shows the amber/new design and "9 %"; shlep.ch/legal?doc=impressum shows DeltaSci Solutions GmbH + UID; shlep.ch/kontakt.html loads; language switcher works
-  - Then: submit the waitlist form once → confirmation email to hello@shlep.ch → click it (activates the formsubmit relay)
+- [ ] **Verify Impressum entity text in browser** - open https://shlep.ch/legal?doc=impressum and confirm "DeltaSci Solutions GmbH" + UID CHE-347.257.714 render (page text is JS-rendered, couldn't auto-verify)
+- [ ] **Activate the waitlist/contact relay** - submit the waitlist form once on the live site → confirmation email lands at hello@shlep.ch → click the link (one-time formsubmit activation, then signups + contact messages arrive by email)
 
 ## Waiting On
 
@@ -54,4 +49,5 @@
 
 ## Done
 
+- [x] ~~Redeploy shlep.ch with the current site~~ (2026-07-25) - hosting is **Netlify** (project "shlep.ch", team Shlep), NOT Hostpoint — updated via Netlify Drop → Deploys → drag `website/` folder. Verified live: new design, 9%/min-fee pricing, packaging USP, Switzerland-wide copy, Kontakt page. NOTE: shlep.ch DNS is still managed at Hostpoint (Domain-Zugriff → DNS zone) — that's where Resend email records go later, but the website itself lives on Netlify (redeploy = drag folder onto the Netlify project, no Hostpoint involved).
 - [x] ~~Fill in legal entity details for shlep.ch~~ (2026-07-21) - DeltaSci Solutions GmbH, Jonas-Furrer-Strasse 104, 8400 Winterthur, UID/MWST CHE-347.257.714 (verified against uid.admin.ch), signatory Nils Weiler; lawyer-review disclaimers removed from site + app
