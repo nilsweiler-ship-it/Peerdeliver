@@ -2,6 +2,7 @@ import { prisma } from '../config';
 import { hashPassword, comparePassword } from '../utils';
 import { generateTokenPair, verifyRefreshToken } from './token';
 import { AppError } from '../middleware';
+import * as emailService from './email';
 import type { RegisterInput, LoginInput } from '@peerdeliver/shared';
 
 export async function register(input: RegisterInput) {
@@ -31,6 +32,13 @@ export async function register(input: RegisterInput) {
   await prisma.user.update({
     where: { id: user.id },
     data: { refreshToken: tokens.refreshToken },
+  });
+
+  // Welcome mail — fire-and-forget, never blocks or fails signup.
+  emailService.sendWelcome({
+    to: user.email,
+    firstName: user.firstName,
+    language: user.language,
   });
 
   const { passwordHash: _, refreshToken: __, ...safeUser } = user;

@@ -4,6 +4,7 @@ import { AppError } from '../middleware';
 import type { CreateDeliveryInput, PackageSize } from '@peerdeliver/shared';
 import { sizesUpTo, ALL_SIZES } from '@peerdeliver/shared';
 import * as paymentService from './payment';
+import * as emailService from './email';
 
 // All scalar columns (excluding raw geometry) with ST_AsGeoJSON for coordinates
 const DELIVERY_COLS = `
@@ -212,6 +213,25 @@ export async function getNearbyDeliveries(
   return rows.map(transformDelivery);
 }
 
+/**
+ * Look up the people to notify for a delivery plus a human route label.
+ * Kept tolerant: any missing piece just means that mail is skipped.
+ */
+async function notifyContext(deliveryId: string) {
+  const d = await getDeliveryById(deliveryId);
+  if (!d) return null;
+  const [sender, driver] = await Promise.all([
+    d.senderId
+      ? prisma.user.findUnique({ where: { id: d.senderId }, select: { email: true, firstName: true, language: true } })
+      : null,
+    d.driverId
+      ? prisma.user.findUnique({ where: { id: d.driverId }, select: { email: true, firstName: true, language: true } })
+      : null,
+  ]);
+  const route = `${d.pickupAddress.label} → ${d.deliveryAddress.label}`;
+  return { d, sender, driver, route };
+}
+
 export async function assignDelivery(deliveryId: string, driverId: string) {
   // In real-payment mode, block drivers who haven't completed payout onboarding —
   // otherwise we couldn't pay them out on delivery. (No-op in simulated mode.)
@@ -254,6 +274,19 @@ export async function confirmDelivery(deliveryId: string, senderId: string) {
     },
   });
 
+  // Notify the sender that a driver is confirmed (fire-and-forget).
+  const ctx = await notifyContext(deliveryId);
+  if (ctx?.sender?.email) {
+    emailService.sendDeliveryMatched({
+      to: ctx.sender.email,
+      driverName: driver?.firstName ?? 'Ein Nachbar',
+      route: ctx.route,
+      priceCHF: ctx.d.budgetCHF,
+      pickupCode: ctx.d.pickupCode,
+      language: ctx.sender.language,
+    });
+  }
+
   return getDeliveryById(deliveryId);
 }
 
@@ -277,6 +310,16 @@ export async function verifyPickup(deliveryId: string, driverId: string, code: s
       content: 'Package picked up. Delivery is in transit.',
     },
   });
+
+  const ctx = await notifyContext(deliveryId);
+  if (ctx?.sender?.email) {
+    emailService.sendPickedUp({
+      to: ctx.sender.email,
+      route: ctx.route,
+      deliveryCode: ctx.d.deliveryCode,
+      language: ctx.sender.language,
+    });
+  }
 
   return getDeliveryById(deliveryId);
 }
@@ -326,6 +369,30 @@ export async function verifyDelivery(deliveryId: string, driverId: string, code:
 
   // Split the budget and credit the driver. No-op if the sender never paid.
   await paymentService.captureAndPayoutOnDelivered(deliveryId);
+
+  // Closing notifications: receipt to the sender, payout note to the driver.
+  const ctx = await notifyContext(deliveryId);
+  if (ctx) {
+    if (ctx.sender?.email) {
+      emailService.sendDelivered({
+        to: ctx.sender.email,
+        route: ctx.route,
+        priceCHF: ctx.d.budgetCHF,
+        co2SavedKg,
+        language: ctx.sender.language,
+      });
+    }
+    if (ctx.driver?.email) {
+      const split = paymentService.computeSplit(ctx.d.budgetCHF);
+      emailService.sendDriverPayout({
+        to: ctx.driver.email,
+        route: ctx.route,
+        payoutCHF: split.driverPayoutCHF,
+        feeCHF: split.platformFeeCHF,
+        language: ctx.driver.language,
+      });
+    }
+  }
 
   return getDeliveryById(deliveryId);
 }

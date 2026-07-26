@@ -18,6 +18,10 @@ const envSchema = z.object({
   PARTNER_API_KEYS: z.string().default(''),
   PARTNER_DEEPLINK_BASE: z.string().default('https://shlep.ch'),
   PARTNER_MAX_DISTANCE_KM: z.coerce.number().default(150),
+  // Transactional email (Resend). Unset = emails are logged, not sent.
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().default('Shlep <hello@shlep.ch>'),
+  EMAIL_INTERNAL_TO: z.string().default('hello@shlep.ch'),
 });
 
 export const env = envSchema.parse(process.env);
