@@ -2,9 +2,6 @@
 
 ## Active
 
-- [ ] **Enroll Apple Developer Program ($99/yr) + Google Play ($25)** - D-U-N-S/company verification can take 1-2 weeks; needed for TestFlight
-  - Apple: https://developer.apple.com/programs/enroll/ (company enrollment needs a D-U-N-S number: https://developer.apple.com/support/D-U-N-S/)
-  - Google Play Console: https://play.google.com/console/signup
 - [ ] **Sign up transactional email (Resend or Postmark)** - so the app can actually send verification emails, receipts & delivery notifications (the screens exist, but no email service is connected yet)
   - What it is: a service with an API the backend calls to send email ("resend.emails.send(...)") — reliable delivery, no own mail server. Recommendation: **Resend** (simplest, free up to 3k emails/mo, enough for pilot)
   - 1. Create account at https://resend.com/signup (alternative: https://account.postmarkapp.com/sign_up) — use nils.weiler@gmail.com for now; switch to hello@shlep.ch later
@@ -39,6 +36,12 @@
 
 ## Waiting On
 
+- [ ] **Apple + Google developer accounts — verification pending** (both started 2026-07-25, as DeltaSci Solutions GmbH)
+  - Apple: enrolment underway; needs the D-U-N-S number — look it up / request free at https://developer.apple.com/enroll/duns-lookup/ (name + address must match the Handelsregister exactly)
+  - Google Play: account created. Monetisation answer given: "Other" → commission on P2P delivery (9%, min CHF 1.50), payments external via Stripe/TWINT, physical service → exempt from Play Billing. **Keep this wording consistent** for app submission + Apple review notes.
+  - Google identity verification can take a few days; Apple usually 1-2 days once D-U-N-S resolves
+  - **When both are verified → tell Claude.** Next step is EAS: link the project, implement `expo-notifications`, produce the first TestFlight / internal-test build (needs the Expo account, see Active)
+
 - [ ] **Stripe application under review** - submitted 2026-07-25 (DeltaSci Solutions GmbH, CHE-347.257.714, site shlep.ch, brand #14532D / accent #E0A32E)
   - Watch hello@shlep.ch / the Stripe dashboard for requests for extra documents — respond fast, that's the usual delay
   - **Once approved, three things to do:**
@@ -59,6 +62,8 @@
 - [ ] **Verify authorised signatory in Impressum matches HR entry** - "Nils Weiler" was filled in; cross-check with the Handelsregister excerpt (ref CH-020.4.069.680-8)
 
 ## Done
+
+- [x] ~~Create Apple Developer + Google Play developer accounts~~ (2026-07-25) - both registered as the GmbH (company accounts avoid Google's 12-tester closed-test requirement). Verification pending — see Waiting On.
 
 - [x] ~~Apply for Stripe account (Payments + Connect + TWINT)~~ (2026-07-25) - submitted with the live shlep.ch site, filled Impressum and brand assets. Now in review — see Waiting On.
 
