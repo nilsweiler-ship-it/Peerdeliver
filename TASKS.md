@@ -2,16 +2,6 @@
 
 ## Active
 
-- [ ] **Sign up transactional email (Resend or Postmark)** - so the app can actually send verification emails, receipts & delivery notifications (the screens exist, but no email service is connected yet)
-  - What it is: a service with an API the backend calls to send email ("resend.emails.send(...)") — reliable delivery, no own mail server. Recommendation: **Resend** (simplest, free up to 3k emails/mo, enough for pilot)
-  - 1. Create account at https://resend.com/signup (alternative: https://account.postmarkapp.com/sign_up) — use nils.weiler@gmail.com for now; switch to hello@shlep.ch later
-  - 2. In Resend: "Domains" → Add Domain → `shlep.ch`. It shows 3-4 DNS records (SPF, DKIM, return-path) — these prove to Gmail & co. that Shlep is allowed to send from @shlep.ch, otherwise everything lands in spam
-  - 3. Add those records in **Netlify → Domains → shlep.ch → DNS panel** (that's where shlep.ch DNS actually lives — NOT Hostpoint). Verification usually turns green in minutes-to-hours
-  - 4. In Resend: create an API key → goes into `packages/server/.env` as e.g. `RESEND_API_KEY=...` (Claude wires the send calls into the backend once the key exists)
-  - 5. Test: send yourself a verification email from staging; check it arrives in Gmail inbox (not spam)
-  - **Current state: the shlep.ch domain in Resend shows "Failed"** — its records were added to the dead Hostpoint zone. Re-copy them into Netlify DNS and hit Verify again.
-  - ⚠️ SPF: the root already has `v=spf1 redirect=spf.mail.hostpoint.ch` (for Hostpoint mail). If Resend wants its own SPF on the root, do NOT add a second TXT — send Claude both values and they get merged into one valid record.
-  - No entity needed, no review process — 15 min of clicking + DNS wait
 - [ ] **Create Expo account** - unlocks push notifications + app builds for the stores
   - What it is: the Shlep app is built on Expo (the React Native framework in `packages/app`). An Expo account gives you two things: **Expo Push** (free notification service — "match found", "code needed", "delivered" alerts, currently not implemented) and **EAS Build** (cloud service that produces the installable iOS/Android binaries for TestFlight / Play Store — no Mac or Xcode setup needed)
   - 1. Create account at https://expo.dev/signup (free plan is enough for the pilot; builds cost ~$1-4 each on free tier or come with a paid plan; pricing: https://expo.dev/pricing)
@@ -62,6 +52,11 @@
 - [ ] **Verify authorised signatory in Impressum matches HR entry** - "Nils Weiler" was filled in; cross-check with the Handelsregister excerpt (ref CH-020.4.069.680-8)
 
 ## Done
+
+- [x] ~~Transactional email live (Resend)~~ (2026-07-26) - domain `send.shlep.ch` verified, DKIM/SPF aligned, test mail landed in **inbox** first try. Backend sends welcome, delivery-matched (+pickup code), picked-up (+delivery code), delivered receipt (+CO₂) and driver payout — branded templates in DE/FR/IT/EN. Fire-and-forget: a Resend outage can never fail a signup, handover or payout; no-ops without a key so dev/CI are unaffected.
+  - Smoke test any time: `cd packages/server && npx tsx scripts/test-email.ts you@example.com`
+  - Preview all templates: `brand/email-preview.html`
+  - ⚠️ The key lives only in `packages/server/.env` (gitignored, untracked). Rotate it in Resend once things settle — it was pasted into a chat.
 
 - [x] ~~Create Apple Developer + Google Play developer accounts~~ (2026-07-25) - both registered as the GmbH (company accounts avoid Google's 12-tester closed-test requirement). Verification pending — see Waiting On.
 
