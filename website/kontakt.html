@@ -172,6 +172,7 @@
   </div>
 </footer>
 
+<script src="forms.js"></script>
 <script src="i18n.js"></script>
 <script>
   function t(key) {
@@ -188,16 +189,13 @@
     var err = document.getElementById('cErr');
     if (!name || !msg || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { err.textContent = t('contact.err'); return; }
     err.textContent = '';
-    // Same relay as the waitlist: formsubmit.co → hello@shlep.ch, mailto fallback.
-    fetch('https://formsubmit.co/ajax/hello@shlep.ch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ name: name, email: email, topic: topic, message: msg, source: 'shlep.ch kontakt', _subject: 'Shlep Kontakt (' + topic + '): ' + name })
-    })
-      .then(function (r) { return r.json().catch(function () { return {}; }); })
-      .then(function (res) {
-        var ok = res && (res.success === true || res.success === 'true');
-        if (!ok) throw new Error((res && (res.message || res.error)) || 'relay rejected');
+    // Our API first, formsubmit relay as fallback (see forms.js), mailto last.
+    ShlepForms.submit(
+      '/api/forms/contact',
+      { name: name, email: email, topic: topic, message: msg },
+      { name: name, email: email, topic: topic, message: msg, source: 'shlep.ch kontakt', _subject: 'Shlep Kontakt (' + topic + '): ' + name }
+    )
+      .then(function () {
         document.getElementById('contactForm').style.display = 'none';
         document.getElementById('cOk').classList.add('on');
       })

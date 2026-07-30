@@ -570,6 +570,7 @@
   </div>
 </footer>
 
+<script src="forms.js"></script>
 <script src="i18n.js"></script>
 <script>
   // ---- helpers ----
@@ -658,19 +659,17 @@
       var err = document.getElementById('formErr');
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { err.textContent = t('cta.err'); return; }
       err.textContent = '';
-      // Waitlist relay → hello@shlep.ch. Only show success if the relay really accepted it;
-      // a silent failure here would mean lost signups.
+      // Waitlist → our API, with the formsubmit relay as fallback (see forms.js).
+      // Only show success if one of them really accepted it; a silent failure
+      // here would mean lost signups.
       var btn = document.querySelector('#waitform button');
       if (btn) btn.disabled = true;
-      fetch('https://formsubmit.co/ajax/hello@shlep.ch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ email: email, role: role, source: 'shlep.ch waitlist', _subject: 'Shlep Warteliste: ' + email })
-      })
-        .then(function (r) { return r.json().catch(function () { return {}; }); })
-        .then(function (res) {
-          var ok = res && (res.success === true || res.success === 'true');
-          if (!ok) throw new Error((res && (res.message || res.error)) || 'relay rejected');
+      ShlepForms.submit(
+        '/api/forms/waitlist',
+        { email: email, role: role, source: 'website' },
+        { email: email, role: role, source: 'shlep.ch waitlist', _subject: 'Shlep Warteliste: ' + email }
+      )
+        .then(function () {
           document.getElementById('waitbox').style.display = 'none';
           document.getElementById('waitok').classList.add('on');
         })

@@ -197,3 +197,36 @@ model Rating {
   @@index([toUserId])
   @@map("ratings")
 }
+
+/// Waitlist signups from the marketing site. Kept separate from User: these are
+/// leads, not accounts, and most will never register. `email` is unique so a
+/// repeat signup updates rather than duplicates.
+model WaitlistSignup {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  role      String? // "sender" | "driver" | "both" — what they clicked
+  language  String   @default("de")
+  source    String   @default("website") // website | partner | /new deep link
+  routeHint String? // free text from the /new flow, e.g. "Zürich → Bern"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@map("waitlist_signups")
+}
+
+/// Messages from the Kontakt form. Stored so nothing is lost if mail delivery
+/// fails — the notification email is a convenience, this table is the record.
+model ContactMessage {
+  id        String    @id @default(uuid())
+  name      String?
+  email     String
+  topic     String?
+  message   String
+  language  String    @default("de")
+  handledAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([createdAt])
+  @@map("contact_messages")
+}

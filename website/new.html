@@ -133,6 +133,7 @@
   </div>
 </footer>
 
+<script src="forms.js"></script>
 <script>
 (function () {
   var q = new URLSearchParams(location.search);
@@ -229,15 +230,19 @@
       _subject: 'Shlep Lieferungs-Vormerkung: ' + email,
     };
 
-    fetch('https://formsubmit.co/ajax/hello@shlep.ch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify(payload),
-    })
-      .then(function (r) { return r.json().catch(function () { return {}; }); })
-      .then(function (res) {
-        var ok = res && (res.success === true || res.success === 'true');
-        if (!ok) throw new Error((res && (res.message || res.error)) || 'relay rejected');
+    // Our API first, formsubmit relay as fallback (see forms.js). The route and
+    // price details ride along in routeHint so a lead is never just an address.
+    ShlepForms.submit(
+      '/api/forms/waitlist',
+      {
+        email: email,
+        source: 'new' + (src ? ':' + src : ''),
+        routeHint: payload.route + ' · ' + size + ' · CHF ' + price +
+                   (km != null ? ' · ' + Math.round(km * 10) / 10 + ' km' : ''),
+      },
+      payload
+    )
+      .then(function () {
         document.getElementById('f').style.display = 'none';
         document.getElementById('ok').classList.add('on');
       })
