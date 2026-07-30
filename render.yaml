@@ -4,8 +4,10 @@
 #   1. Push this repo to GitHub.
 #   2. Render → New → Blueprint → pick the repo. Render reads this file.
 #   3. Set the secret env vars marked `sync: false` in the dashboard.
-#   4. Render → shlep-api → Settings → Custom Domain → api.shlep.ch,
-#      then add the CNAME it shows to the shlep.ch DNS zone at Hostpoint.
+#   4. Render → shlep-api → Settings → Custom Domain → api.shlep.ch, then add
+#      the CNAME it shows in **Netlify → Domains → shlep.ch → DNS**.
+#      shlep.ch nameservers point at Netlify (dns1-4.p04.nsone.net); the
+#      Hostpoint DNS zone is inactive and silently ignored.
 #
 # Note: PostGIS is required (driver routes use geography queries). Render's
 # managed Postgres supports it — run `CREATE EXTENSION postgis;` once, or let
@@ -44,6 +46,14 @@ services:
       # Partner widget keys — format: name:key,name2:key2
       - key: PARTNER_API_KEYS
         sync: false
+      # Transactional email (Resend). Without RESEND_API_KEY the app still runs,
+      # but every notification silently no-ops — set it or users get no mail.
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        value: Shlep <hello@shlep.ch>
+      - key: EMAIL_INTERNAL_TO
+        value: hello@shlep.ch
       # Stripe (leave unset to keep simulated payments)
       - key: STRIPE_SECRET_KEY
         sync: false

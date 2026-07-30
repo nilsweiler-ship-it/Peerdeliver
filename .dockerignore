@@ -1,0 +1,44 @@
+# Keep secrets and host-built artefacts out of the image.
+#
+# Critical: packages/server/.env holds the live Resend key. The Dockerfile does
+# `COPY packages/server packages/server`, so without this file the secret would
+# be baked into an image layer — recoverable by anyone who pulls the image.
+
+# Secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Host-built artefacts. node_modules in particular would carry macOS-native
+# binaries (incl. the darwin Prisma engine) into a Linux image and break it.
+node_modules
+**/node_modules
+dist
+**/dist
+**/.prisma
+build
+.expo
+
+# VCS + tooling
+.git
+.gitignore
+.github
+
+# Not needed to run the API
+website
+brand
+packages/app
+docs
+*.md
+!packages/server/**/*.md
+
+# Local noise
+.DS_Store
+*.log
+npm-debug.log*
+coverage
+.vscode
+.idea
