@@ -14,18 +14,16 @@
   - Alternative: Vonage Verify: https://www.vonage.com/communications-apis/verify/
 - [ ] **Verify Impressum entity text in browser** - open https://shlep.ch/legal?doc=impressum and confirm "DeltaSci Solutions GmbH" + UID CHE-347.257.714 render (page text is JS-rendered, couldn't auto-verify)
 
-- [ ] **Deploy the API to api.shlep.ch** - last blocker before a partner can integrate live (widget currently falls back to local price estimates)
-  - Repo has `render.yaml` + `packages/server/Dockerfile` + `.dockerignore` — Render reads them automatically. Build verified green 2026-07-30 (tsc clean, server boots).
-  - 1. Push: `git push origin main` (branch already merged, fast-forward, 39 commits)
-  - 2. https://dashboard.render.com → New → **Blueprint** → select `nilsweiler-ship-it/Peerdeliver` → Apply. Creates `shlep-api` (Frankfurt) + Postgres `shlep-db`
-  - 3. Render prompts for the `sync: false` secrets. Set:
-    - `PARTNER_API_KEYS` = `demo:pk_demo_shlep_2026` (add real partners later as `name:key` pairs)
-    - `RESEND_API_KEY` = the key from `packages/server/.env` — **without it every notification silently no-ops**
-    - Stripe keys: leave empty until the account is approved (payments stay simulated)
-  - 4. In the Render DB shell run once: `CREATE EXTENSION IF NOT EXISTS postgis;` (driver-route matching needs it). Then redeploy so `prisma migrate deploy` runs against a PostGIS-enabled DB.
-  - 5. Render → shlep-api → Settings → **Custom Domain** → `api.shlep.ch` → add the CNAME it shows in **Netlify → Domains → shlep.ch → DNS** (Hostpoint's zone is inactive and ignored)
-  - 6. Verify: `curl https://api.shlep.ch/health` → `{"status":"ok"}`, then reload shlep.ch/partner.html — the demo widget should show live coverage instead of an estimate
+- [ ] **Point api.shlep.ch at the Render service** — API is LIVE on its `.onrender.com` URL (verified 2026-07-30: `/health` ok, `/api/partner/quote` returns a real quote incl. PostGIS coverage query). Only the custom domain is missing.
+  - 1. Render → shlep-api → Settings → **Custom Domains** → add `api.shlep.ch`, copy the CNAME target it shows
+  - 2. Netlify → Domains → shlep.ch → DNS → add CNAME, **name `api.shlep.ch` (full name — Netlify rejects `api` or `@`)**, value = Render's target
+  - 3. Verify `curl https://api.shlep.ch/health` → `{"status":"ok"}`
+  - 4. Then reload shlep.ch/partner.html — widget should show live coverage instead of an estimate
+
+- [x] ~~Deploy the API~~ (2026-07-30) - Render blueprint applied; `shlep-api` + Postgres `shlep-db` running in Frankfurt. Pre-deploy fixes needed: user.ts enum type error (broke the Docker build), missing RESEND_API_KEY in render.yaml, missing .dockerignore (would have baked the Resend key into the image), and 39 commits stranded on the feature branch while Render deploys `main`.
+
   - Cost: ~USD 7/mo web + ~USD 6/mo DB on starter plans
+  - **Operating notes for later:** `autoDeploy: true` — every push to `main` rebuilds. Secrets live in Render → shlep-api → Environment (`RESEND_API_KEY`, `PARTNER_API_KEYS`, Stripe keys later), never in the repo. Logs: Render → shlep-api → Logs.
 
 ## Waiting On
 
