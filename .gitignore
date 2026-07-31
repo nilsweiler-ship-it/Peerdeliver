@@ -12,3 +12,7 @@ coverage/
 .turbo/
 .claude/
 shlep_ch_deploy.zip
+
+# Xcode build logs (generated when debugging native builds)
+xcode-build.log
+*.xcresult
