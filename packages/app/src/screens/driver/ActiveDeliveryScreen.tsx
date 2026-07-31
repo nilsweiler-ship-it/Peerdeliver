@@ -10,6 +10,11 @@ import { useSocket } from '../../providers/SocketProvider';
 import { useAuthStore } from '../../stores/authStore';
 import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 import * as Location from 'expo-location';
+import {
+  requestBackgroundPermission,
+  startBackgroundLocation,
+  stopBackgroundLocation,
+} from '../../services/backgroundLocation';
 import type { DeliveryRequest, DeliveryStatus } from '@peerdeliver/shared';
 import { SOCKET_EVENTS } from '@peerdeliver/shared';
 
@@ -194,13 +199,15 @@ export function ActiveDeliveryScreen({ navigation }: any) {
 
     let cancelled = false;
 
+    const deliveryIds = inProgressDeliveries.map((d) => d.id);
+
     const startTracking = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted' || cancelled) return;
 
       // Join tracking rooms
-      inProgressDeliveries.forEach((d) => {
-        socket.emit(SOCKET_EVENTS.TRACKING_START, d.id);
+      deliveryIds.forEach((id) => {
+        socket.emit(SOCKET_EVENTS.TRACKING_START, id);
       });
 
       const sendLocation = async () => {
@@ -208,9 +215,9 @@ export function ActiveDeliveryScreen({ navigation }: any) {
           const loc = await Location.getCurrentPositionAsync({
             accuracy: Location.Accuracy.High,
           });
-          inProgressDeliveries.forEach((d) => {
+          deliveryIds.forEach((id) => {
             socket.emit(SOCKET_EVENTS.TRACKING_LOCATION_UPDATE, {
-              deliveryRequestId: d.id,
+              deliveryRequestId: id,
               lat: loc.coords.latitude,
               lng: loc.coords.longitude,
             });
@@ -224,6 +231,14 @@ export function ActiveDeliveryScreen({ navigation }: any) {
       if (!cancelled) {
         locationIntervalRef.current = setInterval(sendLocation, 10000);
       }
+
+      // Keep reporting once the screen locks or the driver switches apps —
+      // otherwise the sender's map freezes exactly when the driving starts.
+      // Declining background permission is fine: foreground tracking above
+      // still works, so this is an enhancement rather than a requirement.
+      if (!cancelled && (await requestBackgroundPermission()) && !cancelled) {
+        await startBackgroundLocation(deliveryIds);
+      }
     };
 
     startTracking();
@@ -234,9 +249,10 @@ export function ActiveDeliveryScreen({ navigation }: any) {
         clearInterval(locationIntervalRef.current);
         locationIntervalRef.current = null;
       }
-      inProgressDeliveries.forEach((d) => {
-        socket.emit(SOCKET_EVENTS.TRACKING_STOP, d.id);
+      deliveryIds.forEach((id) => {
+        socket.emit(SOCKET_EVENTS.TRACKING_STOP, id);
       });
+      void stopBackgroundLocation();
     };
   }, [socket, user?.shareLocation, inProgressDeliveries.length]);
 

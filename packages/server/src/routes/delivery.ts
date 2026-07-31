@@ -17,5 +17,7 @@ router.patch('/:id/reject', deliveryController.reject);
 router.post('/:id/verify-pickup', validate(verifyCodeSchema), deliveryController.verifyPickup);
 router.post('/:id/verify-delivery', validate(verifyCodeSchema), deliveryController.verifyDelivery);
 router.get('/:id/driver', deliveryController.getDriverInfo);
+// Background location reports from the driver's phone (no socket available).
+router.post('/:id/location', deliveryController.reportLocation);
 
 export default router;

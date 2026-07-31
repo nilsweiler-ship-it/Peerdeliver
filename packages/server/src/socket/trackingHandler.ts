@@ -146,6 +146,44 @@ function stopSimulation(deliveryId: string) {
   }
 }
 
+/**
+ * Publish a driver position that arrived over HTTP rather than the socket.
+ *
+ * Background location updates come from an OS task that has no socket
+ * connection (it runs in a separate JS context, often while the app is
+ * suspended), so it POSTs instead. Everything downstream — suppressing the
+ * simulation, storing the last position, fanning out to watchers — is identical
+ * to the socket path.
+ *
+ * Returns false if the caller is not the assigned driver.
+ */
+export async function publishDriverLocation(
+  io: Server,
+  deliveryId: string,
+  userId: string,
+  lat: number,
+  lng: number,
+): Promise<boolean> {
+  const row = await prisma.deliveryRequest.findUnique({
+    where: { id: deliveryId },
+    select: { driverId: true, status: true },
+  });
+  if (!row || row.driverId !== userId) return false;
+  if (row.status !== 'accepted' && row.status !== 'in_transit') return false;
+
+  realActive.add(deliveryId);
+  stopSimulation(deliveryId);
+  const payload: LastLocation = {
+    userId,
+    lat,
+    lng,
+    timestamp: new Date().toISOString(),
+  };
+  lastLocations.set(deliveryId, payload);
+  io.to(`tracking:${deliveryId}`).emit(SOCKET_EVENTS.TRACKING_LOCATION_NEW, payload);
+  return true;
+}
+
 export function setupTrackingHandlers(io: Server, socket: Socket) {
   const joined = new Set<string>();
 

@@ -1,37 +1,64 @@
 {
   "expo": {
-    "name": "PeerDeliver",
-    "slug": "peerdeliver",
+    "name": "Shlep",
+    "slug": "shlep",
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "scheme": "peerdeliver",
+    "scheme": "shlep",
     "platforms": [
       "ios",
       "android",
       "web"
     ],
     "ios": {
-      "bundleIdentifier": "com.peerdeliver.app"
-    },
-    "android": {
-      "package": "com.peerdeliver.app",
-      "adaptiveIcon": {
-        "backgroundColor": "#1B7340"
+      "bundleIdentifier": "ch.shlep.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Shlep zeigt der sendenden Person, wo sich ihre Lieferung gerade befindet — nur während einer laufenden Fahrt.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Damit die Live-Verfolgung weiterläuft, wenn dein Bildschirm gesperrt ist. Shlep verfolgt deinen Standort ausschliesslich während einer aktiven Lieferung und stoppt danach automatisch.",
+        "NSCameraUsageDescription": "Für Fotos des Pakets bei Übergabe und Zustellung.",
+        "NSPhotoLibraryUsageDescription": "Um ein Profilbild oder ein Foto des Pakets auszuwählen.",
+        "UIBackgroundModes": [
+          "location"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
+    "android": {
+      "package": "ch.shlep.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#14532D"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION"
+      ]
+    },
     "extra": {
-      "apiUrl": "http://192.168.1.141:3001",
+      "apiUrl": "https://api.shlep.ch",
       "stripePublishableKey": ""
     },
     "plugins": [
       "expo-web-browser",
       "expo-font",
       [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Damit die Live-Verfolgung weiterläuft, wenn dein Bildschirm gesperrt ist. Shlep verfolgt deinen Standort ausschliesslich während einer aktiven Lieferung.",
+          "locationWhenInUsePermission": "Shlep zeigt der sendenden Person, wo sich ihre Lieferung gerade befindet — nur während einer laufenden Fahrt.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
         "@stripe/stripe-react-native",
         {
-          "merchantIdentifier": "merchant.com.peerdeliver.app",
+          "merchantIdentifier": "merchant.ch.shlep.app",
           "enableGooglePay": false
         }
       ]

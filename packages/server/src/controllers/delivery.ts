@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { deliveryService, userService } from '../services';
 import { success, error } from '../utils';
+import { getIO } from '../socket';
+import { publishDriverLocation } from '../socket/trackingHandler';
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
@@ -130,6 +132,38 @@ export async function verifyDelivery(req: Request<{ id: string }>, res: Response
   try {
     const delivery = await deliveryService.verifyDelivery(req.params.id, req.user!.userId, req.body.code);
     success(res, delivery);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Location report from the driver's OS background task.
+ *
+ * The background task runs in its own JS context with no socket, so it can only
+ * speak HTTP. Authorisation and fan-out are shared with the socket path in
+ * publishDriverLocation.
+ */
+export async function reportLocation(req: Request<{ id: string }>, res: Response, next: NextFunction) {
+  try {
+    const { lat, lng } = req.body ?? {};
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+      error(res, 'Invalid coordinates', 400);
+      return;
+    }
+    const io = getIO();
+    if (!io) {
+      // Nothing to broadcast to. Not the client's problem — ack so the OS task
+      // doesn't treat it as a failure and back off.
+      success(res, { delivered: false });
+      return;
+    }
+    const ok = await publishDriverLocation(io, req.params.id, req.user!.userId, lat, lng);
+    if (!ok) {
+      error(res, 'Not the assigned driver, or delivery is not in progress', 403);
+      return;
+    }
+    success(res, { delivered: true });
   } catch (err) {
     next(err);
   }

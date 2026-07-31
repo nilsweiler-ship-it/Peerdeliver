@@ -10,7 +10,10 @@ const storage = Platform.OS === 'web'
     }
   : require('expo-secure-store');
 
-const API_URL = __DEV__ ? resolveDevApiUrl() : 'https://api.peerdeliver.ch';
+// Production points at the live Render service behind api.shlep.ch. This was
+// api.peerdeliver.ch — a domain that was never registered, so every request in
+// a release build would have failed DNS.
+const API_URL = __DEV__ ? resolveDevApiUrl() : 'https://api.shlep.ch';
 
 export const api = axios.create({
   baseURL: `${API_URL}/api`,
