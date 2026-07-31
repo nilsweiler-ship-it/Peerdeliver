@@ -25,4 +25,7 @@ export const SOCKET_EVENTS = {
 
   // Notifications
   NOTIFICATION_NEW: 'notification:new',
+
+  // Errors (e.g. a tracking subscription the user isn't a party to)
+  ERROR: 'error:message',
 } as const;

@@ -142,6 +142,17 @@ export async function getDriverInfo(req: Request<{ id: string }>, res: Response,
       error(res, 'No driver assigned', 404);
       return;
     }
+
+    // Only the people involved may see the driver's name, car and plate. Being
+    // logged in is not enough — anyone holding a delivery id could otherwise
+    // pull a named person's vehicle details.
+    const userId = req.user?.userId;
+    const participants = [delivery.senderId, delivery.driverId, delivery.recipientId];
+    if (!userId || !participants.includes(userId)) {
+      error(res, 'Not authorised', 403);
+      return;
+    }
+
     const prisma = require('../config').prisma;
     const driver = await prisma.user.findUnique({
       where: { id: delivery.driverId },
