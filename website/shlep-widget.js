@@ -55,7 +55,7 @@
   var TEXT = {
     de: {
       title: 'Mit Shlep liefern lassen',
-      sub: 'Nachbarn nehmen dein Paket auf einer Fahrt mit, die sie ohnehin machen.',
+      sub: 'Verifizierte Fahrer:innen nehmen dein Paket auf einer Fahrt mit, die sie ohnehin machen.',
       cta: 'Mit Shlep senden',
       insured: 'Bis CHF 1’000 versichert',
       code: 'Code-verifizierte Übergabe',
@@ -71,7 +71,7 @@
     },
     en: {
       title: 'Get it delivered with Shlep',
-      sub: 'Neighbours carry your parcel on a trip they are already making.',
+      sub: 'Verified drivers carry your parcel on a trip they are already making.',
       cta: 'Send with Shlep',
       insured: 'Insured up to CHF 1,000',
       code: 'Code-verified handoff',

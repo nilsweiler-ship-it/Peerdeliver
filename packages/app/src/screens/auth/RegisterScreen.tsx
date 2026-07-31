@@ -119,7 +119,7 @@ export function RegisterScreen({ navigation }: any) {
             icon="package"
             iconColor={colors.primary}
             title={t('auth.roleSender')}
-            caption="Get parcels delivered by neighbours already heading your way."
+            caption="Get parcels delivered by verified drivers already heading your way."
             selected={role === 'sender'}
             onPress={() => setRole('sender')}
           />

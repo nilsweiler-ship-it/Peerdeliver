@@ -279,7 +279,7 @@ export async function confirmDelivery(deliveryId: string, senderId: string) {
   if (ctx?.sender?.email) {
     emailService.sendDeliveryMatched({
       to: ctx.sender.email,
-      driverName: driver?.firstName ?? 'Ein Nachbar',
+      driverName: driver?.firstName ?? 'Eine fahrende Person',
       route: ctx.route,
       priceCHF: ctx.d.budgetCHF,
       pickupCode: ctx.d.pickupCode,

@@ -108,7 +108,7 @@ export function VerificationScreen({ navigation }: any) {
           />
         </View>
         <Text style={styles.heroHint}>
-          Verified neighbours get more deliveries and build a safer network.
+          Verified drivers get more deliveries and build a safer network.
         </Text>
       </View>
 

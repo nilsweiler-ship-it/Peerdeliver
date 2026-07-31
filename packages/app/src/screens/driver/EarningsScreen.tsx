@@ -28,7 +28,7 @@ export function EarningsScreen({ navigation }: any) {
   const pending = data?.pending ?? 0;
 
   // ── Derived figures ─────────────────────────────────────
-  // ~2.6 kg CO₂ saved per neighbourly delivery (no extra car trip made).
+  // ~2.6 kg CO₂ saved per shared delivery (no extra car trip made).
   const co2Saved = deliveries.length * 2.6;
   const weekTotal = deliveries.reduce((sum, d) => sum + (d.driverPayoutCHF ?? 0), 0);
 

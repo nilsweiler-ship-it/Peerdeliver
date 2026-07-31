@@ -48,7 +48,7 @@ export function ProfileScreen() {
   const totalDeliveries = user?.totalDeliveries ?? 0;
   const carTrips = Math.max(0, Math.round(co2Saved / 1.6));
   const kmShared = Math.round(co2Saved / 0.12); // ~120 g CO₂ / km saved
-  const neighbours = totalDeliveries; // one neighbour reached per delivery
+  const peopleConnected = totalDeliveries; // one person connected per delivery
   const rating = user?.averageRating ? user.averageRating.toFixed(1) : 'N/A';
   const memberYear = user?.createdAt ? new Date(user.createdAt).getFullYear() : '';
   const isVerified = user?.verificationStatus === 'verified';
@@ -142,8 +142,8 @@ export function ProfileScreen() {
             </View>
             <View style={styles.impactDivider} />
             <View style={styles.impactStat}>
-              <Text style={styles.impactStatValue}>{neighbours}</Text>
-              <Text style={styles.impactStatLabel}>{t('profileExtra.neighbours')}</Text>
+              <Text style={styles.impactStatValue}>{peopleConnected}</Text>
+              <Text style={styles.impactStatLabel}>{t('profileExtra.peopleConnected')}</Text>
             </View>
           </View>
         </GradientSurface>
