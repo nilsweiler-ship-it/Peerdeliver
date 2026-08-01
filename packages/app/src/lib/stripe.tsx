@@ -23,7 +23,9 @@ function useStripeStub() {
   };
 }
 
-let StripeProvider: (props: AnyProps) => JSX.Element = PassthroughProvider;
+// React.JSX.Element rather than the bare global JSX namespace, which React 19
+// removed.
+let StripeProvider: (props: AnyProps) => React.JSX.Element = PassthroughProvider;
 let useStripe: () => { initPaymentSheet: Function; presentPaymentSheet: Function } = useStripeStub;
 
 // appOwnership === 'expo' means we're inside Expo Go (no custom native modules).

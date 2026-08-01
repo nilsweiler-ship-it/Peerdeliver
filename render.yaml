@@ -54,6 +54,14 @@ services:
         value: Shlep <hello@shlep.ch>
       - key: EMAIL_INTERNAL_TO
         value: hello@shlep.ch
+      # SMS one-time codes (Twilio Verify). Without these the server accepts
+      # any 6-digit code — never deploy to production unset.
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_VERIFY_SERVICE_SID
+        sync: false
       # Stripe (leave unset to keep simulated payments)
       - key: STRIPE_SECRET_KEY
         sync: false

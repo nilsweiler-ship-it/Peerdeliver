@@ -22,6 +22,11 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default('Shlep <hello@shlep.ch>'),
   EMAIL_INTERNAL_TO: z.string().default('hello@shlep.ch'),
+  // SMS one-time codes (Twilio Verify). Unset = codes are logged, not sent,
+  // and any 6-digit code is accepted — dev convenience, never in production.
+  TWILIO_ACCOUNT_SID: z.string().optional(),
+  TWILIO_AUTH_TOKEN: z.string().optional(),
+  TWILIO_VERIFY_SERVICE_SID: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);

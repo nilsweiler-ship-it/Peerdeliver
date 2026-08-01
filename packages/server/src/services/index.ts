@@ -7,3 +7,4 @@ export * as tokenService from './token';
 export * as paymentService from './payment';
 export * as partnerService from './partner';
 export * as emailService from './email';
+export * as smsService from './sms';

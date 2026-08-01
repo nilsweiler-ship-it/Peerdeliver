@@ -4,7 +4,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
-import { useVerify, useDevVerifyAll } from '../../queries/verification';
+import {
+  useVerify,
+  useDevVerifyAll,
+  useStartPhoneVerification,
+  useCheckPhoneVerification,
+} from '../../queries/verification';
 import { Button, Input, Badge } from '../../components/ui';
 import { BackChip } from '../../components/brand';
 import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
@@ -14,16 +19,24 @@ function serverError(err: any): string | undefined {
 }
 
 export function VerificationScreen({ navigation }: any) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
   const verify = useVerify();
   const devVerify = useDevVerifyAll();
+  const startPhone = useStartPhoneVerification();
+  const checkPhone = useCheckPhoneVerification();
 
   const [phone, setPhone] = useState(user?.phone ?? '');
   const [plate, setPlate] = useState(user?.licensePlate ?? '');
   const [phoneError, setPhoneError] = useState<string | undefined>();
   const [plateError, setPlateError] = useState<string | undefined>();
+
+  // Phone verification is two steps: request a code, then enter it. `sentTo`
+  // holds the server-normalised E.164 number and doubles as the "code sent"
+  // flag — it must be echoed back exactly or Twilio can't match the request.
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [smsCode, setSmsCode] = useState('');
 
   const isDriver = user?.role === 'driver' || user?.role === 'both';
   const isVerified = user?.verificationStatus === 'verified';
@@ -38,10 +51,23 @@ export function VerificationScreen({ navigation }: any) {
   const done = checks.filter(Boolean).length;
   const total = checks.length;
 
-  const handleVerifyPhone = async () => {
+  const handleSendCode = async () => {
     setPhoneError(undefined);
     try {
-      await verify.mutateAsync({ type: 'phone', value: phone });
+      const res = await startPhone.mutateAsync({ phone, language: i18n.language?.slice(0, 2) });
+      setSentTo(res.phone);
+      setSmsCode('');
+    } catch (err: any) {
+      setPhoneError(serverError(err) ?? t('more.phoneError'));
+    }
+  };
+
+  const handleCheckCode = async () => {
+    setPhoneError(undefined);
+    try {
+      await checkPhone.mutateAsync({ phone: sentTo!, code: smsCode });
+      setSentTo(null);
+      setSmsCode('');
     } catch (err: any) {
       setPhoneError(serverError(err) ?? t('more.phoneError'));
     }
@@ -129,7 +155,7 @@ export function VerificationScreen({ navigation }: any) {
         verified={!!user?.phoneVerified}
         verifiedValue={user?.phone}
       >
-        {!user?.phoneVerified && (
+        {!user?.phoneVerified && !sentTo && (
           <View style={styles.action}>
             <Input
               value={phone}
@@ -141,12 +167,45 @@ export function VerificationScreen({ navigation }: any) {
               style={styles.input}
             />
             <Button
-              title={t('verification.verify')}
-              onPress={handleVerifyPhone}
-              loading={verify.isPending}
+              title={t('verification.sendCode', 'Code senden')}
+              onPress={handleSendCode}
+              loading={startPhone.isPending}
               disabled={!phone.trim()}
             />
             <Text style={styles.caption}>{t('verification.oneTimeCode')}</Text>
+          </View>
+        )}
+
+        {!user?.phoneVerified && sentTo && (
+          <View style={styles.action}>
+            <Text style={styles.caption}>
+              {t('verification.codeSentTo', 'Code gesendet an')} {sentTo}
+            </Text>
+            <Input
+              value={smsCode}
+              onChangeText={setSmsCode}
+              placeholder="123456"
+              keyboardType="number-pad"
+              autoComplete="sms-otp"
+              maxLength={10}
+              error={phoneError}
+              style={styles.input}
+            />
+            <Button
+              title={t('verification.verify')}
+              onPress={handleCheckCode}
+              loading={checkPhone.isPending}
+              disabled={smsCode.trim().length < 4}
+            />
+            <Button
+              title={t('verification.changeNumber', 'Nummer ändern')}
+              variant="outline"
+              onPress={() => {
+                setSentTo(null);
+                setSmsCode('');
+                setPhoneError(undefined);
+              }}
+            />
           </View>
         )}
       </TrustItem>
