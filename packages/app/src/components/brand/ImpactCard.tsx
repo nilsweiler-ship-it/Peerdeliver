@@ -46,7 +46,20 @@ export function ImpactCard({
         <LeafMark size={20} color={dark ? colors.impactLeaf : colors.impact} />
       </View>
       <View style={styles.body}>
-        <Text style={[styles.amount, { fontSize: amountSize, color: dark ? colors.impactOnDark : colors.impact }]}>
+        <Text
+          style={[
+            styles.amount,
+            {
+              fontSize: amountSize,
+              // typography.figure ships a fixed lineHeight of 22 for its 19px
+              // size. Overriding fontSize without it clipped the glyphs — the
+              // "kg" descender and the CO₂ subscript were cut off at the
+              // default 23. Scale the box with the text instead.
+              lineHeight: Math.round(amountSize * 1.25),
+              color: dark ? colors.impactOnDark : colors.impact,
+            },
+          ]}
+        >
           {amount}
         </Text>
         <Text style={[styles.caption, { color: dark ? colors.textInverse : colors.text }]}>{caption}</Text>

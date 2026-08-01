@@ -130,7 +130,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: { ...typography.h1, color: colors.text },
-  count: { ...typography.figure, fontSize: 24, color: colors.textLight },
+  // lineHeight must follow fontSize — typography.figure fixes it at 22 for its
+  // own 19px, which clips a 24px figure.
+  count: { ...typography.figure, fontSize: 24, lineHeight: 30, color: colors.textLight },
   actions: { gap: spacing.md, paddingTop: spacing.md },
   deleteButton: { borderColor: colors.error },
 });
