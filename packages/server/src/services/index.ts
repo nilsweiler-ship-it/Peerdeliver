@@ -8,3 +8,4 @@ export * as paymentService from './payment';
 export * as partnerService from './partner';
 export * as emailService from './email';
 export * as smsService from './sms';
+export * as payrexxService from './payrexx';

@@ -319,3 +319,49 @@ export async function getEarnings(driverId: string) {
     .reduce((sum, d) => sum + (d.driverPayoutCHF ?? 0), 0);
   return { pending: Math.round(pending * 100) / 100, deliveries };
 }
+
+/**
+ * Mark a delivery paid after a confirmed external payment.
+ *
+ * Called from the Payrexx webhook. Idempotent: Payrexx re-fires on every status
+ * change, so a second confirmation for an already-authorised delivery is a
+ * no-op rather than a duplicate side effect.
+ */
+export async function markDeliveryPaid(
+  deliveryId: string,
+  opts: { provider: 'payrexx'; transactionId?: string },
+): Promise<void> {
+  const delivery = await prisma.deliveryRequest.findUnique({
+    where: { id: deliveryId },
+    select: { paymentStatus: true, budgetCHF: true },
+  });
+  if (!delivery) return;
+  if (delivery.paymentStatus === 'authorised' || delivery.paymentStatus === 'captured') return;
+
+  const { driverPayoutCHF } = computeSplit(Number(delivery.budgetCHF));
+  await prisma.deliveryRequest.update({
+    where: { id: deliveryId },
+    data: {
+      paymentStatus: 'authorised',
+      driverPayoutCHF,
+      ...(opts.transactionId ? { payrexxTransactionId: opts.transactionId } : {}),
+    },
+  });
+  console.log(`[payment] ${deliveryId} authorised via ${opts.provider}`);
+}
+
+/** Record a failed or abandoned external payment. */
+export async function markDeliveryPaymentFailed(deliveryId: string, reason: string): Promise<void> {
+  const delivery = await prisma.deliveryRequest.findUnique({
+    where: { id: deliveryId },
+    select: { paymentStatus: true },
+  });
+  // Never downgrade a payment that already succeeded.
+  if (!delivery || delivery.paymentStatus === 'authorised' || delivery.paymentStatus === 'captured') return;
+
+  await prisma.deliveryRequest.update({
+    where: { id: deliveryId },
+    data: { paymentStatus: 'failed' },
+  });
+  console.log(`[payment] ${deliveryId} payment failed: ${reason}`);
+}

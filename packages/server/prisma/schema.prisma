@@ -127,6 +127,10 @@ model DeliveryRequest {
   twintPhone            String?
   stripePaymentIntentId String?
   stripeTransferId      String?
+  /// Payrexx hosted-payment gateway id (real TWINT). The transaction id only
+  /// exists once the payer has actually completed the payment.
+  payrexxGatewayId      String?
+  payrexxTransactionId  String?
   paymentStatus         PaymentStatus  @default(unpaid)
   driverPayoutCHF       Float?
   refundedCHF           Float?

@@ -27,6 +27,13 @@ const envSchema = z.object({
   TWILIO_ACCOUNT_SID: z.string().optional(),
   TWILIO_AUTH_TOKEN: z.string().optional(),
   TWILIO_VERIFY_SERVICE_SID: z.string().optional(),
+  // Real TWINT payments via Payrexx (Swiss PSP). Takes money from the sender;
+  // driver payouts stay with Stripe Connect — see services/payrexx.ts.
+  PAYREXX_INSTANCE: z.string().optional(),
+  PAYREXX_API_SECRET: z.string().optional(),
+  PAYREXX_WEBHOOK_SECRET: z.string().optional(),
+  // Where Payrexx sends the payer back after the hosted page.
+  PAYREXX_RETURN_BASE: z.string().default('https://shlep.ch'),
 });
 
 export const env = envSchema.parse(process.env);

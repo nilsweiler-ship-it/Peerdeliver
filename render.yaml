@@ -62,6 +62,15 @@ services:
         sync: false
       - key: TWILIO_VERIFY_SERVICE_SID
         sync: false
+      # Real TWINT payments (Payrexx). Unset = simulated TWINT.
+      - key: PAYREXX_INSTANCE
+        sync: false
+      - key: PAYREXX_API_SECRET
+        sync: false
+      - key: PAYREXX_WEBHOOK_SECRET
+        sync: false
+      - key: PAYREXX_RETURN_BASE
+        value: https://shlep.ch
       # Stripe (leave unset to keep simulated payments)
       - key: STRIPE_SECRET_KEY
         sync: false
