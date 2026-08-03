@@ -99,6 +99,7 @@ export function PublishRouteScreen({ navigation }: any) {
         style={styles.container}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.md }]}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       >
         {/* Header */}
         <View style={styles.header}>

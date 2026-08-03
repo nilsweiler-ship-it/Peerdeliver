@@ -103,6 +103,7 @@ export function VerificationScreen({ navigation }: any) {
       style={styles.container}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
       keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
     >
       {/* Header */}
       <View style={styles.header}>

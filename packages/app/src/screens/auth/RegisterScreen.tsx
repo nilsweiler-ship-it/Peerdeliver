@@ -103,6 +103,12 @@ export function RegisterScreen({ navigation }: any) {
           { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.xl },
         ]}
         keyboardShouldPersistTaps="handled"
+        // The max-load field opens a numeric keypad, which on iOS has no Return
+        // or Done key. Without drag-to-dismiss the keypad stays up, covers the
+        // capacity cards, terms and submit button, and the form appears to stop
+        // scrolling at "max load (kg)".
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={true}
       >
         {/* Header */}
         <View style={styles.headerRow}>

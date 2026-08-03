@@ -281,6 +281,7 @@ export function ActiveDeliveryScreen({ navigation }: any) {
       </LiveMap>
 
       <ScrollView
+      keyboardDismissMode="on-drag"
         style={styles.scroll}
         contentContainerStyle={styles.content}
         refreshControl={
