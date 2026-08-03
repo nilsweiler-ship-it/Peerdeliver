@@ -24,7 +24,10 @@ export async function getMine(req: Request, res: Response, next: NextFunction) {
     // user got sent + driven only, and a parcel addressed to them was invisible
     // in the app — which is the common case now that 'both' is the default.
     const wants = {
-      sent: role !== 'driver' && role !== 'recipient',
+      // Sending is open to everyone; only an explicit driver-only role opts out.
+      sent: role !== 'driver',
+      // Driving needs a vehicle and a verified plate, so it is the one thing a
+      // user genuinely opts into.
       driven: role !== 'sender' && role !== 'recipient',
       received: true,
     };

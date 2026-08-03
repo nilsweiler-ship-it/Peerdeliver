@@ -28,19 +28,31 @@ export function MainTabs() {
   const { data: deliveries } = useMyDeliveries();
   const hasIncoming = !!deliveries?.some((d) => d.recipientId && d.recipientId === userId);
 
-  // Everyone can send and drive unless they have explicitly narrowed their
-  // role. 'both' is the signup default: opting out is a deliberate choice, and
-  // a sender who later wants to drive shouldn't have to find a settings screen
-  // to discover the option exists.
-  const showSender = role !== 'driver' && role !== 'recipient';
+  // Sending is available to everyone. Driving is the only thing you opt out of:
+  // it needs a vehicle and a verified plate, so it is a real commitment in a way
+  // that sending and receiving are not.
+  //
+  // 'recipient' therefore means "I'm not driving", not "receiving only". People
+  // often arrive because someone sent them a parcel; leaving them unable to send
+  // without hunting through settings would be a dead end at exactly the moment
+  // they have just seen the product work.
+  const showSender = role !== 'driver';
   const showDriver = role !== 'sender' && role !== 'recipient';
-  // Receiving is not really a role — anyone can be named as the recipient of a
-  // parcel. The tab appears when there is something to receive, rather than
-  // sitting permanently empty for everyone.
+  // Receiving is not really a role — anyone can be named on a parcel. The tab
+  // appears when there is something to receive, or when they chose that role,
+  // rather than sitting permanently empty for everyone else.
   const showRecipient = role === 'recipient' || hasIncoming;
+
+  // 'sender' and 'recipient' grant the same permissions — both mean "not
+  // driving". What differs is intent, so it decides which tab greets them:
+  // someone who signed up because a parcel is on its way lands on Incoming,
+  // someone who came to send lands on Shipments. Same app, right first screen.
+  const initialRouteName =
+    role === 'recipient' && showRecipient ? 'RecipientStack' : 'Home';
 
   return (
     <Tab.Navigator
+      initialRouteName={initialRouteName}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
