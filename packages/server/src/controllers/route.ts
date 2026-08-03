@@ -1,9 +1,27 @@
 import { Request, Response, NextFunction } from 'express';
 import { routeService } from '../services';
+import { prisma } from '../config';
 import { success, error } from '../utils';
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
+    // Vehicle details are no longer collected at signup — everyone starts with
+    // both roles, and most people send before they ever drive. Publishing a
+    // route is the first moment the vehicle actually matters: senders are shown
+    // the plate, and capacity matching depends on the size.
+    const driver = await prisma.user.findUnique({
+      where: { id: req.user!.userId },
+      select: { licensePlate: true, vehicleSize: true },
+    });
+    if (!driver?.licensePlate || !driver?.vehicleSize) {
+      error(
+        res,
+        'Bitte ergänze zuerst dein Fahrzeug (Kennzeichen und Grösse) in deinem Profil.',
+        400,
+      );
+      return;
+    }
+
     const route = await routeService.createRoute(req.user!.userId, req.body);
     success(res, route, 201);
   } catch (err) {

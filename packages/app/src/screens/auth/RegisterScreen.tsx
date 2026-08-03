@@ -288,14 +288,12 @@ export function RegisterScreen({ navigation }: any) {
           title="Create account  →"
           onPress={handleRegister}
           loading={register.isPending}
-          disabled={
-            !email ||
-            !password ||
-            !firstName ||
-            !lastName ||
-            !agreed ||
-            (isDriver && !licensePlate)
-          }
+          // Vehicle details are NOT required to sign up. Everyone defaults to
+          // 'both', so demanding a licence plate up front would force people who
+          // only want to send a parcel to invent one, or to narrow their role
+          // before they know what the app does. The plate is collected when it
+          // first matters — publishing a route — and verified there.
+          disabled={!email || !password || !firstName || !lastName || !agreed}
           style={styles.cta}
         />
 

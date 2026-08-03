@@ -17,25 +17,35 @@ export async function getMine(req: Request, res: Response, next: NextFunction) {
   try {
     const role = req.user!.role;
     const userId = req.user!.userId;
-    let deliveries;
-    if (role === 'both') {
-      const [sent, driven] = await Promise.all([
-        deliveryService.getDeliveriesBySender(userId),
-        deliveryService.getDeliveriesByDriver(userId),
-      ]);
-      // Merge and sort by createdAt desc, dedup by id
-      const seen = new Set<string>();
-      deliveries = [...sent, ...driven]
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .filter((d) => { if (seen.has(d.id)) return false; seen.add(d.id); return true; });
-    } else if (role === 'driver') {
-      deliveries = await deliveryService.getDeliveriesByDriver(userId);
-    } else if (role === 'recipient') {
-      const { email } = await userService.getUserById(userId);
-      deliveries = await deliveryService.getDeliveriesByRecipient(userId, email);
-    } else {
-      deliveries = await deliveryService.getDeliveriesBySender(userId);
-    }
+    const { email } = await userService.getUserById(userId);
+
+    // Receiving is not an opt-in role: anyone can be named as the recipient of
+    // a parcel, so incoming deliveries are always included. Previously a 'both'
+    // user got sent + driven only, and a parcel addressed to them was invisible
+    // in the app — which is the common case now that 'both' is the default.
+    const wants = {
+      sent: role !== 'driver' && role !== 'recipient',
+      driven: role !== 'sender' && role !== 'recipient',
+      received: true,
+    };
+
+    const [sent, driven, received] = await Promise.all([
+      wants.sent ? deliveryService.getDeliveriesBySender(userId) : [],
+      wants.driven ? deliveryService.getDeliveriesByDriver(userId) : [],
+      wants.received ? deliveryService.getDeliveriesByRecipient(userId, email) : [],
+    ]);
+
+    // Merge newest-first, dedup by id — a user can be both sender and recipient
+    // on the same delivery (sending something to themselves at another address).
+    const seen = new Set<string>();
+    const deliveries = [...sent, ...driven, ...received]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .filter((d) => {
+        if (seen.has(d.id)) return false;
+        seen.add(d.id);
+        return true;
+      });
+
     success(res, deliveries);
   } catch (err) {
     next(err);

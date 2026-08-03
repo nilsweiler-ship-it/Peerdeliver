@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Feather } from '@expo/vector-icons';
 import { useAuthStore } from '../stores/authStore';
+import { useMyDeliveries } from '../queries/delivery';
 import { HomeScreen } from '../screens/shared/HomeScreen';
 import { SenderStack } from './SenderStack';
 import { DriverStack } from './DriverStack';
@@ -23,10 +24,20 @@ const icon = (name: FeatherName) =>
 export function MainTabs() {
   const { t } = useTranslation();
   const role = useAuthStore((s) => s.user?.role);
+  const userId = useAuthStore((s) => s.user?.id);
+  const { data: deliveries } = useMyDeliveries();
+  const hasIncoming = !!deliveries?.some((d) => d.recipientId && d.recipientId === userId);
 
-  const showSender = role === 'sender' || role === 'both';
-  const showDriver = role === 'driver' || role === 'both';
-  const showRecipient = role === 'recipient';
+  // Everyone can send and drive unless they have explicitly narrowed their
+  // role. 'both' is the signup default: opting out is a deliberate choice, and
+  // a sender who later wants to drive shouldn't have to find a settings screen
+  // to discover the option exists.
+  const showSender = role !== 'driver' && role !== 'recipient';
+  const showDriver = role !== 'sender' && role !== 'recipient';
+  // Receiving is not really a role — anyone can be named as the recipient of a
+  // parcel. The tab appears when there is something to receive, rather than
+  // sitting permanently empty for everyone.
+  const showRecipient = role === 'recipient' || hasIncoming;
 
   return (
     <Tab.Navigator
