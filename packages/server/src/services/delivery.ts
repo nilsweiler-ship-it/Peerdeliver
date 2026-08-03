@@ -5,6 +5,7 @@ import type { CreateDeliveryInput, PackageSize } from '@peerdeliver/shared';
 import { sizesUpTo, ALL_SIZES } from '@peerdeliver/shared';
 import * as paymentService from './payment';
 import * as emailService from './email';
+import * as pushService from './push';
 
 // All scalar columns (excluding raw geometry) with ST_AsGeoJSON for coordinates
 const DELIVERY_COLS = `
@@ -286,6 +287,13 @@ export async function confirmDelivery(deliveryId: string, senderId: string) {
       language: ctx.sender.language,
     });
   }
+  if (ctx?.d.senderId) {
+    pushService.notifyDeliveryMatched(
+      ctx.d.senderId,
+      driver?.firstName ?? 'Eine fahrende Person',
+      deliveryId,
+    );
+  }
 
   return getDeliveryById(deliveryId);
 }
@@ -320,6 +328,7 @@ export async function verifyPickup(deliveryId: string, driverId: string, code: s
       language: ctx.sender.language,
     });
   }
+  if (ctx?.d.senderId) pushService.notifyPickedUp(ctx.d.senderId, deliveryId);
 
   return getDeliveryById(deliveryId);
 }
@@ -391,6 +400,11 @@ export async function verifyDelivery(deliveryId: string, driverId: string, code:
         feeCHF: split.platformFeeCHF,
         language: ctx.driver.language,
       });
+    }
+    if (ctx.d.senderId) pushService.notifyDelivered(ctx.d.senderId, deliveryId);
+    if (ctx.d.driverId) {
+      const split = paymentService.computeSplit(ctx.d.budgetCHF);
+      pushService.notifyDriverPayout(ctx.d.driverId, split.driverPayoutCHF, deliveryId);
     }
   }
 
