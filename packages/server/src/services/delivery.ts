@@ -13,7 +13,7 @@ const DELIVERY_COLS = `
   dr."pickupLabel", dr."deliveryLabel",
   ST_AsGeoJSON(dr."pickupPoint") AS "pickupGeoJSON",
   ST_AsGeoJSON(dr."deliveryPoint") AS "deliveryGeoJSON",
-  dr."packageSize", dr."packageWeight", dr."packageDescription", dr."declaredValue",
+  dr."packageSize", dr."packageWeight", dr."packageDescription", dr."packaging", dr."declaredValue",
   dr."budgetCHF", dr."platformFeeCHF",
   dr."deliveryWindowStart", dr."deliveryWindowEnd",
   dr.status, dr."pickupCode", dr."deliveryCode",
@@ -36,6 +36,7 @@ interface RawDeliveryRow {
   packageSize: string;
   packageWeight?: number;
   packageDescription?: string;
+  packaging?: string;
   declaredValue?: number;
   budgetCHF: number;
   platformFeeCHF?: number;
@@ -94,7 +95,7 @@ export async function createDelivery(senderId: string, input: CreateDeliveryInpu
     INSERT INTO delivery_requests (
       id, "senderId", "recipientId", "recipientEmail",
       "pickupLabel", "pickupPoint", "deliveryLabel", "deliveryPoint",
-      "packageSize", "packageWeight", "packageDescription", "declaredValue",
+      "packageSize", "packageWeight", "packageDescription", "packaging", "declaredValue",
       "budgetCHF", "deliveryWindowStart", "deliveryWindowEnd",
       status, "pickupCode", "deliveryCode", "createdAt", "updatedAt"
     ) VALUES (
@@ -104,6 +105,7 @@ export async function createDelivery(senderId: string, input: CreateDeliveryInpu
       ${input.deliveryAddress.label},
       ST_SetSRID(ST_MakePoint(${input.deliveryAddress.point.lng}, ${input.deliveryAddress.point.lat}), 4326),
       ${input.packageSize}::"PackageSize", ${input.packageWeight ?? null}, ${input.packageDescription ?? null},
+      ${input.packaging ?? null}::"Packaging",
       ${input.declaredValue ?? null}, ${input.budgetCHF},
       ${new Date(input.deliveryWindowStart)}, ${new Date(input.deliveryWindowEnd)},
       'pending'::"DeliveryStatus", ${pickupCode}, ${deliveryCode},
@@ -353,7 +355,33 @@ export async function verifyDelivery(deliveryId: string, driverId: string, code:
        FROM delivery_requests dr WHERE dr.id = $1`,
     deliveryId,
   );
-  const co2SavedKg = Math.round((km || 0) * 0.12 * 100) / 100;
+  // Packaging avoided, in kg CO2e. A courier shipment of this size would need a
+  // new corrugated box; a hand-to-hand handover often needs nothing at all.
+  //
+  // Basis: roughly 0.7 kg CO2e per kg of corrugated board produced. Typical box
+  // weights by parcel size are ~0.15 kg (S), ~0.35 kg (M), ~0.8 kg (L), giving
+  // the figures below. Deliberately conservative — we would rather understate
+  // this number than have a partner audit it and find it inflated.
+  const PACKAGING_SAVED_KG: Record<string, Record<string, number>> = {
+    none: { S: 0.11, M: 0.25, L: 0.56 },
+    // Reusing a box that already exists avoids producing a new one, but the
+    // material was still made once, so credit is partial.
+    reused: { S: 0.05, M: 0.12, L: 0.28 },
+    // A new box is the courier baseline: no saving, but no penalty either.
+    cardboard: { S: 0, M: 0, L: 0 },
+    other: { S: 0, M: 0, L: 0 },
+  };
+
+  const row = await prisma.deliveryRequest.findUnique({
+    where: { id: deliveryId },
+    select: { packaging: true, packageSize: true },
+  });
+
+  const transportSavedKg = (km || 0) * 0.12;
+  const packagingSavedKg =
+    PACKAGING_SAVED_KG[row?.packaging ?? 'cardboard']?.[row?.packageSize ?? 'M'] ?? 0;
+
+  const co2SavedKg = Math.round((transportSavedKg + packagingSavedKg) * 100) / 100;
 
   await prisma.deliveryRequest.update({ where: { id: deliveryId }, data: { co2SavedKg } });
   // Credit both parties' lifetime impact; the driver also gets a completed delivery.

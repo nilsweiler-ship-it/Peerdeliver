@@ -100,7 +100,12 @@
     "deliveryCodeHint": "Teile diesen Code mit der empfangenden Person zur Bestätigung",
     "driverLocation": "Standort der fahrenden Person",
     "lastUpdated": "Zuletzt aktualisiert",
-    "waitingLocation": "Warte auf Standort der fahrenden Person …"
+    "waitingLocation": "Warte auf Standort der fahrenden Person …",
+    "packaging": "Verpackung",
+    "packagingNone": "Keine",
+    "packagingReused": "Wiederverwendet",
+    "packagingCardboard": "Neuer Karton",
+    "packagingOther": "Anderes"
   },
   "driver": {
     "publishRoute": "Route veröffentlichen",
@@ -361,8 +366,15 @@
     "a8": "Öffne die Sendung, die du stornieren möchtest, und tippe auf Stornieren. Stornierungen vor der Abholung durch die fahrende Person werden automatisch erstattet."
   },
   "growth": {
-    "0": "Samen", "1": "Spross", "2": "Blatt", "3": "Trieb", "4": "Pflanze",
-    "5": "Setzling", "6": "Baum", "7": "Obstbaum", "8": "Wald"
+    "0": "Samen",
+    "1": "Spross",
+    "2": "Blatt",
+    "3": "Trieb",
+    "4": "Pflanze",
+    "5": "Setzling",
+    "6": "Baum",
+    "7": "Obstbaum",
+    "8": "Wald"
   },
   "more": {
     "memberSince": "Mitglied seit {{year}}",

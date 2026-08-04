@@ -19,7 +19,7 @@ import type { AddressSelection } from '../../components/ui';
 import { Stepper, BackChip, Pill, RouteLine } from '../../components/brand';
 import { useCreateDelivery } from '../../queries/delivery';
 import { colors, spacing, typography, borderRadius } from '../../theme';
-import type { PackageSize, CreateDeliveryInput } from '@peerdeliver/shared';
+import type { PackageSize, Packaging, CreateDeliveryInput } from '@peerdeliver/shared';
 import { estimateSize } from '@peerdeliver/shared';
 
 const SIZES: { key: PackageSize; labelKey: string }[] = [
@@ -30,6 +30,18 @@ const SIZES: { key: PackageSize; labelKey: string }[] = [
 
 const SELECTED_FILL = '#ECF1EC';
 
+const PACKAGING_OPTIONS: {
+  key: Packaging;
+  labelKey: string;
+  fallback: string;
+  hint?: string;
+}[] = [
+  { key: 'none', labelKey: 'sender.packagingNone', fallback: 'Keine', hint: 'CO₂-ärmste Option' },
+  { key: 'reused', labelKey: 'sender.packagingReused', fallback: 'Wiederverwendet' },
+  { key: 'cardboard', labelKey: 'sender.packagingCardboard', fallback: 'Neuer Karton' },
+  { key: 'other', labelKey: 'sender.packagingOther', fallback: 'Anderes' },
+];
+
 export function CreateRequestScreen({ navigation }: any) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -39,6 +51,9 @@ export function CreateRequestScreen({ navigation }: any) {
 
   // Step 0: Package details
   const [packageSize, setPackageSize] = useState<PackageSize>('S');
+  // Default to no packaging: it is the common case for a hand-to-hand handover
+  // and the greener one, so it should not require an extra tap.
+  const [packaging, setPackaging] = useState<Packaging>('none');
   const [description, setDescription] = useState('');
   const [weight, setWeight] = useState('');
   const [declaredValue, setDeclaredValue] = useState('');
@@ -104,6 +119,7 @@ export function CreateRequestScreen({ navigation }: any) {
       pickupAddress,
       deliveryAddress,
       packageSize,
+      packaging,
       packageDescription: description,
       packageWeight: weight ? parseFloat(weight) : undefined,
       declaredValue: declaredValue ? parseFloat(declaredValue) : undefined,
@@ -221,6 +237,31 @@ export function CreateRequestScreen({ navigation }: any) {
                     <Text style={[styles.sizeDesc, selected && styles.sizeDescSelected]}>
                       {t(s.labelKey)}
                     </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Packaging feeds the CO2 figure: skipping a new box is a real
+                saving over a courier shipment, and it is one of the few things
+                a peer handover can offer that a parcel network cannot. */}
+            <Text style={styles.sectionTitle}>{t('sender.packaging', 'Verpackung')}</Text>
+            <View style={styles.packagingRow}>
+              {PACKAGING_OPTIONS.map((o) => {
+                const selected = packaging === o.key;
+                return (
+                  <TouchableOpacity
+                    key={o.key}
+                    activeOpacity={0.85}
+                    style={[styles.packagingOption, selected && styles.packagingSelected]}
+                    onPress={() => setPackaging(o.key)}
+                  >
+                    <Text
+                      style={[styles.packagingLabel, selected && styles.packagingLabelSelected]}
+                    >
+                      {t(o.labelKey, o.fallback)}
+                    </Text>
+                    {!!o.hint && <Text style={styles.packagingHint}>{o.hint}</Text>}
                   </TouchableOpacity>
                 );
               })}
@@ -421,6 +462,36 @@ const styles = StyleSheet.create({
   },
   monoInput: {
     fontFamily: typography.figure.fontFamily,
+  },
+  packagingRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  packagingOption: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  packagingSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryLight ?? colors.surface,
+  },
+  packagingLabel: {
+    ...typography.bodyStrong,
+    color: colors.text,
+  },
+  packagingLabelSelected: {
+    color: colors.primary,
+  },
+  packagingHint: {
+    ...typography.caption,
+    color: colors.impact,
+    marginTop: 2,
   },
   sizeRow: {
     flexDirection: 'row',

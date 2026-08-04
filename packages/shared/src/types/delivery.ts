@@ -1,3 +1,5 @@
+export type Packaging = 'none' | 'reused' | 'cardboard' | 'other';
+
 import { PublicUser } from './user';
 
 export type PackageSize = 'S' | 'M' | 'L';
@@ -44,6 +46,8 @@ export interface DeliveryRequest {
   packageSize: PackageSize;
   packageWeight?: number;
   packageDescription?: string;
+  /** What the parcel is wrapped in. 'none' = handed over unpackaged. */
+  packaging?: Packaging;
   declaredValue?: number;
   budgetCHF: number;
   platformFeeCHF?: number;

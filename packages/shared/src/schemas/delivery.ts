@@ -17,6 +17,7 @@ export const createDeliverySchema = z.object({
   packageSize: z.enum(['S', 'M', 'L']),
   packageWeight: z.number().positive().optional(),
   packageDescription: z.string().max(500).optional(),
+  packaging: z.enum(['none', 'reused', 'cardboard', 'other']).optional(),
   declaredValue: z.number().nonnegative().optional(),
   budgetCHF: z.number().positive(),
   deliveryWindowStart: z.string().datetime(),

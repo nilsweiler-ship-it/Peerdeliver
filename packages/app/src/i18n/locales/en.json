@@ -100,7 +100,12 @@
     "deliveryCodeHint": "Share this code with the recipient for delivery confirmation",
     "driverLocation": "Driver Location",
     "lastUpdated": "Last updated",
-    "waitingLocation": "Waiting for driver location..."
+    "waitingLocation": "Waiting for driver location...",
+    "packaging": "Packaging",
+    "packagingNone": "None",
+    "packagingReused": "Reused",
+    "packagingCardboard": "New box",
+    "packagingOther": "Other"
   },
   "driver": {
     "publishRoute": "Publish Route",
@@ -361,8 +366,15 @@
     "a8": "Open the shipment you want to cancel and tap cancel. Cancellations made before the driver picks up the parcel are refunded automatically."
   },
   "growth": {
-    "0": "Seedling", "1": "Sprout", "2": "Leaf", "3": "Shoot", "4": "Plant",
-    "5": "Sapling", "6": "Tree", "7": "Fruit tree", "8": "Forest"
+    "0": "Seedling",
+    "1": "Sprout",
+    "2": "Leaf",
+    "3": "Shoot",
+    "4": "Plant",
+    "5": "Sapling",
+    "6": "Tree",
+    "7": "Fruit tree",
+    "8": "Forest"
   },
   "more": {
     "memberSince": "Member since {{year}}",

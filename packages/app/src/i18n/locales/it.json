@@ -100,7 +100,12 @@
     "deliveryCodeHint": "Condividi questo codice con il destinatario per la conferma",
     "driverLocation": "Posizione del conducente",
     "lastUpdated": "Ultimo aggiornamento",
-    "waitingLocation": "In attesa della posizione del conducente …"
+    "waitingLocation": "In attesa della posizione del conducente …",
+    "packaging": "Imballaggio",
+    "packagingNone": "Nessuno",
+    "packagingReused": "Riutilizzato",
+    "packagingCardboard": "Scatola nuova",
+    "packagingOther": "Altro"
   },
   "driver": {
     "publishRoute": "Pubblica un tragitto",
@@ -361,8 +366,15 @@
     "a8": "Apri la spedizione che vuoi annullare e tocca annulla. Gli annullamenti effettuati prima del ritiro da parte del conducente vengono rimborsati automaticamente."
   },
   "growth": {
-    "0": "Seme", "1": "Germoglio", "2": "Foglia", "3": "Getto", "4": "Pianta",
-    "5": "Alberello", "6": "Albero", "7": "Albero da frutto", "8": "Foresta"
+    "0": "Seme",
+    "1": "Germoglio",
+    "2": "Foglia",
+    "3": "Getto",
+    "4": "Pianta",
+    "5": "Alberello",
+    "6": "Albero",
+    "7": "Albero da frutto",
+    "8": "Foresta"
   },
   "more": {
     "memberSince": "Membro dal {{year}}",

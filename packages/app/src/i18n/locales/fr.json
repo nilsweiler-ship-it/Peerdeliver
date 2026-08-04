@@ -100,7 +100,12 @@
     "deliveryCodeHint": "Partagez ce code avec le destinataire pour confirmer la livraison",
     "driverLocation": "Position du conducteur",
     "lastUpdated": "Dernière mise à jour",
-    "waitingLocation": "En attente de la position du conducteur …"
+    "waitingLocation": "En attente de la position du conducteur …",
+    "packaging": "Emballage",
+    "packagingNone": "Aucun",
+    "packagingReused": "Réutilisé",
+    "packagingCardboard": "Carton neuf",
+    "packagingOther": "Autre"
   },
   "driver": {
     "publishRoute": "Publier un trajet",
@@ -361,8 +366,15 @@
     "a8": "Ouvrez l'envoi que vous souhaitez annuler et appuyez sur annuler. Les annulations faites avant l'enlèvement par le conducteur sont remboursées automatiquement."
   },
   "growth": {
-    "0": "Graine", "1": "Pousse", "2": "Feuille", "3": "Tige", "4": "Plante",
-    "5": "Jeune arbre", "6": "Arbre", "7": "Arbre fruitier", "8": "Forêt"
+    "0": "Graine",
+    "1": "Pousse",
+    "2": "Feuille",
+    "3": "Tige",
+    "4": "Plante",
+    "5": "Jeune arbre",
+    "6": "Arbre",
+    "7": "Arbre fruitier",
+    "8": "Forêt"
   },
   "more": {
     "memberSince": "Membre depuis {{year}}",

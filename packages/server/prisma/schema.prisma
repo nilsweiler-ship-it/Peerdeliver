@@ -45,6 +45,13 @@ enum RouteType {
   recurring
 }
 
+enum Packaging {
+  none
+  reused
+  cardboard
+  other
+}
+
 enum PaymentStatus {
   unpaid
   authorised
@@ -115,6 +122,10 @@ model DeliveryRequest {
   packageSize         PackageSize
   packageWeight       Float?
   packageDescription  String?
+  /// What the parcel is wrapped in. Feeds the CO2 figure: a delivery handed
+  /// over unpackaged, or in reused material, avoids the embodied emissions of
+  /// a new box that a courier shipment would have required.
+  packaging           Packaging?
   declaredValue       Float?
   budgetCHF           Float
   platformFeeCHF      Float?
