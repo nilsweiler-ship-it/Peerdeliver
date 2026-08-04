@@ -7,7 +7,16 @@
   "scripts": {
     "shared:build": "npm run build -w @peerdeliver/shared",
     "server": "npm run dev -w @peerdeliver/server",
-    "app": "npm run start -w @peerdeliver/app"
+    "app": "npm run start -w @peerdeliver/app",
+    "db:generate": "prisma generate --schema packages/server/prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema packages/server/prisma/schema.prisma",
+    "db:studio": "prisma studio --schema packages/server/prisma/schema.prisma",
+    "typecheck": "tsc -p packages/server/tsconfig.json --noEmit && tsc -p packages/app/tsconfig.json --noEmit",
+    "verify": "npm run db:generate && npm run typecheck && echo \"\\n✅ GREEN — types clean across server and app\"",
+    "preflight": "node scripts/preflight.mjs"
+  },
+  "prisma": {
+    "schema": "packages/server/prisma/schema.prisma"
   },
   "engines": {
     "node": ">=18"

@@ -14,17 +14,17 @@ Hier entstanden die meisten verlorenen Stunden.
 
 ```bash
 cd "$HOME/Peerdeliver"
+npm run preflight
+```
 
-# 1. Abhängigkeiten sind installiert UND zur SDK-Version passend
+Prüft automatisch: alle vier nativen Module installiert, Icon deklariert, Bundle-ID korrekt, iOS- und Android-Standortberechtigungen gesetzt, EAS-projectId vorhanden, Produktions-API-URL korrekt, kein Platzhalter-Projekt im Repo-Root, keine `.env` im Git, i18n-Schlüssel in allen vier Sprachen identisch.
+
+Zusätzlich von Hand:
+
+```bash
 cd packages/app && npx expo install --check && cd ../..
-
-# 2. Native Module, die die App zur Laufzeit braucht, sind wirklich da
-node -e "['expo-dev-client','expo-notifications','expo-location','expo-task-manager']
-  .forEach(p=>{try{require.resolve(p+'/package.json')}catch{console.log('FEHLT:',p);process.exitCode=1}})"
-
-# 3. Xcode zeigt auf die richtige Installation
-xcode-select -p          # muss auf /Applications/Xcode.app/... zeigen
-xcrun xctrace list devices | head   # Gerät sichtbar?
+xcode-select -p                      # zeigt auf /Applications/Xcode.app/...
+xcrun xctrace list devices | head    # Gerät sichtbar?
 ```
 
 **Checkliste**
