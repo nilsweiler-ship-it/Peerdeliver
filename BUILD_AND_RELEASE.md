@@ -56,6 +56,10 @@ npx eas-cli@latest build --platform ios --profile preview
 
 Beim ersten Mal fragt EAS nach Signing-Zertifikaten — **„let EAS handle it"** wählen. EAS verwaltet sie danach selbst; das ist der Teil, den man sonst manuell in Xcode pflegen müsste.
 
+> **Was das bedeutet:** EAS erzeugt Distribution-Zertifikat und Provisioning-Profile und speichert sie auf Expo-Servern. Kein Lock-in — mit `npx eas-cli@latest credentials` lassen sie sich jederzeit herunterladen oder ersetzen.
+>
+> Der eigentliche Grund für diese Wahl: Apple erlaubt nur **drei Distribution-Zertifikate pro Account**. Wer sie von Hand anlegt, verbraucht sie über mehrere Rechner hinweg schnell und muss dann im Developer-Portal aufräumen. EAS verwendet konsequent eines wieder.
+
 Ergebnis ist ein Link. Für iOS musst du Testgeräte vorher registrieren:
 
 ```bash
