@@ -57,10 +57,17 @@ plist.UIBackgroundModes?.includes('location')
   ? ok('iOS background location mode')
   : fail('iOS background location mode', 'background tracking dies silently without it');
 
+// Expo's plugins normalise these to fully-qualified names, so match on the
+// suffix rather than the exact string.
 const androidPerms = appJson.android?.permissions ?? [];
-androidPerms.includes('ACCESS_BACKGROUND_LOCATION') && androidPerms.includes('FOREGROUND_SERVICE_LOCATION')
+const hasPerm = (p) => androidPerms.some((x) => x === p || x.endsWith(`.${p}`));
+hasPerm('ACCESS_BACKGROUND_LOCATION') && hasPerm('FOREGROUND_SERVICE_LOCATION')
   ? ok('Android location permissions')
   : fail('Android location permissions', 'ACCESS_BACKGROUND_LOCATION + FOREGROUND_SERVICE_LOCATION required');
+
+appJson.updates?.url
+  ? ok('EAS updates configured', appJson.updates.url.slice(-12))
+  : warn('EAS updates configured', 'set on first EAS build — rerun the build command once');
 
 appJson.extra?.eas?.projectId
   ? ok('EAS projectId', appJson.extra.eas.projectId.slice(0, 8) + '…')

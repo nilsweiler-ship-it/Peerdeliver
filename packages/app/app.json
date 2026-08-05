@@ -27,6 +27,7 @@
         "NSCameraUsageDescription": "Für Fotos des Pakets bei Übergabe und Zustellung.",
         "NSPhotoLibraryUsageDescription": "Um ein Profilbild oder ein Foto des Pakets auszuwählen.",
         "UIBackgroundModes": [
+          "location",
           "location"
         ],
         "ITSAppUsesNonExemptEncryption": false
@@ -39,11 +40,6 @@
         "backgroundColor": "#14532D"
       },
       "permissions": [
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_BACKGROUND_LOCATION",
-        "FOREGROUND_SERVICE",
-        "FOREGROUND_SERVICE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_BACKGROUND_LOCATION",
@@ -82,6 +78,12 @@
     "owner": "neezus",
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/a8f4abf0-c648-4913-86d7-1121821fa956"
     }
   }
 }
