@@ -7,7 +7,9 @@
     "start": "expo start --tunnel",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "preflight": "cd ../.. && npm run preflight",
+    "verify": "cd ../.. && npm run verify"
   },
   "dependencies": {
     "@expo-google-fonts/bricolage-grotesque": "^0.4.1",

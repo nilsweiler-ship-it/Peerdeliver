@@ -8,7 +8,9 @@
     "start": "node dist/index.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "preflight": "cd ../.. && npm run preflight",
+    "verify": "cd ../.. && npm run verify"
   },
   "dependencies": {
     "@peerdeliver/shared": "*",
