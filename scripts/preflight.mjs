@@ -73,7 +73,17 @@ appJson.extra?.eas?.projectId
   ? ok('EAS projectId', appJson.extra.eas.projectId.slice(0, 8) + '…')
   : fail('EAS projectId', 'run: npx eas-cli@latest init — push tokens cannot be issued without it');
 
-// 3. Production API URL is a domain that exists -----------------------------
+// 3. EAS can build the shared package it cannot clone -----------------------
+// packages/shared/dist is gitignored, and EAS builds from a git clone. Without
+// a post-install hook the shared package's `main` points at a file that does
+// not exist on the build server, and Metro fails during "Bundle JavaScript"
+// with no useful message.
+appPkg.scripts?.['eas-build-post-install']?.includes('shared:build')
+  ? ok('EAS builds shared package', 'post-install hook present')
+  : fail('EAS builds shared package',
+         'add "eas-build-post-install": "cd ../.. && npm run shared:build" — cloud builds fail without it');
+
+// 4. Production API URL is a domain that exists -----------------------------
 const apiSrc = readFileSync(join(root, 'packages/app/src/services/api.ts'), 'utf8');
 const prodUrl = apiSrc.match(/__DEV__\s*\?[^:]+:\s*'([^']+)'/)?.[1];
 prodUrl === 'https://api.shlep.ch'
