@@ -16,3 +16,9 @@ shlep_ch_deploy.zip
 # Xcode build logs (generated when debugging native builds)
 xcode-build.log
 *.xcresult
+
+# EAS / store credentials — never commit
+google-play-key.json
+*.p8
+*.p12
+*.mobileprovision
