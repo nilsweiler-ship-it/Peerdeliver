@@ -10,9 +10,11 @@
     "web": "expo start --web",
     "preflight": "cd ../.. && npm run preflight",
     "verify": "cd ../.. && npm run verify",
-    "build:preview": "eas-cli build --platform ios --profile preview",
-    "build:prod": "eas-cli build --platform ios --profile production",
-    "submit:ios": "eas-cli submit --platform ios --latest"
+    "build:preview": "npx eas-cli@latest build --platform ios --profile preview",
+    "build:prod": "npx eas-cli@latest build --platform ios --profile production",
+    "submit:ios": "npx eas-cli@latest submit --platform ios --latest",
+    "build:android": "npx eas-cli@latest build --platform android --profile preview",
+    "device:register": "npx eas-cli@latest device:create"
   },
   "dependencies": {
     "@expo-google-fonts/bricolage-grotesque": "^0.4.1",
