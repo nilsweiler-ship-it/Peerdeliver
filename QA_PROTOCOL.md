@@ -87,6 +87,10 @@ curl -s -X POST https://api.shlep.ch/api/partner/quote \
 
 ## Stufe 4 — Funktionale Tests auf echtem Gerät
 
+> **Vollständige Abnahme:** `MANUAL_TEST_PLAN.md` — 78 Einzeltests über alle
+> Funktionen, mit Setup, erwartetem Ergebnis und Blocker-Definition. Die Liste
+> unten ist die Kurzfassung für einen Bugfix-Release.
+
 **Nie im Simulator abnehmen.** Simulator hat keine echte GPS, kein Push, keine Kamera, und er hängt die Mac-Tastatur ein — die Software-Tastatur erscheint gar nicht, weshalb Tastatur- und Scroll-Probleme dort unsichtbar bleiben. Genau so ist ein realer Bug (Zahlen-Tastatur ohne „Fertig") tagelang durchgerutscht.
 
 ### Registrierung & Rollen
