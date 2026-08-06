@@ -3,9 +3,10 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { Button } from '../../components/ui';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 
-export function VerifyEmailScreen() {
+export function VerifyEmailScreen({ navigation }: any) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
@@ -17,11 +18,27 @@ export function VerifyEmailScreen() {
       <Text style={styles.eyebrow}>{t('verifyEmail.eyebrow').toUpperCase()}</Text>
       <Text style={styles.title}>{t('verifyEmail.title')}</Text>
       <Text style={styles.text}>{t('verifyEmail.text')}</Text>
+
+      {/* This screen sits on a header-less stack and has no action of its own,
+          so without this it is a dead end — reachable with no way out but
+          force-quitting. Nothing currently routes here, but leaving a trap in
+          place for a future navigate() call is how these bugs happen. */}
+      <View style={styles.actions}>
+        <Button
+          title={t('common.back', 'Zurück')}
+          variant="outline"
+          onPress={() => (navigation?.canGoBack?.() ? navigation.goBack() : navigation?.navigate?.('Login'))}
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  actions: {
+    marginTop: spacing.xl,
+    alignSelf: 'stretch',
+  },
   container: {
     flex: 1,
     justifyContent: 'center',

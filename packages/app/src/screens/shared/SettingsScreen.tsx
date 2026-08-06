@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { SegmentedControl } from '../../components/brand';
+import { SegmentedControl, BackChip } from '../../components/brand';
 import { setAppLanguage, SUPPORTED_LANGUAGES, type AppLanguage } from '../../i18n';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 
@@ -26,6 +26,13 @@ export function SettingsScreen({ navigation }: any) {
       style={styles.container}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.lg }]}
     >
+      {/* Every stack in the app runs with headerShown: false, so each screen
+          has to bring its own way back. This one did not — once you opened
+          Settings there was no route out except force-quitting the app. */}
+      <View style={styles.header}>
+        <BackChip onPress={() => navigation.goBack()} />
+      </View>
+
       <Text style={styles.eyebrow}>{t('settings.preferences').toUpperCase()}</Text>
       <Text style={styles.title}>{t('settings.title')}</Text>
 
@@ -61,6 +68,11 @@ export function SettingsScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl },
   eyebrow: { ...typography.overline, color: colors.textLight, letterSpacing: 1.2, marginBottom: 2 },

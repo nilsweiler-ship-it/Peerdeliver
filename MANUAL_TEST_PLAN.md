@@ -217,6 +217,7 @@ Der Fall, der bei Marktplatz-Käufen am häufigsten ist.
 | J8 | Schriften gegen shlep.ch halten | Gleiche Anmutung (Bricolage / IBM Plex) | ☐ |
 | J9 | Grösste Systemschrift einstellen (iOS-Einstellungen) | Nichts überlappt, alles bedienbar | ☐ |
 | J10 | Dunkelmodus des Systems | App bleibt lesbar (sie ist bewusst hell) | ☐ |
+| J11 | **Jeden** Unterbildschirm öffnen (Einstellungen, Verifizierung, Hilfe, Rechtliches, Route veröffentlichen, Zahlung) und wieder verlassen | Überall ein sichtbarer Zurück-Weg. Alle Stacks laufen ohne Systemkopfzeile — fehlt der eigene Zurück-Button, ist der Bildschirm eine Sackgasse | ☐ |
 
 ---
 
