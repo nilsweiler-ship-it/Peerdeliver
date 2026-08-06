@@ -19,8 +19,8 @@
   },
   "dependencies": {
     "@expo-google-fonts/bricolage-grotesque": "^0.4.1",
-    "@expo-google-fonts/hanken-grotesk": "^0.4.3",
-    "@expo-google-fonts/jetbrains-mono": "^0.4.1",
+    "@expo-google-fonts/ibm-plex-mono": "^0.4.1",
+    "@expo-google-fonts/ibm-plex-sans": "^0.4.1",
     "@expo/metro-runtime": "~6.1.2",
     "@peerdeliver/shared": "*",
     "@react-native-community/slider": "5.0.1",

@@ -8,15 +8,23 @@ import { TextStyle } from 'react-native';
  *
  * Load via expo-font / @expo-google-fonts in App.tsx, then set these family names.
  */
+/**
+ * Typefaces match the website exactly: Bricolage Grotesque for display,
+ * IBM Plex Sans for body, IBM Plex Mono for figures and codes.
+ *
+ * Body and mono previously used Hanken Grotesk and JetBrains Mono — close
+ * enough not to jar, but a different voice from shlep.ch. Anyone seeing the
+ * site and the app together would have noticed the letterforms disagree.
+ */
 export const fonts = {
   display: 'BricolageGrotesque_700Bold',
   displaySemi: 'BricolageGrotesque_600SemiBold',
-  body: 'HankenGrotesk_400Regular',
-  bodyMedium: 'HankenGrotesk_500Medium',
-  bodySemi: 'HankenGrotesk_600SemiBold',
-  bodyBold: 'HankenGrotesk_700Bold',
-  mono: 'JetBrainsMono_500Medium',
-  monoBold: 'JetBrainsMono_700Bold',
+  body: 'IBMPlexSans_400Regular',
+  bodyMedium: 'IBMPlexSans_500Medium',
+  bodySemi: 'IBMPlexSans_600SemiBold',
+  bodyBold: 'IBMPlexSans_700Bold',
+  mono: 'IBMPlexMono_500Medium',
+  monoBold: 'IBMPlexMono_700Bold',
 } as const;
 
 export const typography: Record<string, TextStyle> = {

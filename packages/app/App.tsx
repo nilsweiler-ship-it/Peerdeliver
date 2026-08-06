@@ -10,15 +10,15 @@ import {
   BricolageGrotesque_700Bold,
 } from '@expo-google-fonts/bricolage-grotesque';
 import {
-  HankenGrotesk_400Regular,
-  HankenGrotesk_500Medium,
-  HankenGrotesk_600SemiBold,
-  HankenGrotesk_700Bold,
-} from '@expo-google-fonts/hanken-grotesk';
+  IBMPlexSans_400Regular,
+  IBMPlexSans_500Medium,
+  IBMPlexSans_600SemiBold,
+  IBMPlexSans_700Bold,
+} from '@expo-google-fonts/ibm-plex-sans';
 import {
-  JetBrainsMono_500Medium,
-  JetBrainsMono_700Bold,
-} from '@expo-google-fonts/jetbrains-mono';
+  IBMPlexMono_500Medium,
+  IBMPlexMono_700Bold,
+} from '@expo-google-fonts/ibm-plex-mono';
 import { QueryProvider } from './src/providers/QueryProvider';
 import { SocketProvider } from './src/providers/SocketProvider';
 import { RootNavigator } from './src/navigation/RootNavigator';
@@ -29,12 +29,12 @@ export default function App() {
   const [fontsLoaded, fontError] = useFonts({
     BricolageGrotesque_600SemiBold,
     BricolageGrotesque_700Bold,
-    HankenGrotesk_400Regular,
-    HankenGrotesk_500Medium,
-    HankenGrotesk_600SemiBold,
-    HankenGrotesk_700Bold,
-    JetBrainsMono_500Medium,
-    JetBrainsMono_700Bold,
+    IBMPlexSans_400Regular,
+    IBMPlexSans_500Medium,
+    IBMPlexSans_600SemiBold,
+    IBMPlexSans_700Bold,
+    IBMPlexMono_500Medium,
+    IBMPlexMono_700Bold,
   });
 
   // Proceed once fonts resolve — but never block the whole app on a font error
