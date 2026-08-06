@@ -12,8 +12,9 @@ interface GradientSurfaceProps {
 }
 
 const stops: Record<string, [string, string, string]> = {
-  spruce: ['#235440', '#1A3E2F', '#0F291E'],
-  spruceSoft: ['#2A5E48', '#1F4D3B', '#163528'],
+  // Forest-green ramp, matching brand / website (#14532D).
+  spruce: ['#1B6437', '#14532D', '#0B2E19'],
+  spruceSoft: ['#1E6B3A', '#14532D', '#0E3A1F'],
 };
 
 export function GradientSurface({ children, style, variant = 'spruce', fill = true }: GradientSurfaceProps) {

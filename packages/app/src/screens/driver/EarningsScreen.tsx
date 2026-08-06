@@ -9,7 +9,8 @@ import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 
 const WEEK_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 // Bars escalate in colour from soft mint → moss → spruce as the value grows.
-const BAR_RAMP = ['#DCE7DD', '#3E7D5E', '#1F4D3B'];
+// Bar ramp climbs to the brand forest green, not the retired spruce.
+const BAR_RAMP = ['#DCE7DD', '#3E7D5E', colors.primary];
 
 function barColor(ratio: number) {
   if (ratio >= 0.66) return BAR_RAMP[2];

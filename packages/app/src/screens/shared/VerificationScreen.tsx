@@ -260,18 +260,23 @@ export function VerificationScreen({ navigation }: any) {
         </TrustItem>
       )}
 
-      {/* Dev helper */}
-      <View style={styles.dev}>
-        <Button
-          title="Verify everything (dev)"
-          variant="outline"
-          onPress={handleDevVerify}
-          loading={devVerify.isPending}
-        />
-        <Text style={styles.devCaption}>
-          Development shortcut — instantly verifies every signal for testing.
-        </Text>
-      </View>
+      {/* Dev helper — hidden outside development. The server returns 404 for
+          this route in production (otherwise anyone could self-certify), so
+          showing the button in a release build only produces a confusing
+          "dev verify failed" alert. */}
+      {__DEV__ && (
+        <View style={styles.dev}>
+          <Button
+            title="Verify everything (dev)"
+            variant="outline"
+            onPress={handleDevVerify}
+            loading={devVerify.isPending}
+          />
+          <Text style={styles.devCaption}>
+            Development shortcut — instantly verifies every signal for testing.
+          </Text>
+        </View>
+      )}
     </ScrollView>
   );
 }
