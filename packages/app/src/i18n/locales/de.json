@@ -173,7 +173,15 @@
     "noConversationsMessage": "Unterhaltungen erscheinen hier, sobald du mit jemandem interagierst",
     "typing": "schreibt …",
     "deliveryRef": "Lieferung: {{id}}",
-    "unread": "{{count}} ungelesen"
+    "unread": "{{count}} ungelesen",
+    "quickOnMyWay": "Bin unterwegs 👋",
+    "quickRunningLate": "Verspäte mich etwas",
+    "quickArrived": "Bin da",
+    "quickWhereAreYou": "Wo bist du gerade?",
+    "quickAtAddress": "Ich bin an der Adresse",
+    "quickThanks": "Danke!",
+    "quickWhenArriving": "Wann kommst du etwa?",
+    "quickAtHome": "Ich bin zu Hause"
   },
   "profile": {
     "editProfile": "Profil bearbeiten",

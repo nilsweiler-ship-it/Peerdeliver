@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useMessages, useSendMessage, useMarkRead } from '../../queries/chat';
+import { useDelivery } from '../../queries/delivery';
 import { MessageBubble } from '../../components/chat/MessageBubble';
 import { ChatInput } from '../../components/chat/ChatInput';
 import { LoadingSpinner } from '../../components/ui';
@@ -24,7 +25,21 @@ import { colors, spacing, typography, borderRadius } from '../../theme';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Message } from '@peerdeliver/shared';
 
-const QUICK_REPLIES = ['On my way 👋', 'Running late', 'Thanks!'];
+/**
+ * Quick replies differ by who you are in this delivery.
+ *
+ * They were previously one hardcoded English list — "On my way", "Running
+ * late", "Thanks!" — which are all things the DRIVER says. A sender tapping
+ * "On my way" makes no sense, and the strings were not translated either.
+ *
+ * Kept to three per role: more than that and the chips wrap, which pushes the
+ * input field off screen on smaller phones.
+ */
+const QUICK_REPLY_KEYS: Record<'driver' | 'sender' | 'recipient', string[]> = {
+  driver: ['chat.quickOnMyWay', 'chat.quickRunningLate', 'chat.quickArrived'],
+  sender: ['chat.quickWhereAreYou', 'chat.quickAtAddress', 'chat.quickThanks'],
+  recipient: ['chat.quickWhenArriving', 'chat.quickAtHome', 'chat.quickThanks'],
+};
 
 /** Derive a short, stable display id (#PD-xxxxxx) from the delivery id. */
 function shortRef(id: string): string {
@@ -38,6 +53,16 @@ export function ChatScreen({ route, navigation }: any) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const userId = useAuthStore((s) => s.user?.id);
+  const { data: delivery } = useDelivery(deliveryId);
+
+  // Role in THIS delivery, not the account's global role — the same person can
+  // be the driver on one delivery and the sender on the next.
+  const chatRole: 'driver' | 'sender' | 'recipient' =
+    delivery?.driverId && delivery.driverId === userId
+      ? 'driver'
+      : delivery?.recipientId && delivery.recipientId === userId
+        ? 'recipient'
+        : 'sender';
   const socket = useSocket();
   const queryClient = useQueryClient();
   const flatListRef = useRef<FlatList>(null);
@@ -189,7 +214,9 @@ export function ChatScreen({ route, navigation }: any) {
 
         {/* Quick replies */}
         <View style={styles.quickRow}>
-          {QUICK_REPLIES.map((reply) => (
+          {QUICK_REPLY_KEYS[chatRole].map((key) => {
+            const reply = t(key);
+            return (
             <TouchableOpacity
               key={reply}
               style={styles.quickChip}
@@ -198,7 +225,8 @@ export function ChatScreen({ route, navigation }: any) {
             >
               <Text style={styles.quickChipText}>{reply}</Text>
             </TouchableOpacity>
-          ))}
+            );
+          })}
         </View>
 
         <ChatInput onSend={handleSend} onTyping={handleTyping} />

@@ -187,6 +187,18 @@ Der Fall, der bei Marktplatz-Käufen am häufigsten ist.
 
 ---
 
+## H2 · Chat
+
+| # | Test | Erwartet | |
+|---|---|---|---|
+| H2.1 | Als **sender** den Chat zu einer Lieferung öffnen | Schnellantworten passen zur sendenden Rolle („Wo bist du gerade?"), **nicht** „Bin unterwegs" | ☐ |
+| H2.2 | Als **driver** denselben Chat öffnen | Schnellantworten sind die des Fahrers („Bin unterwegs", „Verspäte mich etwas", „Bin da") | ☐ |
+| H2.3 | Sprache auf FR/IT/EN stellen, Chat öffnen | Schnellantworten sind übersetzt, kein Englisch in der DE-Ansicht | ☐ |
+| H2.4 | Schnellantwort antippen | Wird sofort gesendet und erscheint im Verlauf | ☐ |
+| H2.5 | Nachricht auf dem zweiten Gerät | Kommt live an, ohne Neuladen | ☐ |
+
+---
+
 ## I · Sicherheit & Privatsphäre
 
 **Bitte nicht überspringen.** Diese Punkte sind vor echten Nutzern zu prüfen, nicht danach.

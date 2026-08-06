@@ -173,7 +173,15 @@
     "noConversationsMessage": "Le conversazioni appariranno qui quando interagisci con un mittente o un conducente",
     "typing": "sta scrivendo …",
     "deliveryRef": "Consegna: {{id}}",
-    "unread": "{{count}} non letti"
+    "unread": "{{count}} non letti",
+    "quickOnMyWay": "Sto arrivando 👋",
+    "quickRunningLate": "Sono un po' in ritardo",
+    "quickArrived": "Sono qui",
+    "quickWhereAreYou": "Dove sei adesso?",
+    "quickAtAddress": "Sono all'indirizzo",
+    "quickThanks": "Grazie!",
+    "quickWhenArriving": "Verso che ora arrivi?",
+    "quickAtHome": "Sono a casa"
   },
   "profile": {
     "editProfile": "Modifica profilo",

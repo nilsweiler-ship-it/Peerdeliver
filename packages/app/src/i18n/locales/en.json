@@ -173,7 +173,15 @@
     "noConversationsMessage": "Conversations will appear here when you interact with a sender or driver",
     "typing": "typing...",
     "deliveryRef": "Delivery: {{id}}",
-    "unread": "{{count}} unread"
+    "unread": "{{count}} unread",
+    "quickOnMyWay": "On my way 👋",
+    "quickRunningLate": "Running a bit late",
+    "quickArrived": "I'm here",
+    "quickWhereAreYou": "Where are you now?",
+    "quickAtAddress": "I'm at the address",
+    "quickThanks": "Thanks!",
+    "quickWhenArriving": "Roughly when will you arrive?",
+    "quickAtHome": "I'm home"
   },
   "profile": {
     "editProfile": "Edit Profile",
