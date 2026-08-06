@@ -136,3 +136,52 @@ export async function checkCode(phoneE164: string, code: string): Promise<Verify
     return { ok: false, reason: 'error' };
   }
 }
+
+/**
+ * Send a plain SMS (not a verification code).
+ *
+ * Used to reach a recipient who has no Shlep account — the person receiving a
+ * parcel is often not a user, and a phone number is frequently the only contact
+ * detail the sender has for someone met on a marketplace.
+ *
+ * This uses the Messages API rather than Verify, so it needs a sending number
+ * (TWILIO_FROM_NUMBER) or an approved alphanumeric sender ID. Without one it
+ * logs and returns false rather than throwing — a missed notification must
+ * never fail a delivery.
+ */
+export async function sendSms(phoneE164: string, body: string): Promise<boolean> {
+  const from = process.env.TWILIO_FROM_NUMBER || process.env.TWILIO_SENDER_ID;
+  if (!env.TWILIO_ACCOUNT_SID || !env.TWILIO_AUTH_TOKEN || !from) {
+    console.warn(`[sms:skipped] would text ${phoneE164}: ${body.slice(0, 60)}`);
+    return false;
+  }
+  try {
+    const res = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${env.TWILIO_ACCOUNT_SID}/Messages.json`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: authHeader(),
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({ To: phoneE164, From: from, Body: body }),
+      },
+    );
+    if (res.ok) return true;
+    console.error(`[sms:send-failed] ${res.status} ${(await res.text()).slice(0, 200)}`);
+    return false;
+  } catch (err) {
+    console.error('[sms:error]', err instanceof Error ? err.message : err);
+    return false;
+  }
+}
+
+/** Tell an unregistered recipient a parcel is on its way, with the code. */
+export function notifyRecipientPickedUp(phone: string, route: string, deliveryCode: string): void {
+  const e164 = normaliseSwissPhone(phone);
+  if (!e164) return;
+  void sendSms(
+    e164,
+    `Shlep: Dein Paket ist unterwegs (${route}). Zustellcode: ${deliveryCode} — bitte der fahrenden Person bei der Übergabe nennen.`,
+  );
+}

@@ -62,6 +62,9 @@ services:
         sync: false
       - key: TWILIO_VERIFY_SERVICE_SID
         sync: false
+      # Needed only to SMS recipients who have no account.
+      - key: TWILIO_FROM_NUMBER
+        sync: false
       # Real TWINT payments (Payrexx). Unset = simulated TWINT.
       - key: PAYREXX_INSTANCE
         sync: false

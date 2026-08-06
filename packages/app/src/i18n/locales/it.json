@@ -105,7 +105,9 @@
     "packagingNone": "Nessuno",
     "packagingReused": "Riutilizzato",
     "packagingCardboard": "Scatola nuova",
-    "packagingOther": "Altro"
+    "packagingOther": "Altro",
+    "recipientPhone": "Telefono del destinatario",
+    "recipientPhoneHint": "Inviamo il codice di consegna via SMS."
   },
   "driver": {
     "publishRoute": "Pubblica un tragitto",

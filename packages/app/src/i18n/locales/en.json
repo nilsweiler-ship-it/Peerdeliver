@@ -105,7 +105,9 @@
     "packagingNone": "None",
     "packagingReused": "Reused",
     "packagingCardboard": "New box",
-    "packagingOther": "Other"
+    "packagingOther": "Other",
+    "recipientPhone": "Recipient's phone",
+    "recipientPhoneHint": "We send the delivery code by SMS."
   },
   "driver": {
     "publishRoute": "Publish Route",

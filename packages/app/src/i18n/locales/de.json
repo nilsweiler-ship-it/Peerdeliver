@@ -105,7 +105,9 @@
     "packagingNone": "Keine",
     "packagingReused": "Wiederverwendet",
     "packagingCardboard": "Neuer Karton",
-    "packagingOther": "Anderes"
+    "packagingOther": "Anderes",
+    "recipientPhone": "Telefon der empfangenden Person",
+    "recipientPhoneHint": "Wir schicken den Zustellcode per SMS."
   },
   "driver": {
     "publishRoute": "Route veröffentlichen",

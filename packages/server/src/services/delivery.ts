@@ -6,10 +6,11 @@ import { sizesUpTo, ALL_SIZES } from '@peerdeliver/shared';
 import * as paymentService from './payment';
 import * as emailService from './email';
 import * as pushService from './push';
+import * as smsService from './sms';
 
 // All scalar columns (excluding raw geometry) with ST_AsGeoJSON for coordinates
 const DELIVERY_COLS = `
-  dr.id, dr."senderId", dr."driverId", dr."recipientId", dr."recipientEmail",
+  dr.id, dr."senderId", dr."driverId", dr."recipientId", dr."recipientEmail", dr."recipientPhone",
   dr."pickupLabel", dr."deliveryLabel",
   ST_AsGeoJSON(dr."pickupPoint") AS "pickupGeoJSON",
   ST_AsGeoJSON(dr."deliveryPoint") AS "deliveryGeoJSON",
@@ -29,6 +30,7 @@ interface RawDeliveryRow {
   driverId?: string;
   recipientId?: string;
   recipientEmail?: string;
+  recipientPhone?: string;
   pickupLabel: string;
   pickupGeoJSON: string;
   deliveryLabel: string;
@@ -82,6 +84,7 @@ export async function createDelivery(senderId: string, input: CreateDeliveryInpu
   // delivery shows up in their incoming list immediately. The email is also
   // stored verbatim so a recipient who registers later can still be matched.
   const recipientEmail = input.recipientEmail?.toLowerCase() ?? null;
+  const recipientPhone = input.recipientPhone?.trim() || null;
   let recipientId: string | null = null;
   if (recipientEmail) {
     const recipient = await prisma.user.findUnique({
@@ -93,13 +96,13 @@ export async function createDelivery(senderId: string, input: CreateDeliveryInpu
 
   const inserted: { id: string }[] = await prisma.$queryRaw`
     INSERT INTO delivery_requests (
-      id, "senderId", "recipientId", "recipientEmail",
+      id, "senderId", "recipientId", "recipientEmail", "recipientPhone",
       "pickupLabel", "pickupPoint", "deliveryLabel", "deliveryPoint",
       "packageSize", "packageWeight", "packageDescription", "packaging", "declaredValue",
       "budgetCHF", "deliveryWindowStart", "deliveryWindowEnd",
       status, "pickupCode", "deliveryCode", "createdAt", "updatedAt"
     ) VALUES (
-      gen_random_uuid()::text, ${senderId}, ${recipientId}, ${recipientEmail},
+      gen_random_uuid()::text, ${senderId}, ${recipientId}, ${recipientEmail}, ${recipientPhone},
       ${input.pickupAddress.label},
       ST_SetSRID(ST_MakePoint(${input.pickupAddress.point.lng}, ${input.pickupAddress.point.lat}), 4326),
       ${input.deliveryAddress.label},
@@ -331,6 +334,11 @@ export async function verifyPickup(deliveryId: string, driverId: string, code: s
     });
   }
   if (ctx?.d.senderId) pushService.notifyPickedUp(ctx.d.senderId, deliveryId);
+  // A recipient reached only by phone has no account and no app — SMS is the
+  // only way they learn the parcel is coming, and they need the code to accept it.
+  if (ctx?.d.recipientPhone && ctx.d.deliveryCode) {
+    smsService.notifyRecipientPickedUp(ctx.d.recipientPhone, ctx.route, ctx.d.deliveryCode);
+  }
 
   return getDeliveryById(deliveryId);
 }

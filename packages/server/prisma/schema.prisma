@@ -115,6 +115,10 @@ model DeliveryRequest {
   recipientId         String?
   recipient           User?          @relation("RecipientDeliveries", fields: [recipientId], references: [id])
   recipientEmail      String?
+  /// Either an email or a phone reaches the recipient. Phone is often the only
+  /// thing a sender has for someone they met on a marketplace, and an SMS is
+  /// more likely to be read before a handover than an email.
+  recipientPhone      String?
   pickupLabel         String
   pickupPoint         Unsupported("geometry(Point, 4326)")
   deliveryLabel       String
