@@ -145,6 +145,13 @@ Das Skript ist mehrfach ausführbar; bestehende Konten werden übersprungen.
 
 **Nur auf echten Geräten, im Auto oder zu Fuss.** Der Simulator kann das nicht.
 
+> **Zwei Dinge vorab, sonst wirkt Tracking kaputt, obwohl es funktioniert:**
+>
+> 1. **Es braucht ein zweites Gerät**, das als fahrende Person eingeloggt ist, die Lieferung angenommen hat und sich bewegt. Die frühere Attrappe — ein simulierter Punkt, der von A nach B glitt — ist in der Produktion bewusst abgeschaltet. Ohne echte fahrende Person bleibt die Karte leer, und das ist korrekt.
+> 2. **Ausserhalb der Schweiz** wurde bisher nur eine leere Fläche gezeigt: die Swisstopo-Kacheln decken nur die Schweiz ab. Seit dem Fix wird ausserhalb auf OpenStreetMap umgeschaltet.
+>
+> In der Karte des Senders steht „Warte auf Standort", solange nichts eintrifft — das ist die ehrliche Anzeige, nicht ein Fehler.
+
 | # | Test | Erwartet | |
 |---|---|---|---|
 | F1 | Während der Fahrt: Karte beim Sender | Fahrer-Punkt bewegt sich | ☐ |

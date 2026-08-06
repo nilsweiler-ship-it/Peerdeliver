@@ -18,10 +18,22 @@ interface LiveMapProps {
   style?: ViewStyle;
 }
 
-// Free official Swiss basemap (attribution required). Overlaid on the base map;
-// covers all of Switzerland.
+// Free official Swiss basemap (attribution required). Beautiful, but it covers
+// ONLY Switzerland — outside the border every tile is empty, so the map renders
+// as a blank pane. That looks like a broken feature rather than a coverage
+// limit, and it makes testing from anywhere else impossible.
 const SWISSTOPO_TILES =
   'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg';
+
+// Fallback for coordinates outside Switzerland. Shlep only operates in CH, so
+// this is for development and for the occasional cross-border route.
+const OSM_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+/** Rough Swiss bounding box, generous enough to include border areas. */
+function insideSwitzerland(p: LatLng | null | undefined): boolean {
+  if (!p) return false;
+  return p.lat > 45.7 && p.lat < 47.9 && p.lng > 5.8 && p.lng < 10.6;
+}
 
 /**
  * Real map for tracking: Swisstopo tiles, moss origin / terracotta destination
@@ -43,6 +55,10 @@ export function LiveMap({ from, to, driver, height = 212, children, style }: Liv
   }, [from?.lat, from?.lng, to?.lat, to?.lng, driver?.lat, driver?.lng]);
 
   const center = from ?? to ?? { lat: 47.37, lng: 8.54 };
+  // Any point outside CH means Swisstopo would render blank, so switch the
+  // whole layer rather than showing half a map.
+  const allSwiss = pts.length > 0 && pts.every(insideSwitzerland);
+  const tiles = allSwiss ? SWISSTOPO_TILES : OSM_TILES;
 
   return (
     <View style={[{ height, overflow: 'hidden', backgroundColor: '#D8EBDF' }, style]}>
@@ -54,7 +70,7 @@ export function LiveMap({ from, to, driver, height = 212, children, style }: Liv
         pitchEnabled={false}
         rotateEnabled={false}
       >
-        <UrlTile urlTemplate={SWISSTOPO_TILES} maximumZ={19} zIndex={-1} />
+        <UrlTile urlTemplate={tiles} maximumZ={19} zIndex={-1} />
 
         {from && to && (
           <Polyline
