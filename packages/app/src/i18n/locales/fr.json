@@ -19,7 +19,8 @@
     "pullToRefresh": "Tirer pour actualiser",
     "accept": "Accepter",
     "welcome": "Bienvenue",
-    "step": "Étape {{current}} sur {{total}}"
+    "step": "Étape {{current}} sur {{total}}",
+    "optional": "facultatif"
   },
   "auth": {
     "login": "Se connecter",
@@ -107,7 +108,11 @@
     "packagingCardboard": "Carton neuf",
     "packagingOther": "Autre",
     "recipientPhone": "Téléphone du destinataire",
-    "recipientPhoneHint": "Nous envoyons le code de livraison par SMS."
+    "recipientPhoneHint": "Nous envoyons le code de livraison par SMS.",
+    "recipientEmailRequired": "L'e-mail du destinataire est obligatoire",
+    "recipientEmailInvalid": "Cette adresse e-mail semble invalide",
+    "recipientPhoneInvalid": "Ce numéro semble invalide",
+    "recipientEmailRequiredHint": "Obligatoire — il donne au destinataire accès au suivi."
   },
   "driver": {
     "publishRoute": "Publier un trajet",

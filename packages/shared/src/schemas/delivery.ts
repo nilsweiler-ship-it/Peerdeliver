@@ -13,7 +13,10 @@ const addressSchema = z.object({
 export const createDeliverySchema = z.object({
   pickupAddress: addressSchema,
   deliveryAddress: addressSchema,
-  recipientEmail: z.string().email().optional(),
+  // Required, not optional: the recipient's address is what creates their
+  // account and pulls them into the product. Enforced here as well as in the
+  // form, because a client-side rule is a suggestion, not a requirement.
+  recipientEmail: z.string().email(),
   recipientPhone: z.string().min(6).max(25).optional(),
   packageSize: z.enum(['S', 'M', 'L']),
   packageWeight: z.number().positive().optional(),

@@ -19,7 +19,8 @@
     "pullToRefresh": "Zum Aktualisieren ziehen",
     "accept": "Annehmen",
     "welcome": "Willkommen",
-    "step": "Schritt {{current}} von {{total}}"
+    "step": "Schritt {{current}} von {{total}}",
+    "optional": "optional"
   },
   "auth": {
     "login": "Anmelden",
@@ -107,7 +108,11 @@
     "packagingCardboard": "Neuer Karton",
     "packagingOther": "Anderes",
     "recipientPhone": "Telefon der empfangenden Person",
-    "recipientPhoneHint": "Wir schicken den Zustellcode per SMS."
+    "recipientPhoneHint": "Wir schicken den Zustellcode per SMS.",
+    "recipientEmailRequired": "E-Mail der empfangenden Person ist erforderlich",
+    "recipientEmailInvalid": "Diese E-Mail-Adresse sieht nicht gültig aus",
+    "recipientPhoneInvalid": "Diese Nummer sieht nicht gültig aus",
+    "recipientEmailRequiredHint": "Pflicht — die empfangende Person erhält damit Zugang zur Sendungsverfolgung."
   },
   "driver": {
     "publishRoute": "Route veröffentlichen",

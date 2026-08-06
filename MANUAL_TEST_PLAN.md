@@ -91,8 +91,10 @@ Das Skript ist mehrfach ausführbar; bestehende Konten werden übersprungen.
 | B7 | Adresssuche: **Strasse mit Hausnummer**, z. B. `Jonas-Furrer-Strasse 104` | Erscheint | ☐ |
 | B8 | Flugmodus an → Adresse tippen | Keine Vorschläge, **kein Absturz**, App bleibt bedienbar | ☐ |
 | B9 | Verpackung: alle vier Optionen antippen | Auswahl sichtbar, „Keine" ist Standard | ☐ |
-| B10 | Empfänger-Umschalter: **Telefon** ist vorausgewählt | Ja | ☐ |
-| B11 | Auf **E-Mail** umschalten und zurück | Beide Felder funktionieren, keine Doppelabfrage | ☐ |
+| B10 | Empfänger-E-Mail **leer lassen** → Weiter | Wird abgelehnt, klare Meldung „E-Mail der empfangenden Person ist erforderlich" | ☐ |
+| B11 | Ungültige E-Mail eingeben (`abc@`) → Weiter | Wird abgelehnt mit eigener Meldung | ☐ |
+| B11b | Gültige E-Mail eingeben, Feld verlassen, wieder antippen und **ändern** | Text lässt sich normal bearbeiten, keine Autokorrektur, keine Grossschreibung | ☐ |
+| B11c | Telefonnummer **leer lassen** | Wird akzeptiert — Telefon ist optional | ☐ |
 | B12 | Feld „max. Gewicht" antippen → Zahlen-Tastatur öffnet sich → **nach unten wischen** | Tastatur schliesst sich, Formular bis zum Absenden-Button scrollbar | ☐ |
 | B13 | Preis-Regler bewegen | Preis und Fahrer-Anteil aktualisieren sich (9 %, min. CHF 1.50) | ☐ |
 

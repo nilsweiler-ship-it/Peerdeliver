@@ -19,7 +19,8 @@
     "pullToRefresh": "Tira per aggiornare",
     "accept": "Accetta",
     "welcome": "Benvenuto",
-    "step": "Passaggio {{current}} di {{total}}"
+    "step": "Passaggio {{current}} di {{total}}",
+    "optional": "facoltativo"
   },
   "auth": {
     "login": "Accedi",
@@ -107,7 +108,11 @@
     "packagingCardboard": "Scatola nuova",
     "packagingOther": "Altro",
     "recipientPhone": "Telefono del destinatario",
-    "recipientPhoneHint": "Inviamo il codice di consegna via SMS."
+    "recipientPhoneHint": "Inviamo il codice di consegna via SMS.",
+    "recipientEmailRequired": "L'e-mail del destinatario è obbligatoria",
+    "recipientEmailInvalid": "Questo indirizzo e-mail non sembra valido",
+    "recipientPhoneInvalid": "Questo numero non sembra valido",
+    "recipientEmailRequiredHint": "Obbligatoria — dà al destinatario accesso al tracciamento."
   },
   "driver": {
     "publishRoute": "Pubblica un tragitto",

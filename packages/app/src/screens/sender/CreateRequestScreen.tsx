@@ -65,9 +65,6 @@ export function CreateRequestScreen({ navigation }: any) {
   const [deliveryAddress, setDeliveryAddress] = useState<AddressSelection | null>(null);
   const [recipientEmail, setRecipientEmail] = useState('');
   const [recipientPhone, setRecipientPhone] = useState('');
-  // Phone first: on a marketplace handover it is usually the only contact
-  // detail the sender has, and an SMS is read before an email.
-  const [recipientContact, setRecipientContact] = useState<'phone' | 'email'>('phone');
 
   // Step 2: Budget & Schedule
   const [budget, setBudget] = useState(15);
@@ -83,13 +80,15 @@ export function CreateRequestScreen({ navigation }: any) {
     } else if (step === 1) {
       if (!pickupAddress) newErrors.pickupAddress = t('common.error');
       if (!deliveryAddress) newErrors.deliveryAddress = t('common.error');
-      if (recipientContact === 'email' && recipientEmail.trim() &&
-          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail.trim())) {
-        newErrors.recipientEmail = t('common.error');
+      // Mandatory: the recipient's address is what creates their account and
+      // brings them into the product.
+      if (!recipientEmail.trim()) {
+        newErrors.recipientEmail = t('sender.recipientEmailRequired', 'E-Mail der empfangenden Person ist erforderlich');
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail.trim())) {
+        newErrors.recipientEmail = t('sender.recipientEmailInvalid', 'Diese E-Mail-Adresse sieht nicht gültig aus');
       }
-      if (recipientContact === 'phone' && recipientPhone.trim() &&
-          recipientPhone.replace(/\D/g, '').length < 9) {
-        newErrors.recipientPhone = t('common.error');
+      if (recipientPhone.trim() && recipientPhone.replace(/\D/g, '').length < 9) {
+        newErrors.recipientPhone = t('sender.recipientPhoneInvalid', 'Diese Nummer sieht nicht gültig aus');
       }
     } else if (step === 2) {
       if (budget <= 0) newErrors.budget = t('common.error');
@@ -135,12 +134,8 @@ export function CreateRequestScreen({ navigation }: any) {
       budgetCHF: budget,
       deliveryWindowStart: tomorrow.toISOString(),
       deliveryWindowEnd: dayAfter.toISOString(),
-      ...(recipientContact === 'email' && recipientEmail.trim() && {
-        recipientEmail: recipientEmail.trim(),
-      }),
-      ...(recipientContact === 'phone' && recipientPhone.trim() && {
-        recipientPhone: recipientPhone.trim(),
-      }),
+      recipientEmail: recipientEmail.trim(),
+      ...(recipientPhone.trim() && { recipientPhone: recipientPhone.trim() }),
     };
 
     try {
@@ -332,57 +327,40 @@ export function CreateRequestScreen({ navigation }: any) {
               error={errors.deliveryAddress}
             />
 
-            {/* Phone or email — a sender who met someone on a marketplace
-                usually has one or the other, rarely both, and a phone number
-                is the more common of the two. */}
-            <View style={styles.contactToggle}>
-              {(['phone', 'email'] as const).map((mode) => {
-                const selected = recipientContact === mode;
-                return (
-                  <TouchableOpacity
-                    key={mode}
-                    activeOpacity={0.85}
-                    style={[styles.contactTab, selected && styles.contactTabOn]}
-                    onPress={() => setRecipientContact(mode)}
-                  >
-                    <Text style={[styles.contactTabText, selected && styles.contactTabTextOn]}>
-                      {mode === 'phone'
-                        ? t('sender.recipientPhone', 'Telefon')
-                        : t('sender.recipientEmail')}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+            {/* E-Mail ist Pflicht: sie legt das Konto der empfangenden Person
+                an und bringt sie damit ins Produkt. Die Telefonnummer ist
+                zusätzlich und optional — sie sorgt dafür, dass der Zustellcode
+                auch ankommt, wenn niemand seine Mail liest.
+                Beide Felder stehen nebeneinander statt hinter einem Umschalter:
+                so geht beim Wechseln nichts verloren. */}
+            <Input
+              label={`${t('sender.recipientEmail')} *`}
+              value={recipientEmail}
+              onChangeText={setRecipientEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              textContentType="emailAddress"
+              placeholder={t('sender.recipientEmailPlaceholder')}
+              error={errors.recipientEmail}
+            />
+            <Text style={styles.fieldHint}>
+              {t('sender.recipientEmailRequiredHint', 'Pflicht — die empfangende Person erhält damit Zugang zur Sendungsverfolgung.')}
+            </Text>
 
-            {recipientContact === 'phone' ? (
-              <>
-                <Input
-                  label={t('sender.recipientPhone', 'Telefon der empfangenden Person')}
-                  value={recipientPhone}
-                  onChangeText={setRecipientPhone}
-                  keyboardType="phone-pad"
-                  placeholder="079 123 45 67"
-                  error={errors.recipientPhone}
-                />
-                <Text style={styles.fieldHint}>
-                  {t('sender.recipientPhoneHint', 'Wir schicken den Zustellcode per SMS.')}
-                </Text>
-              </>
-            ) : (
-              <>
-                <Input
-                  label={t('sender.recipientEmail')}
-                  value={recipientEmail}
-                  onChangeText={setRecipientEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  placeholder={t('sender.recipientEmailPlaceholder')}
-                  error={errors.recipientEmail}
-                />
-                <Text style={styles.fieldHint}>{t('sender.recipientEmailHint')}</Text>
-              </>
-            )}
+            <Input
+              label={`${t('sender.recipientPhone', 'Telefon der empfangenden Person')} (${t('common.optional', 'optional')})`}
+              value={recipientPhone}
+              onChangeText={setRecipientPhone}
+              keyboardType="phone-pad"
+              autoCorrect={false}
+              textContentType="telephoneNumber"
+              placeholder="079 123 45 67"
+              error={errors.recipientPhone}
+            />
+            <Text style={styles.fieldHint}>
+              {t('sender.recipientPhoneHint', 'Wir schicken den Zustellcode per SMS.')}
+            </Text>
 
             {pickupAddress && deliveryAddress && (
               <View style={styles.routePreview}>

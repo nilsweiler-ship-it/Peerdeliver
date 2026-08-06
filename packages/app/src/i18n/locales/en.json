@@ -19,7 +19,8 @@
     "pullToRefresh": "Pull to refresh",
     "accept": "Accept",
     "welcome": "Welcome",
-    "step": "Step {{current}} of {{total}}"
+    "step": "Step {{current}} of {{total}}",
+    "optional": "optional"
   },
   "auth": {
     "login": "Log In",
@@ -107,7 +108,11 @@
     "packagingCardboard": "New box",
     "packagingOther": "Other",
     "recipientPhone": "Recipient's phone",
-    "recipientPhoneHint": "We send the delivery code by SMS."
+    "recipientPhoneHint": "We send the delivery code by SMS.",
+    "recipientEmailRequired": "The recipient's email is required",
+    "recipientEmailInvalid": "That email address doesn't look valid",
+    "recipientPhoneInvalid": "That number doesn't look valid",
+    "recipientEmailRequiredHint": "Required — it gives the recipient access to tracking."
   },
   "driver": {
     "publishRoute": "Publish Route",

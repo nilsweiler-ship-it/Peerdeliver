@@ -40,7 +40,7 @@ export interface DeliveryRequest {
   driverId?: string;
   driver?: PublicUser;
   recipientId?: string;
-  recipientEmail?: string;
+  recipientEmail: string;
   recipientPhone?: string;
   pickupAddress: Address;
   deliveryAddress: Address;
