@@ -206,6 +206,14 @@ Der Fall, der bei Marktplatz-Käufen am häufigsten ist.
 | H2.4 | Schnellantwort antippen | Wird sofort gesendet und erscheint im Verlauf | ☐ |
 | H2.5 | Nachricht auf dem zweiten Gerät | Kommt live an, ohne Neuladen | ☐ |
 
+**Bottom-Sheets (alle Detailansichten)**
+
+| # | Test | Erwartet | |
+|---|---|---|---|
+| H2.6 | Als **recipient** eine Lieferung im Status *unterwegs* antippen | Zustellcode ist sichtbar — notfalls durch Scrollen im Sheet erreichbar | ☐ |
+| H2.7 | Dasselbe auf einem kleinen Gerät (SE) oder mit grosser Systemschrift | Sheet lässt sich scrollen, nichts ist abgeschnitten | ☐ |
+| H2.8 | Sheets in *Meine Sendungen*, *Verfügbare Lieferungen*, *Meine Routen*, *Fahrersuche* öffnen | Alle scrollbar bis zum letzten Element | ☐ |
+
 ---
 
 ## I · Sicherheit & Privatsphäre
