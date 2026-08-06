@@ -12,7 +12,38 @@ Automatisiert geprüft sind: Typen, Konfiguration, i18n-Vollständigkeit, Build 
 
 **Zwei Geräte.** Ein iPhone mit dem aktuellen Build, ein zweites Gerät (Telefon oder Simulator) für die fahrende Person. Zwei Konten auf einem Gerät gleichzeitig geht nicht.
 
-**Drei E-Mail-Adressen**, z. B. mit Gmail-Plus-Trick: `du+sender@gmail.com`, `du+fahrer@gmail.com`, `du+dritt@gmail.com`. Alle landen in deinem Postfach.
+### Testkonten anlegen
+
+Einmalig, legt alle fünf Konten über die öffentliche API an:
+
+```bash
+cd "$HOME/Peerdeliver"
+npm run seed:testusers -- nils.weiler@gmail.com
+```
+
+Gegen die lokale Umgebung stattdessen:
+
+```bash
+npm run seed:testusers -- nils.weiler@gmail.com http://localhost:3001
+```
+
+**Passwort für alle Konten:** `ShlepTest2026!`
+
+| Rolle | E-Mail | Wofür |
+|---|---|---|
+| **sender** | `…+shlep-sender@gmail.com` | Nur senden — Fahrer-Tabs müssen fehlen |
+| **driver** | `…+shlep-driver@gmail.com` | Fahrzeug ZH 123456, VW Passat, 580 kg, Grösse **L** |
+| **both** | `…+shlep-both@gmail.com` | Standardrolle. Toyota Yaris, 320 kg, Grösse **S** — prüft Kapazitätsfilter |
+| **recipient** | `…+shlep-recipient@gmail.com` | Startet auf Eingang, muss trotzdem senden können |
+| **third** | `…+shlep-third@gmail.com` | Unbeteiligter — für die Zugriffstests in Block I |
+
+Das Skript ist mehrfach ausführbar; bestehende Konten werden übersprungen.
+
+**Warum echte Adressen mit `+alias`:** alle landen in deinem Postfach, sind aber für Shlep verschiedene Konten — und der Plan prüft, ob Willkommens- und Belegmails tatsächlich ankommen. Mit erfundenen Adressen liesse sich das nicht testen.
+
+⚠️ **Diese Zugangsdaten sind für Tests.** Vor dem öffentlichen Start löschen oder das Passwort ändern — sie stehen im Repo und wären sonst fünf bekannte Konten in der Produktivdatenbank.
+
+**Fahrzeuggrössen sind bewusst verschieden:** `driver` fährt L, `both` fährt S. Damit lässt sich in D2 direkt prüfen, dass ein kleines Fahrzeug keine grossen Lieferungen angeboten bekommt.
 
 **Eine Mobilnummer**, die bei Twilio unter *Verified Caller IDs* steht (nötig, solange das Konto im Trial ist).
 
@@ -30,16 +61,16 @@ Automatisiert geprüft sind: Typen, Konfiguration, i18n-Vollständigkeit, Build 
 
 | # | Test | Erwartet | |
 |---|---|---|---|
-| A1 | Registrierung `+sender`, Standardrolle unverändert lassen, **keine** Fahrzeugdaten eingeben | Konto wird erstellt. Fahrzeugangaben sind **nicht** Pflicht. | ☐ |
+| A1 | **Neue** Registrierung von Hand (nicht aus dem Seed), Standardrolle unverändert, **keine** Fahrzeugdaten | Konto wird erstellt. Fahrzeugangaben sind **nicht** Pflicht. | ☐ |
 | A2 | Willkommensmail prüfen | Kommt an, **im Posteingang, nicht im Spam**, Absender `hello@shlep.ch`, deutsche Anrede, Shlep-Design | ☐ |
 | A3 | Profil → Verifizierung → Telefon → Nummer eingeben → *Code senden* | SMS kommt innert ~30 s an | ☐ |
 | A4 | Code eingeben → *Verifizieren* | Häkchen erscheint, Trust-Score steigt | ☐ |
 | A5 | Nochmal probieren mit **falschem** Code | Verständliche Fehlermeldung, kein Absturz, kein fälschliches Häkchen | ☐ |
 | A6 | Code eingeben, 15 Min warten, dann absenden | Meldung „Code abgelaufen" (nicht „falsch") | ☐ |
 | A7 | Prüfen, ob der Button *„Verify everything (dev)"* sichtbar ist | **Darf im Release-Build nicht erscheinen** | ☐ |
-| A8 | Registrierung `+fahrer` mit Fahrzeugdaten (Kennzeichen, Modell, Grösse) | Konto erstellt, Fahrzeug gespeichert | ☐ |
-| A9 | Als `+fahrer` eine Route veröffentlichen | Klappt | ☐ |
-| A10 | Neues Konto ohne Fahrzeug → Route veröffentlichen | Verständliche Meldung „Bitte ergänze zuerst dein Fahrzeug", **kein** Absturz | ☐ |
+| A8 | Mit **driver** einloggen | Fahrzeugdaten sind vorhanden | ☐ |
+| A9 | Als **driver** eine Route veröffentlichen | Klappt | ☐ |
+| A10 | Als **sender** (kein Fahrzeug) → Route veröffentlichen | Verständliche Meldung „Bitte ergänze zuerst dein Fahrzeug", **kein** Absturz | ☐ |
 
 > **A2 ist wichtiger als es aussieht.** Landet die Mail im Spam, stimmt etwas mit DKIM/SPF nicht — und dann sieht kein einziger echter Nutzer je eine Shlep-Mail.
 
@@ -86,10 +117,10 @@ Automatisiert geprüft sind: Typen, Konfiguration, i18n-Vollständigkeit, Build 
 
 | # | Test | Erwartet | |
 |---|---|---|---|
-| D1 | Als `+fahrer`: Lieferungen in der Nähe | Die eben erstellte Lieferung erscheint | ☐ |
-| D2 | Fahrzeuggrösse in `+fahrer` auf **S** stellen, Liste neu laden | Eine **L**-Lieferung erscheint **nicht** mehr | ☐ |
+| D1 | Als **driver**: Lieferungen in der Nähe | Die eben erstellte Lieferung erscheint | ☐ |
+| D2 | Fahrzeuggrösse in **driver** auf **S** stellen, Liste neu laden | Eine **L**-Lieferung erscheint **nicht** mehr | ☐ |
 | D3 | Zurück auf L stellen → Lieferung annehmen | Klappt | ☐ |
-| D4 | Als `+sender`: Fahrer bestätigen | Status wechselt, Abholcode wird angezeigt | ☐ |
+| D4 | Als **sender**: Fahrer bestätigen | Status wechselt, Abholcode wird angezeigt | ☐ |
 | D5 | Fahrersuche: Von/Nach als **Adressen** eingeben | Autovervollständigung funktioniert (nicht nur 12 Städte) | ☐ |
 
 ---
@@ -98,9 +129,9 @@ Automatisiert geprüft sind: Typen, Konfiguration, i18n-Vollständigkeit, Build 
 
 | # | Test | Erwartet | |
 |---|---|---|---|
-| E1 | Als `+fahrer` den **Abholcode** eingeben | Übergabe bestätigt | ☐ |
+| E1 | Als **driver** den **Abholcode** eingeben | Übergabe bestätigt | ☐ |
 | E2 | Vorher **falschen** Code eingeben | Abgelehnt, verständliche Meldung | ☐ |
-| E3 | Als `+fahrer` den **Zustellcode** eingeben | Zustellung bestätigt | ☐ |
+| E3 | Als **driver** den **Zustellcode** eingeben | Zustellung bestätigt | ☐ |
 | E4 | Nach Zustellung: CO₂-Wert in der App | Wird angezeigt, **Text nicht abgeschnitten** (z. B. „2.5 kg") | ☐ |
 | E5 | CO₂ bei Verpackung „Keine" vs. „Neuer Karton" vergleichen (zwei Lieferungen) | „Keine" ergibt einen höheren Wert | ☐ |
 
@@ -160,8 +191,8 @@ Der Fall, der bei Marktplatz-Käufen am häufigsten ist.
 
 | # | Test | Erwartet | |
 |---|---|---|---|
-| I1 | Mit `+dritt` einloggen und die Lieferungs-ID aus dem Test verwenden: <br>`curl https://api.shlep.ch/api/deliveries/<ID>/driver -H "Authorization: Bearer <token>"` | **403**, keine Fahrerdaten, kein Kennzeichen | ☐ |
-| I2 | Als `+dritt` versuchen, dieselbe Lieferung zu tracken | Wird abgelehnt | ☐ |
+| I1 | Mit **third** einloggen und die Lieferungs-ID aus dem Test verwenden: <br>`curl https://api.shlep.ch/api/deliveries/<ID>/driver -H "Authorization: Bearer <token>"` | **403**, keine Fahrerdaten, kein Kennzeichen | ☐ |
+| I2 | Als **third** versuchen, dieselbe Lieferung zu tracken | Wird abgelehnt | ☐ |
 | I3 | Ausloggen → geschützten Screen aufrufen | Zurück zum Login | ☐ |
 | I4 | Konto löschen | Funktioniert, Daten weg | ☐ |
 | I5 | Zahlen-Tastatur: Zustellcode während der Eingabe | Nicht im App-Switcher-Vorschaubild sichtbar | ☐ |
