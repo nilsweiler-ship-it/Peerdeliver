@@ -39,6 +39,8 @@ npm run seed:testusers -- nils.weiler@gmail.com http://localhost:3001
 
 Das Skript ist mehrfach ausführbar; bestehende Konten werden übersprungen.
 
+**Für A1 wird bewusst kein Seed-Konto benutzt** — dieser Test prüft die Registrierung selbst. Dafür eine frische Adresse nehmen, z. B. `…+shlep-a1@gmail.com`. Eine Adresse lässt sich nur einmal registrieren; bei einem zweiten Durchlauf `…+shlep-a2@gmail.com` verwenden.
+
 **Warum echte Adressen mit `+alias`:** alle landen in deinem Postfach, sind aber für Shlep verschiedene Konten — und der Plan prüft, ob Willkommens- und Belegmails tatsächlich ankommen. Mit erfundenen Adressen liesse sich das nicht testen.
 
 ⚠️ **Diese Zugangsdaten sind für Tests.** Vor dem öffentlichen Start löschen oder das Passwort ändern — sie stehen im Repo und wären sonst fünf bekannte Konten in der Produktivdatenbank.
@@ -61,7 +63,7 @@ Das Skript ist mehrfach ausführbar; bestehende Konten werden übersprungen.
 
 | # | Test | Erwartet | |
 |---|---|---|---|
-| A1 | **Neue** Registrierung von Hand (nicht aus dem Seed), Standardrolle unverändert, **keine** Fahrzeugdaten | Konto wird erstellt. Fahrzeugangaben sind **nicht** Pflicht. | ☐ |
+| A1 | **Registrierung von Hand** — nicht mit einem Seed-Konto, denn hier wird der Registrierungsvorgang selbst geprüft.<br>Frische Adresse verwenden, z. B. `…+shlep-a1@gmail.com`, Passwort `ShlepTest2026!`, Rolle **unverändert**, Fahrzeugfelder **leer lassen** | Konto wird erstellt. Fahrzeugangaben sind **nicht** Pflicht. | ☐ |
 | A2 | Willkommensmail prüfen | Kommt an, **im Posteingang, nicht im Spam**, Absender `hello@shlep.ch`, deutsche Anrede, Shlep-Design | ☐ |
 | A3 | Profil → Verifizierung → Telefon → Nummer eingeben → *Code senden* | SMS kommt innert ~30 s an | ☐ |
 | A4 | Code eingeben → *Verifizieren* | Häkchen erscheint, Trust-Score steigt | ☐ |
