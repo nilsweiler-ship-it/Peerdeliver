@@ -62,6 +62,35 @@ app.get('/health/integrations', async (_req, res) => {
       });
       if (r.ok) {
         twilio.liveCheck = 'ok';
+
+        // Credentials being valid does not mean sending works. A trial account
+        // refuses every destination that is not on its Verified Caller IDs
+        // list — which looks exactly like a generic send failure. Report the
+        // account type and how many numbers are whitelisted, never which ones.
+        try {
+          const acct = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}.json`, {
+            headers: { Authorization: `Basic ${auth}` },
+          });
+          if (acct.ok) {
+            const a = (await acct.json()) as { type?: string; status?: string };
+            twilio.accountType = a.type; // "Trial" or "Full"
+            twilio.accountStatus = a.status;
+            if (a.type === 'Trial') {
+              const ids = await fetch(
+                `https://api.twilio.com/2010-04-01/Accounts/${sid}/OutgoingCallerIds.json?PageSize=50`,
+                { headers: { Authorization: `Basic ${auth}` } },
+              );
+              if (ids.ok) {
+                const j = (await ids.json()) as { outgoing_caller_ids?: unknown[] };
+                twilio.verifiedCallerIdCount = j.outgoing_caller_ids?.length ?? 0;
+              }
+              twilio.note =
+                'Trial account: SMS is delivered only to numbers on the Verified Caller IDs list.';
+            }
+          }
+        } catch {
+          /* account lookup is a nice-to-have; never fail the health check on it */
+        }
       } else if (r.status === 401) {
         twilio.liveCheck = 'auth_failed — Account SID or Auth Token is wrong';
       } else if (r.status === 404) {
