@@ -55,11 +55,77 @@ export function normaliseSwissPhone(input: string): string | null {
   return `+41${s}`;
 }
 
+type FailureReason =
+  | 'invalid_number'
+  | 'rate_limited'
+  | 'expired'
+  | 'incorrect'
+  | 'unverified_trial'
+  | 'geo_blocked'
+  | 'landline'
+  | 'blocked'
+  | 'bad_credentials'
+  | 'no_service'
+  | 'error';
+
 interface VerifyResult {
   ok: boolean;
   /** Machine-readable reason when ok is false, for mapping to a user message. */
-  reason?: 'invalid_number' | 'rate_limited' | 'expired' | 'incorrect' | 'error';
+  reason?: FailureReason;
+  /** Twilio's numeric error code, so a failure can be diagnosed without log access. */
+  twilioCode?: number;
   simulated?: boolean;
+}
+
+/**
+ * Map Twilio's numeric error codes to something we can act on.
+ *
+ * These are the failures that actually occur in practice. The first four are
+ * account-configuration problems rather than anything the user did wrong, and
+ * telling them apart matters: "try again" is useless advice when the account is
+ * on trial or the destination country is switched off.
+ *
+ * https://www.twilio.com/docs/api/errors
+ */
+function reasonForCode(code: number | undefined, status: number): FailureReason {
+  switch (code) {
+    case 21608: // Trial account: destination not in Verified Caller IDs.
+      return 'unverified_trial';
+    case 21408: // Geo Permissions: sending to this country is not enabled.
+    case 21215:
+      return 'geo_blocked';
+    case 21211: // Invalid 'To'.
+    case 21614:
+    case 60200: // Invalid parameter.
+      return 'invalid_number';
+    case 60203: // Max send attempts reached.
+    case 20429:
+      return 'rate_limited';
+    case 60205: // SMS not supported by this landline.
+      return 'landline';
+    case 60410: // Verification delivery blocked by carrier/Twilio.
+    case 30003:
+    case 30005:
+    case 30006:
+      return 'blocked';
+    case 20003: // Authenticate — wrong Account SID or Auth Token.
+    case 20005:
+      return 'bad_credentials';
+    case 20404: // Resource not found — usually a wrong Verify Service SID.
+      return 'no_service';
+    default:
+      return status === 429 ? 'rate_limited' : 'error';
+  }
+}
+
+/** Pull { code, message } out of a Twilio error body, tolerating non-JSON. */
+function parseTwilioError(body: string): { code?: number; message?: string } {
+  try {
+    const j = JSON.parse(body) as { code?: number; message?: string; more_info?: string };
+    return { code: j.code, message: j.message };
+  } catch {
+    return {};
+  }
 }
 
 /** Send a one-time code by SMS. */
@@ -87,11 +153,12 @@ export async function sendCode(phoneE164: string, locale = 'de'): Promise<Verify
     if (res.ok) return { ok: true };
 
     const body = await res.text().catch(() => '');
-    console.error(`[sms:send-failed] ${res.status} ${body.slice(0, 300)}`);
-    // 60200 = invalid parameter (bad number), 60203 = max send attempts.
-    if (body.includes('60200')) return { ok: false, reason: 'invalid_number' };
-    if (body.includes('60203') || res.status === 429) return { ok: false, reason: 'rate_limited' };
-    return { ok: false, reason: 'error' };
+    const { code, message } = parseTwilioError(body);
+    const reason = reasonForCode(code, res.status);
+    console.error(
+      `[sms:send-failed] http=${res.status} twilio=${code ?? '?'} reason=${reason} to=${phoneE164} msg=${message ?? body.slice(0, 200)}`,
+    );
+    return { ok: false, reason, twilioCode: code };
   } catch (err) {
     console.error('[sms:send-error]', err instanceof Error ? err.message : err);
     return { ok: false, reason: 'error' };
@@ -123,9 +190,12 @@ export async function checkCode(phoneE164: string, code: string): Promise<Verify
     // a wrong code.
     if (res.status === 404) return { ok: false, reason: 'expired' };
     if (!res.ok) {
-      console.error(`[sms:check-failed] ${res.status} ${body.slice(0, 300)}`);
-      if (res.status === 429) return { ok: false, reason: 'rate_limited' };
-      return { ok: false, reason: 'error' };
+      const { code, message } = parseTwilioError(body);
+      const reason = reasonForCode(code, res.status);
+      console.error(
+        `[sms:check-failed] http=${res.status} twilio=${code ?? '?'} reason=${reason} to=${phoneE164} msg=${message ?? body.slice(0, 200)}`,
+      );
+      return { ok: false, reason, twilioCode: code };
     }
 
     const data = JSON.parse(body) as { status?: string; valid?: boolean };

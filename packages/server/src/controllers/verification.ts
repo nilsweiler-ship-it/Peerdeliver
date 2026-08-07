@@ -16,20 +16,43 @@ function safe(u: any) {
   return rest;
 }
 
-/** Map an SMS failure to something a person can act on. */
-function smsMessage(reason?: string): string {
-  switch (reason) {
-    case 'invalid_number':
-      return 'Diese Nummer sieht nicht gültig aus. Bitte prüfe sie.';
-    case 'rate_limited':
-      return 'Zu viele Versuche. Bitte warte einen Moment.';
-    case 'expired':
-      return 'Der Code ist abgelaufen. Fordere einen neuen an.';
-    case 'incorrect':
-      return 'Der Code stimmt nicht.';
-    default:
-      return 'SMS-Versand hat gerade nicht geklappt. Bitte versuch es nochmal.';
-  }
+/**
+ * Map an SMS failure to something a person can act on.
+ *
+ * Several of these are account-configuration faults, not user errors — a trial
+ * account, a country switched off in Geo Permissions, a wrong Service SID. They
+ * used to collapse into "please try again", which is the one piece of advice
+ * that cannot possibly work. The Twilio code is appended so a tester can report
+ * the exact cause without needing access to the server logs.
+ */
+function smsMessage(reason?: string, twilioCode?: number): string {
+  const base = (() => {
+    switch (reason) {
+      case 'invalid_number':
+        return 'Diese Nummer sieht nicht gültig aus. Bitte prüfe sie.';
+      case 'rate_limited':
+        return 'Zu viele Versuche. Bitte warte einen Moment.';
+      case 'expired':
+        return 'Der Code ist abgelaufen. Fordere einen neuen an.';
+      case 'incorrect':
+        return 'Der Code stimmt nicht.';
+      case 'landline':
+        return 'An diese Nummer kann keine SMS zugestellt werden (Festnetz).';
+      case 'unverified_trial':
+        return 'Diese Nummer ist im Twilio-Testkonto nicht freigegeben. Bitte unter „Verified Caller IDs" hinzufügen.';
+      case 'geo_blocked':
+        return 'SMS in dieses Land sind im Twilio-Konto nicht freigeschaltet (Geo Permissions).';
+      case 'blocked':
+        return 'Der Mobilfunkanbieter hat die SMS abgelehnt. Bitte andere Nummer versuchen.';
+      case 'bad_credentials':
+        return 'SMS-Dienst nicht korrekt konfiguriert (Zugangsdaten).';
+      case 'no_service':
+        return 'SMS-Dienst nicht korrekt konfiguriert (Verify-Service nicht gefunden).';
+      default:
+        return 'SMS-Versand hat gerade nicht geklappt. Bitte versuch es nochmal.';
+    }
+  })();
+  return twilioCode ? `${base} (Twilio ${twilioCode})` : base;
 }
 
 /**
@@ -46,7 +69,7 @@ export async function startPhoneVerification(req: Request, res: Response, next: 
     if (!e164) throw new AppError(400, 'Bitte gib eine gültige Telefonnummer ein');
 
     const result = await smsService.sendCode(e164, language ?? 'de');
-    if (!result.ok) throw new AppError(400, smsMessage(result.reason));
+    if (!result.ok) throw new AppError(400, smsMessage(result.reason, result.twilioCode));
 
     // Echo the normalised number so the client sends back exactly what Twilio
     // has on file — a mismatch here is the usual cause of "code not found".
@@ -66,7 +89,7 @@ export async function checkPhoneVerification(req: Request, res: Response, next: 
     if (!/^\d{4,10}$/.test(code ?? '')) throw new AppError(400, 'Bitte gib den Code aus der SMS ein');
 
     const result = await smsService.checkCode(e164, code!);
-    if (!result.ok) throw new AppError(400, smsMessage(result.reason));
+    if (!result.ok) throw new AppError(400, smsMessage(result.reason, result.twilioCode));
 
     let user = await prisma.user.update({
       where: { id: userId },
