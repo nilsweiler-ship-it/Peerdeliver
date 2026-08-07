@@ -29,20 +29,28 @@ export function EarningsScreen({ navigation }: any) {
   const pending = data?.pending ?? 0;
 
   // ── Derived figures ─────────────────────────────────────
-  // ~2.6 kg CO₂ saved per shared delivery (no extra car trip made).
-  const co2Saved = deliveries.length * 2.6;
+  // Sum what each delivery actually saved, as computed on the server from its
+  // real distance and packaging. This used to be `deliveries.length * 2.6` — a
+  // flat invented constant that ignored a 3 km trip and a 90 km one alike, and
+  // that no partner or investor could reconcile against a single delivery.
+  const co2Saved = deliveries.reduce((sum, d) => sum + (d.co2SavedKg ?? 0), 0);
   const weekTotal = deliveries.reduce((sum, d) => sum + (d.driverPayoutCHF ?? 0), 0);
 
-  // Representative 7-bar weekly distribution derived from payouts so the chart
-  // is always visual. Falls back to a sensible escalating shape when empty.
-  const weeklyValues =
-    deliveries.length > 0
-      ? WEEK_LABELS.map((_, i) =>
-          deliveries
-            .filter((_d, idx) => idx % 7 === i)
-            .reduce((sum, d) => sum + (d.driverPayoutCHF ?? 0), 0),
-        )
-      : [8, 14, 11, 22, 18, 30, 24];
+  // Group real payouts by weekday. The previous version bucketed by array index
+  // (`idx % 7`), which had nothing to do with when anything was delivered, and
+  // fell back to a hardcoded [8, 14, 11, 22, 18, 30, 24] when there were no
+  // deliveries at all — a driver who had earned nothing was shown a week of
+  // invented income. An empty chart is the honest answer.
+  const weeklyValues = WEEK_LABELS.map((_, i) =>
+    deliveries
+      .filter((d) => {
+        const raw = (d as any).deliveredAt ?? (d as any).updatedAt ?? (d as any).createdAt;
+        if (!raw) return false;
+        // JS weekday is Sun=0; these labels start on Monday.
+        return (new Date(raw).getDay() + 6) % 7 === i;
+      })
+      .reduce((sum, d) => sum + (d.driverPayoutCHF ?? 0), 0),
+  );
   const maxWeekly = Math.max(...weeklyValues, 1);
 
   return (

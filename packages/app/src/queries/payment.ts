@@ -64,6 +64,7 @@ interface EarningsResponse {
     budgetCHF: number;
     platformFeeCHF: number | null;
     driverPayoutCHF: number | null;
+    co2SavedKg: number | null;
     updatedAt: string;
   }>;
 }

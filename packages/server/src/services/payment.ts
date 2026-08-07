@@ -315,6 +315,10 @@ export async function getEarnings(driverId: string) {
       budgetCHF: true,
       platformFeeCHF: true,
       driverPayoutCHF: true,
+      // The real per-delivery figure, computed from distance and packaging when
+      // the delivery completed. The earnings screen used to multiply the
+      // delivery count by a flat 2.6 kg because this was never sent.
+      co2SavedKg: true,
       updatedAt: true,
     },
   });

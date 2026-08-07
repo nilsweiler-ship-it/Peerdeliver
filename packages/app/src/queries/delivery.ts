@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
+import { useAuthStore } from '../stores/authStore';
 import type { DeliveryRequest, ApiResponse, CreateDeliveryInput } from '@peerdeliver/shared';
 
 export function useMyDeliveries() {
@@ -189,6 +190,7 @@ export function useVerifyPickup() {
 
 export function useVerifyDelivery() {
   const queryClient = useQueryClient();
+  const refreshUser = useAuthStore((s) => s.refreshUser);
   return useMutation({
     mutationFn: async ({ id, code }: { id: string; code: string }) => {
       const { data } = await api.post<ApiResponse<DeliveryRequest>>(`/deliveries/${id}/verify-delivery`, { code });
@@ -196,6 +198,10 @@ export function useVerifyDelivery() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['deliveries'] });
+      // Completing a delivery is the moment co2Saved and totalDeliveries
+      // change. Without this the dashboard keeps the figure it had at app
+      // start, so a successful delivery appears to have counted for nothing.
+      void refreshUser();
     },
   });
 }

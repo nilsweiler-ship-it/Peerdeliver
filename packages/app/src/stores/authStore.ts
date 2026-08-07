@@ -20,6 +20,7 @@ interface AuthState {
   setAuth: (user: User, tokens: AuthTokens) => Promise<void>;
   clearAuth: () => Promise<void>;
   setUser: (user: User) => void;
+  refreshUser: () => Promise<void>;
   loadTokens: () => Promise<void>;
 }
 
@@ -42,6 +43,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   setUser: (user) => set({ user }),
+
+  /**
+   * Re-read the profile from the server.
+   *
+   * Lifetime counters — co2Saved, totalDeliveries, averageRating — are updated
+   * server-side when a delivery completes, but the cached user here was only
+   * ever loaded at login or app start. The dashboard therefore kept showing the
+   * figure from the last cold start: the impact number never moved after a
+   * delivery, which reads as "the feature does not work" rather than "the
+   * screen is stale".
+   */
+  refreshUser: async () => {
+    try {
+      const { data } = await api.get<ApiResponse<User>>('/users/profile');
+      if (data.data) set({ user: data.data });
+    } catch {
+      // A stale profile is not worth interrupting anything for.
+    }
+  },
 
   loadTokens: async () => {
     try {
