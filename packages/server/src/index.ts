@@ -113,7 +113,12 @@ app.get('/health/integrations', async (_req, res) => {
     resend: { apiKeyPresent: Boolean(process.env.RESEND_API_KEY) },
     payrexx: {
       instancePresent: Boolean(process.env.PAYREXX_INSTANCE),
-      apiKeyPresent: Boolean(process.env.PAYREXX_API_KEY),
+      // Payrexx calls this the "API Secret" in its dashboard, and so does the
+      // rest of this codebase. An earlier version of this check read
+      // PAYREXX_API_KEY — a name used nowhere else — and so reported a
+      // correctly configured integration as broken.
+      apiSecretPresent: Boolean(process.env.PAYREXX_API_SECRET),
+      webhookSecretPresent: Boolean(process.env.PAYREXX_WEBHOOK_SECRET),
     },
     timestamp: new Date().toISOString(),
   });
