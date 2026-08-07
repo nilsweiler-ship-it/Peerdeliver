@@ -25,7 +25,7 @@ function safe(u: any) {
  * that cannot possibly work. The Twilio code is appended so a tester can report
  * the exact cause without needing access to the server logs.
  */
-function smsMessage(reason?: string, twilioCode?: number): string {
+function smsMessage(reason?: string, twilioCode?: number, step: 'send' | 'check' = 'send'): string {
   const base = (() => {
     switch (reason) {
       case 'invalid_number':
@@ -49,7 +49,11 @@ function smsMessage(reason?: string, twilioCode?: number): string {
       case 'no_service':
         return 'SMS-Dienst nicht korrekt konfiguriert (Verify-Service nicht gefunden).';
       default:
-        return 'SMS-Versand hat gerade nicht geklappt. Bitte versuch es nochmal.';
+        // Naming the step matters: the same wording for both made a failed
+        // code check read as if the SMS had never been sent.
+        return step === 'check'
+          ? 'Der Code konnte gerade nicht geprüft werden. Bitte versuch es nochmal.'
+          : 'SMS-Versand hat gerade nicht geklappt. Bitte versuch es nochmal.';
     }
   })();
   return twilioCode ? `${base} (Twilio ${twilioCode})` : base;
@@ -89,7 +93,7 @@ export async function checkPhoneVerification(req: Request, res: Response, next: 
     if (!/^\d{4,10}$/.test(code ?? '')) throw new AppError(400, 'Bitte gib den Code aus der SMS ein');
 
     const result = await smsService.checkCode(e164, code!);
-    if (!result.ok) throw new AppError(400, smsMessage(result.reason, result.twilioCode));
+    if (!result.ok) throw new AppError(400, smsMessage(result.reason, result.twilioCode, 'check'));
 
     let user = await prisma.user.update({
       where: { id: userId },
