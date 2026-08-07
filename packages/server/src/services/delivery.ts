@@ -339,6 +339,18 @@ export async function verifyPickup(deliveryId: string, driverId: string, code: s
   if (ctx?.d.recipientPhone && ctx.d.deliveryCode) {
     smsService.notifyRecipientPickedUp(ctx.d.recipientPhone, ctx.route, ctx.d.deliveryCode);
   }
+  // The recipient needs the code too. Nothing used to be addressed to them at
+  // all, so a recipient without an account could only get it by the sender
+  // reading it out — which is not a system, just a workaround that held.
+  if (ctx?.d.recipientEmail && ctx.d.deliveryCode) {
+    emailService.sendRecipientPickedUp({
+      to: ctx.d.recipientEmail,
+      route: ctx.route,
+      deliveryCode: ctx.d.deliveryCode,
+      senderName: ctx.sender?.firstName ?? null,
+      language: ctx.sender?.language,
+    });
+  }
 
   return getDeliveryById(deliveryId);
 }

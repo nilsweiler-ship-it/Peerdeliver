@@ -372,3 +372,82 @@ export function sendInternal(opts: { subject: string; lines: Record<string, unkn
     html: shell(h1(opts.subject) + facts(rows), 'Interne Benachrichtigung von shlep.ch'),
   });
 }
+
+/**
+ * Tell the RECIPIENT their parcel is on the way, and give them the code.
+ *
+ * Until this existed, nothing was ever addressed to the recipient — every
+ * message went to the sender or the driver. A recipient without a Shlep account
+ * therefore had no way to learn the delivery code, and the handover only worked
+ * because the sender read it out to them. That is not a system, it is a
+ * workaround that happens to hold.
+ *
+ * Deliberately written for someone who has never heard of Shlep: it explains
+ * what is happening and what to do, rather than assuming familiarity.
+ */
+export function sendRecipientPickedUp(opts: {
+  to: string;
+  route: string;
+  deliveryCode: string;
+  senderName?: string | null;
+  language?: string | null;
+}): void {
+  const l = lang(opts.language);
+  const copy = {
+    de: {
+      subj: 'Ein Paket ist für dich unterwegs',
+      h: 'Ein Paket ist für dich unterwegs',
+      p: opts.senderName
+        ? `${opts.senderName} schickt dir etwas über Shlep. Eine verifizierte fahrende Person hat die Sendung übernommen.`
+        : 'Jemand schickt dir etwas über Shlep. Eine verifizierte fahrende Person hat die Sendung übernommen.',
+      codeLabel: 'Dein Zustellcode',
+      how: 'Nenne diesen Code bei der Übergabe. Erst damit gilt die Sendung als zugestellt — er ist dein Nachweis, dass das Paket wirklich bei dir angekommen ist.',
+      what: 'Shlep ist ein Schweizer Liefernetz: Menschen nehmen ein Paket auf einer Fahrt mit, die sie ohnehin machen.',
+      footer: 'Du erhältst diese Nachricht, weil jemand dir eine Sendung über Shlep geschickt hat.',
+    },
+    en: {
+      subj: 'A parcel is on its way to you',
+      h: 'A parcel is on its way to you',
+      p: opts.senderName
+        ? `${opts.senderName} is sending you something via Shlep. A verified driver has picked it up.`
+        : 'Someone is sending you something via Shlep. A verified driver has picked it up.',
+      codeLabel: 'Your delivery code',
+      how: 'Give this code at handover. Only then does the delivery count as complete — it is your proof the parcel actually reached you.',
+      what: 'Shlep is a Swiss delivery network: people take a parcel along on a journey they are already making.',
+      footer: 'You received this because someone sent you a parcel via Shlep.',
+    },
+    fr: {
+      subj: 'Un colis est en route pour vous',
+      h: 'Un colis est en route pour vous',
+      p: opts.senderName
+        ? `${opts.senderName} vous envoie quelque chose via Shlep. Un conducteur vérifié a pris le colis en charge.`
+        : 'Quelqu\'un vous envoie quelque chose via Shlep. Un conducteur vérifié a pris le colis en charge.',
+      codeLabel: 'Votre code de livraison',
+      how: 'Communiquez ce code lors de la remise. La livraison n\'est validée qu\'à ce moment — c\'est votre preuve de réception.',
+      what: 'Shlep est un réseau de livraison suisse : des personnes emportent un colis sur un trajet qu\'elles font déjà.',
+      footer: 'Vous recevez ce message car quelqu\'un vous a envoyé un colis via Shlep.',
+    },
+    it: {
+      subj: 'Un pacco è in arrivo per te',
+      h: 'Un pacco è in arrivo per te',
+      p: opts.senderName
+        ? `${opts.senderName} ti sta inviando qualcosa tramite Shlep. Un autista verificato ha ritirato il pacco.`
+        : 'Qualcuno ti sta inviando qualcosa tramite Shlep. Un autista verificato ha ritirato il pacco.',
+      codeLabel: 'Il tuo codice di consegna',
+      how: 'Comunica questo codice alla consegna. Solo così la consegna è confermata — è la tua prova di ricezione.',
+      what: 'Shlep è una rete di consegna svizzera: le persone portano un pacco lungo un tragitto che fanno già.',
+      footer: 'Ricevi questo messaggio perché qualcuno ti ha inviato un pacco tramite Shlep.',
+    },
+  }[l];
+
+  const body =
+    h1(copy.h) +
+    p(copy.p) +
+    facts(factRow(T[l].lblRoute, opts.route)) +
+    `<p style="margin:0 0 6px;font-size:13px;font-weight:700;color:${C.ink};">${copy.codeLabel}</p>` +
+    codeBlock(opts.deliveryCode) +
+    `<p style="margin:0 0 14px;font-size:13px;color:${C.ink2};">${copy.how}</p>` +
+    `<p style="margin:0;font-size:12px;color:${C.ink3};">${copy.what}</p>`;
+
+  queue({ to: opts.to, subject: copy.subj, html: shell(body, copy.footer) });
+}
