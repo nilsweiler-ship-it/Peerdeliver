@@ -2,7 +2,7 @@ import { prisma } from '../config';
 import { generateCode } from '../utils';
 import { AppError } from '../middleware';
 import type { CreateDeliveryInput, PackageSize } from '@peerdeliver/shared';
-import { sizesUpTo, ALL_SIZES } from '@peerdeliver/shared';
+import { sizesUpTo, ALL_SIZES, DELIVERY_STATUS_TRANSITIONS } from '@peerdeliver/shared';
 import * as paymentService from './payment';
 import * as emailService from './email';
 import * as pushService from './push';
@@ -163,13 +163,42 @@ export async function getDeliveryById(id: string) {
   return rows[0] ? transformDelivery(rows[0]) : null;
 }
 
-export async function updateDeliveryStatus(id: string, status: string, cancelledBy?: string, cancelReason?: string) {
+export async function updateDeliveryStatus(
+  id: string,
+  status: string,
+  cancelledBy?: string,
+  cancelReason?: string,
+  actorId?: string,
+) {
+  const current = await getDeliveryById(id);
+  if (!current) throw new AppError(404, 'Delivery not found');
+
+  // Who may touch this delivery at all. Previously nobody checked, so any
+  // signed-in account could drive a stranger's delivery through its whole
+  // lifecycle by id alone.
+  if (actorId) {
+    const involved =
+      current.senderId === actorId ||
+      current.driverId === actorId ||
+      current.recipientId === actorId;
+    if (!involved) throw new AppError(403, 'Not authorized');
+  }
+
+  // And which moves are legal from here. Without this the offered driver could
+  // PATCH straight to 'accepted', skipping the payout-eligibility gate in
+  // acceptOffer and leaving the chat thread that accept creates missing.
+  const allowed = DELIVERY_STATUS_TRANSITIONS[current.status] ?? [];
+  if (!allowed.includes(status)) {
+    throw new AppError(400, `Nicht möglich: ${current.status} → ${status}`);
+  }
+
   await prisma.$queryRawUnsafe(
-    `UPDATE delivery_requests SET status = $1::"DeliveryStatus", "cancelledBy" = $2, "cancelReason" = $3, "updatedAt" = NOW() WHERE id = $4`,
+    `UPDATE delivery_requests SET status = $1::"DeliveryStatus", "cancelledBy" = $2, "cancelReason" = $3, "updatedAt" = NOW() WHERE id = $4 AND status = $5::"DeliveryStatus"`,
     status,
     cancelledBy ?? null,
     cancelReason ?? null,
     id,
+    current.status,
   );
   // Refund/void any outstanding TWINT hold when the delivery is cancelled for good.
   // Reject-and-reassign goes to 'pending' (not 'cancelled') so the hold stays live.
@@ -224,6 +253,24 @@ export async function getNearbyDeliveries(
  * Look up the people to notify for a delivery plus a human route label.
  * Kept tolerant: any missing piece just means that mail is skipped.
  */
+/**
+ * Is this user one of the three people involved in a delivery?
+ *
+ * The same question the tracking handler asks before streaming GPS. Chat needed
+ * it too: messages were fetched and posted by delivery id alone, so any signed-in
+ * account could read a stranger's conversation — which routinely contains a home
+ * address, a phone number and a handover time — or post into it while
+ * impersonating nobody in particular.
+ */
+export async function isDeliveryParticipant(deliveryId: string, userId: string): Promise<boolean> {
+  const row = await prisma.deliveryRequest.findUnique({
+    where: { id: deliveryId },
+    select: { senderId: true, driverId: true, recipientId: true },
+  });
+  if (!row) return false;
+  return row.senderId === userId || row.driverId === userId || row.recipientId === userId;
+}
+
 async function notifyContext(deliveryId: string) {
   const d = await getDeliveryById(deliveryId);
   if (!d) return null;
@@ -276,8 +323,27 @@ export async function offerToRoute(deliveryId: string, senderId: string, routeId
   if (!sizesUpTo(route.availableSize).includes(delivery.packageSize as PackageSize)) {
     throw new AppError(400, 'Diese Route hat nicht genug Platz für dieses Paket');
   }
+  // Weight as well as size. The driver-initiated list filters on both, and
+  // checking only one here would let a 28 kg parcel reach a driver whose
+  // profile says 10 kg — discovered at the doorstep, which is the exact
+  // failure these guards exist to prevent.
+  const driverProfile = await prisma.user.findUnique({
+    where: { id: route.driverId },
+    select: { maxLoadKg: true },
+  });
+  if (
+    driverProfile?.maxLoadKg != null &&
+    delivery.packageWeight != null &&
+    delivery.packageWeight > driverProfile.maxLoadKg
+  ) {
+    throw new AppError(400, 'Dieses Paket ist schwerer, als diese Route tragen kann');
+  }
 
-  await prisma.$queryRawUnsafe(
+  // The WHERE re-asserts what we read above, so two taps cannot both win. The
+  // row count then tells us whether *this* call was the winner — without it,
+  // the loser would still send the driver an email and a push about a delivery
+  // that went to someone else.
+  const applied = await prisma.$executeRawUnsafe(
     `UPDATE delivery_requests
         SET "driverId" = $1, "offeredRouteId" = $2,
             status = 'offered'::"DeliveryStatus", "updatedAt" = NOW()
@@ -286,6 +352,9 @@ export async function offerToRoute(deliveryId: string, senderId: string, routeId
     routeId,
     deliveryId,
   );
+  if (applied === 0) {
+    throw new AppError(409, 'Diese Lieferung wurde soeben schon vergeben');
+  }
 
   const ctx = await notifyContext(deliveryId);
   if (ctx?.driver?.email) {
@@ -298,15 +367,70 @@ export async function offerToRoute(deliveryId: string, senderId: string, routeId
       language: ctx.driver.language,
     });
   }
-  if (route.driverId) {
+  // Notify the driver actually written to the row, not the one this caller
+  // aimed at — they are the same only when this call won.
+  if (ctx?.d.driverId) {
     pushService.notifyDeliveryOffered(
-      route.driverId,
+      ctx.d.driverId,
       ctx?.sender?.firstName ?? 'Eine Person',
       deliveryId,
     );
   }
 
   return getDeliveryById(deliveryId);
+}
+
+/**
+ * The sender withdraws an offer nobody answered.
+ *
+ * Without this an ignored request is a trap: the delivery is invisible to every
+ * other driver (the open pool is `pending` only), no expiry job exists, and the
+ * sender's money is already on hold. Silence by one driver would strand the
+ * parcel permanently.
+ */
+export async function withdrawOffer(deliveryId: string, senderId: string) {
+  const delivery = await getDeliveryById(deliveryId);
+  if (!delivery || delivery.senderId !== senderId) {
+    throw new AppError(403, 'Not authorized');
+  }
+  if (delivery.status !== 'offered') {
+    throw new AppError(400, 'Diese Anfrage ist nicht mehr offen');
+  }
+
+  const applied = await prisma.$executeRawUnsafe(
+    `UPDATE delivery_requests
+        SET "driverId" = NULL, "offeredRouteId" = NULL,
+            status = 'pending'::"DeliveryStatus", "updatedAt" = NOW()
+      WHERE id = $1 AND status = 'offered'::"DeliveryStatus"`,
+    deliveryId,
+  );
+  if (applied === 0) {
+    // The driver answered in the meantime — their answer stands.
+    throw new AppError(409, 'Die fahrende Person hat inzwischen geantwortet');
+  }
+
+  return getDeliveryById(deliveryId);
+}
+
+/**
+ * Return any open offers on a route to the pool.
+ *
+ * Called when a driver deactivates or deletes a route. The offer was made
+ * against a promise that no longer exists, and leaving it open would hold the
+ * sender's delivery hostage to a route that is gone.
+ */
+export async function reopenOffersForRoute(routeId: string): Promise<void> {
+  try {
+    await prisma.$executeRawUnsafe(
+      `UPDATE delivery_requests
+          SET "driverId" = NULL, "offeredRouteId" = NULL,
+              status = 'pending'::"DeliveryStatus", "updatedAt" = NOW()
+        WHERE "offeredRouteId" = $1 AND status = 'offered'::"DeliveryStatus"`,
+      routeId,
+    );
+  } catch (err) {
+    console.error('[reopenOffers]', err instanceof Error ? err.message : err);
+  }
 }
 
 /**
@@ -326,12 +450,19 @@ export async function acceptOffer(deliveryId: string, driverId: string) {
     throw new AppError(400, 'Complete payout setup before accepting deliveries');
   }
 
-  await prisma.$queryRawUnsafe(
+  // Row count, not just the WHERE: on a double tap or a cancellation that
+  // lands between the read and the write, the loser must not post a second
+  // "confirmed" chat message or email the sender a pickup code for a delivery
+  // that is no longer going anywhere.
+  const applied = await prisma.$executeRawUnsafe(
     `UPDATE delivery_requests
         SET status = 'matched'::"DeliveryStatus", "offeredRouteId" = NULL, "updatedAt" = NOW()
       WHERE id = $1 AND status = 'offered'::"DeliveryStatus"`,
     deliveryId,
   );
+  if (applied === 0) {
+    throw new AppError(409, 'Diese Anfrage ist nicht mehr offen');
+  }
 
   const driver = await prisma.user.findUnique({
     where: { id: driverId },
@@ -384,13 +515,16 @@ export async function declineOffer(deliveryId: string, driverId: string) {
   const ctx = await notifyContext(deliveryId);
   const driverName = ctx?.driver?.firstName ?? 'Die fahrende Person';
 
-  await prisma.$queryRawUnsafe(
+  const applied = await prisma.$executeRawUnsafe(
     `UPDATE delivery_requests
         SET "driverId" = NULL, "offeredRouteId" = NULL,
             status = 'pending'::"DeliveryStatus", "updatedAt" = NOW()
       WHERE id = $1 AND status = 'offered'::"DeliveryStatus"`,
     deliveryId,
   );
+  if (applied === 0) {
+    throw new AppError(409, 'Diese Anfrage ist nicht mehr offen');
+  }
 
   if (ctx?.sender?.email) {
     emailService.sendOfferDeclined({
@@ -414,12 +548,22 @@ export async function assignDelivery(deliveryId: string, driverId: string) {
     throw new AppError(400, 'Complete payout setup before accepting deliveries');
   }
 
-  // Driver requests — sets status to 'requested', sender must confirm
-  await prisma.$queryRawUnsafe(
-    `UPDATE delivery_requests SET "driverId" = $1, status = 'requested'::"DeliveryStatus", "updatedAt" = NOW() WHERE id = $2`,
+  // Driver requests — sets status to 'requested', sender must confirm.
+  //
+  // The WHERE clause matters as much as the update. Without it this statement
+  // overwrote whatever it found, so any driver could claim a delivery that was
+  // already offered to someone else: the driver the sender personally chose
+  // silently lost the job, and the sender saw a request from a stranger.
+  const applied = await prisma.$executeRawUnsafe(
+    `UPDATE delivery_requests
+        SET "driverId" = $1, status = 'requested'::"DeliveryStatus", "updatedAt" = NOW()
+      WHERE id = $2 AND status = 'pending'::"DeliveryStatus" AND "driverId" IS NULL`,
     driverId,
     deliveryId,
   );
+  if (applied === 0) {
+    throw new AppError(409, 'Diese Lieferung ist nicht mehr offen');
+  }
 
   return getDeliveryById(deliveryId);
 }
@@ -658,7 +802,13 @@ export async function announceToRecipient(deliveryId: string): Promise<void> {
   try {
     const ctx = await notifyContext(deliveryId);
     if (!ctx?.d.recipientEmail) return;
-    if (ctx.d.status !== 'pending' && ctx.d.status !== 'requested') return;
+    // 'offered' belongs here too: a sender can pick a route before completing
+    // payment, and the announcement fires on payment. Omitting it meant the
+    // recipient — often someone with no account, for whom this is the only
+    // contact they will get — was never told a parcel was coming.
+    if (ctx.d.status !== 'pending' && ctx.d.status !== 'requested' && ctx.d.status !== 'offered') {
+      return;
+    }
 
     emailService.sendRecipientAnnounced({
       to: ctx.d.recipientEmail,

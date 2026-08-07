@@ -3,7 +3,13 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Ale
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { useMyDeliveries, useConfirmDelivery, useRejectDriver, useDriverInfo } from '../../queries/delivery';
+import {
+  useMyDeliveries,
+  useConfirmDelivery,
+  useRejectDriver,
+  useDriverInfo,
+  useWithdrawOffer,
+} from '../../queries/delivery';
 import { DeliveryCard } from '../../components/delivery/DeliveryCard';
 import { EmptyState, LoadingSpinner, Modal, Button } from '../../components/ui';
 import { Avatar } from '../../components/ui/Avatar';
@@ -153,6 +159,17 @@ export function MyShipmentsScreen({ navigation }: any) {
   const selectedDelivery = deliveries?.find((d) => d.id === selectedId) ?? null;
   const confirmDelivery = useConfirmDelivery();
   const rejectDriver = useRejectDriver();
+  const withdrawOffer = useWithdrawOffer();
+
+  const handleWithdraw = async (id: string) => {
+    try {
+      await withdrawOffer.mutateAsync(id);
+      Alert.alert(t('sender.offerWithdrawn'));
+      setSelectedId(null);
+    } catch (err: any) {
+      Alert.alert(t('common.error'), err?.response?.data?.error ?? undefined);
+    }
+  };
 
   const filtered = deliveries?.filter((d) => {
     if (filter === 'active') return ACTIVE_STATUSES.includes(d.status);
@@ -360,7 +377,11 @@ export function MyShipmentsScreen({ navigation }: any) {
               </View>
             )}
 
-            {/* Waiting on a driver the sender picked */}
+            {/* Waiting on a driver the sender picked.
+                The withdraw button is not a nicety: while offered, the delivery
+                is hidden from every other driver and the payment hold is live.
+                A driver who simply never answers would otherwise strand it,
+                since nothing expires an offer. */}
             {sel.status === 'offered' && (
               <View style={styles.waitCard}>
                 <View style={styles.findHead}>
@@ -368,6 +389,13 @@ export function MyShipmentsScreen({ navigation }: any) {
                   <Text style={styles.waitTitle}>{t('sender.offerPendingTitle')}</Text>
                 </View>
                 <Text style={styles.waitHint}>{t('sender.offerPendingHint')}</Text>
+                <Button
+                  title={t('sender.withdrawOffer')}
+                  variant="outline"
+                  loading={withdrawOffer.isPending}
+                  onPress={() => handleWithdraw(sel.id)}
+                  style={styles.withdrawButton}
+                />
               </View>
             )}
 
@@ -691,6 +719,9 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     color: colors.signalText,
     opacity: 0.85,
+  },
+  withdrawButton: {
+    marginTop: spacing.md,
   },
 
   // ── Live tracker ──

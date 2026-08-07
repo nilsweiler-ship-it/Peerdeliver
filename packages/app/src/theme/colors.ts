@@ -70,6 +70,10 @@ export const colors = {
 // Status → token map for delivery states (pending/matched/in_transit/delivered)
 export const statusColors = {
   pending:    { bg: '#FBEFD7', fg: '#B98114', dot: '#E0A32E' },
+  // Waiting on a person rather than on the world — same marigold as pending,
+  // declared explicitly so it does not depend on a fallback.
+  offered:    { bg: '#FBEFD7', fg: '#B98114', dot: '#E0A32E' },
+  requested:  { bg: '#FBEFD7', fg: '#B98114', dot: '#E0A32E' },
   matched:    { bg: '#E7F0E9', fg: '#14532D', dot: '#3E7D5E' },
   in_transit: { bg: '#FBEFD7', fg: '#B98114', dot: '#E0A32E' },
   delivered:  { bg: '#EFEADF', fg: '#57534A', dot: '#C9BFA9' },

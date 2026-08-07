@@ -16,6 +16,7 @@ router.patch('/:id/assign', deliveryController.assign);
 router.post('/:id/offer', deliveryController.offerRoute);
 router.patch('/:id/offer/accept', deliveryController.acceptOffer);
 router.patch('/:id/offer/decline', deliveryController.declineOffer);
+router.patch('/:id/offer/withdraw', deliveryController.withdrawOffer);
 router.patch('/:id/confirm', deliveryController.confirm);
 router.patch('/:id/reject', deliveryController.reject);
 router.post('/:id/verify-pickup', validate(verifyCodeSchema), deliveryController.verifyPickup);

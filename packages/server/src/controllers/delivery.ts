@@ -75,6 +75,7 @@ export async function updateStatus(req: Request<{ id: string }>, res: Response, 
       req.body.status,
       req.body.cancelReason ? req.user!.userId : undefined,
       req.body.cancelReason,
+      req.user!.userId,
     );
     success(res, delivery);
   } catch (err) {
@@ -133,6 +134,16 @@ export async function offerRoute(req: Request<{ id: string }>, res: Response, ne
 export async function acceptOffer(req: Request<{ id: string }>, res: Response, next: NextFunction) {
   try {
     const delivery = await deliveryService.acceptOffer(req.params.id, req.user!.userId);
+    success(res, delivery);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** Sender takes back an offer nobody answered. */
+export async function withdrawOffer(req: Request<{ id: string }>, res: Response, next: NextFunction) {
+  try {
+    const delivery = await deliveryService.withdrawOffer(req.params.id, req.user!.userId);
     success(res, delivery);
   } catch (err) {
     next(err);

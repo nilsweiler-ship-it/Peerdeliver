@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { routeService } from '../services';
+import { routeService, deliveryService } from '../services';
 import { prisma } from '../config';
 import { success, error } from '../utils';
 
@@ -51,9 +51,31 @@ export async function getById(req: Request<{ id: string }>, res: Response, next:
   }
 }
 
+/**
+ * Both mutations below are keyed only on a route id, which the client supplies.
+ * Without an ownership check any signed-in driver could deactivate or delete
+ * any other driver's published route — and, now that routes can carry open
+ * offers, strand somebody else's delivery in the process.
+ */
+async function assertOwnsRoute(routeId: string, userId: string): Promise<boolean> {
+  const route = await prisma.driverRoute.findUnique({
+    where: { id: routeId },
+    select: { driverId: true },
+  });
+  return !!route && route.driverId === userId;
+}
+
 export async function toggleActive(req: Request<{ id: string }>, res: Response, next: NextFunction) {
   try {
+    if (!(await assertOwnsRoute(req.params.id, req.user!.userId))) {
+      error(res, 'Not authorized', 403);
+      return;
+    }
     const route = await routeService.toggleRouteActive(req.params.id, req.body.isActive);
+    // A deactivated route can no longer honour an offer made against it.
+    if (req.body.isActive === false) {
+      await deliveryService.reopenOffersForRoute(req.params.id);
+    }
     success(res, route);
   } catch (err) {
     next(err);
@@ -62,6 +84,14 @@ export async function toggleActive(req: Request<{ id: string }>, res: Response, 
 
 export async function remove(req: Request<{ id: string }>, res: Response, next: NextFunction) {
   try {
+    if (!(await assertOwnsRoute(req.params.id, req.user!.userId))) {
+      error(res, 'Not authorized', 403);
+      return;
+    }
+    // Return open offers to the pool before the route disappears, otherwise the
+    // sender's delivery is left assigned to a route that no longer exists and
+    // invisible to every other driver.
+    await deliveryService.reopenOffersForRoute(req.params.id);
     await routeService.deleteRoute(req.params.id);
     success(res, { message: 'Route deleted' });
   } catch (err) {

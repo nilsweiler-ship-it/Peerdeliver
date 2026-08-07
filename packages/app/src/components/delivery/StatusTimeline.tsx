@@ -33,9 +33,12 @@ export function StatusTimeline({ currentStatus, orientation = 'horizontal' }: St
     );
   }
 
-  // Map early statuses (pending/requested) onto the first node.
-  let currentIdx = STATUSES.findIndex((s) => s.key === currentStatus);
-  if (currentIdx === -1) currentIdx = 0;
+  // Map early statuses (pending/requested/offered) onto the first node — but
+  // as *not yet reached*, not as reached. Falling back to index 0 drew an
+  // offered delivery as already "Matched", directly above the driver's own
+  // Accept and Decline buttons.
+  const known = STATUSES.findIndex((s) => s.key === currentStatus);
+  const currentIdx = known === -1 ? -1 : known;
 
   if (orientation === 'vertical') {
     return (

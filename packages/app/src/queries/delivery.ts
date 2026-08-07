@@ -146,6 +146,20 @@ export function useAcceptOffer() {
   });
 }
 
+/** Sender takes back an unanswered offer, reopening the delivery. */
+export function useWithdrawOffer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.patch<ApiResponse<DeliveryRequest>>(`/deliveries/${id}/offer/withdraw`);
+      return data.data!;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deliveries'] });
+    },
+  });
+}
+
 /** The offered driver declines — the delivery returns to the open pool. */
 export function useDeclineOffer() {
   const queryClient = useQueryClient();

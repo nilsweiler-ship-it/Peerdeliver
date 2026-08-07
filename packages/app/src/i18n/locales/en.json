@@ -122,7 +122,9 @@
     "offerSentBody": "The driver has been notified and will decide whether it fits.",
     "offerFailed": "Could not send the request.",
     "offerPendingTitle": "Request pending",
-    "offerPendingHint": "Waiting for an answer. If they decline, your delivery reopens automatically."
+    "offerPendingHint": "Waiting for an answer. If they decline, your delivery reopens automatically.",
+    "withdrawOffer": "Withdraw request",
+    "offerWithdrawn": "Request withdrawn — your delivery is open again."
   },
   "driver": {
     "publishRoute": "Publish Route",
@@ -253,7 +255,8 @@
     "in_transit": "In Transit",
     "delivered": "Delivered",
     "cancelled": "Cancelled",
-    "expired": "Expired"
+    "expired": "Expired",
+    "offered": "Requested"
   },
   "verifyEmail": {
     "eyebrow": "One more step",

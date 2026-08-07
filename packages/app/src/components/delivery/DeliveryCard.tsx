@@ -38,7 +38,11 @@ export function DeliveryCard({ delivery, onPress }: DeliveryCardProps) {
           <Text style={styles.meta} numberOfLines={1}>
             {sizeInfo.label} · {delivery.packageDescription || t('sender.packageSize')}
           </Text>
-          {delivery.driver && (
+          {/* While a delivery is merely offered or requested, a driver id is
+              set but nobody has agreed to anything. Showing their name here
+              read as "this person is taking your parcel", which is not yet
+              true and could be undone by a single decline. */}
+          {delivery.driver && delivery.status !== 'offered' && delivery.status !== 'requested' && (
             <View style={styles.driver}>
               <Avatar
                 firstName={delivery.driver.firstName}

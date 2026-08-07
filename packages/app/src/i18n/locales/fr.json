@@ -122,7 +122,9 @@
     "offerSentBody": "La personne au volant a été prévenue et décidera si cela convient.",
     "offerFailed": "Impossible d’envoyer la demande.",
     "offerPendingTitle": "Demande en cours",
-    "offerPendingHint": "En attente d’une réponse. En cas de refus, votre livraison se rouvre automatiquement."
+    "offerPendingHint": "En attente d’une réponse. En cas de refus, votre livraison se rouvre automatiquement.",
+    "withdrawOffer": "Retirer la demande",
+    "offerWithdrawn": "Demande retirée — votre livraison est à nouveau ouverte."
   },
   "driver": {
     "publishRoute": "Publier un trajet",
@@ -253,7 +255,8 @@
     "in_transit": "En transit",
     "delivered": "Livré",
     "cancelled": "Annulé",
-    "expired": "Expiré"
+    "expired": "Expiré",
+    "offered": "Demandé"
   },
   "verifyEmail": {
     "eyebrow": "Encore une étape",

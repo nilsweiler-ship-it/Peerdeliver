@@ -14,7 +14,7 @@ import { ImpactCard, RouteLine, StatusBadge, GrowthAvatar } from '../../componen
 import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 import type { DeliveryStatus } from '@peerdeliver/shared';
 
-const ACTIVE_STATUSES: DeliveryStatus[] = ['pending', 'requested', 'matched', 'accepted', 'picked_up', 'in_transit'];
+const ACTIVE_STATUSES: DeliveryStatus[] = ['pending', 'requested', 'offered', 'matched', 'accepted', 'picked_up', 'in_transit'];
 
 function ActionNeededCard({ delivery, onDone }: { delivery: any; onDone: () => void }) {
   const { t } = useTranslation();
