@@ -26,6 +26,70 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+/**
+ * Integration self-test.
+ *
+ * Reading Render's logs to find out why an SMS failed turned out to be
+ * unreliable — a log line that is never written looks identical to one that
+ * cannot be found. This asks the live service instead: is Twilio configured at
+ * all, and do the credentials and Service SID actually work?
+ *
+ * Deliberately leaks nothing. No SIDs, no tokens, no phone numbers — only
+ * booleans and a coarse verdict. It sends no SMS, so it cannot be abused to
+ * bill the account or to probe whether a number exists.
+ */
+app.get('/health/integrations', async (_req, res) => {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const verifySid = process.env.TWILIO_VERIFY_SERVICE_SID;
+
+  const twilio: Record<string, unknown> = {
+    accountSidPresent: Boolean(sid),
+    authTokenPresent: Boolean(token),
+    verifyServiceSidPresent: Boolean(verifySid),
+    // A Verify Service SID starts with "VA". Pasting the Messaging Service
+    // (MG) or Account (AC) SID is the single most common setup mistake and
+    // produces a 20404 that reads like a generic failure.
+    verifyServiceSidLooksRight: verifySid ? verifySid.startsWith('VA') : false,
+    senderConfigured: Boolean(process.env.TWILIO_FROM_NUMBER || process.env.TWILIO_SENDER_ID),
+  };
+
+  if (sid && token && verifySid) {
+    try {
+      const auth = Buffer.from(`${sid}:${token}`).toString('base64');
+      const r = await fetch(`https://verify.twilio.com/v2/Services/${verifySid}`, {
+        headers: { Authorization: `Basic ${auth}` },
+      });
+      if (r.ok) {
+        twilio.liveCheck = 'ok';
+      } else if (r.status === 401) {
+        twilio.liveCheck = 'auth_failed — Account SID or Auth Token is wrong';
+      } else if (r.status === 404) {
+        twilio.liveCheck = 'service_not_found — TWILIO_VERIFY_SERVICE_SID is wrong';
+      } else {
+        twilio.liveCheck = `unexpected_${r.status}`;
+      }
+    } catch (err) {
+      twilio.liveCheck = `unreachable — ${err instanceof Error ? err.message : 'error'}`;
+    }
+  } else {
+    // This is the quiet failure mode: unconfigured, sendCode returns
+    // { ok: true, simulated: true }, no SMS is sent and no error is shown.
+    twilio.liveCheck = 'not_configured — codes are simulated, no SMS is sent';
+  }
+
+  res.json({
+    env: env.NODE_ENV,
+    twilio,
+    resend: { apiKeyPresent: Boolean(process.env.RESEND_API_KEY) },
+    payrexx: {
+      instancePresent: Boolean(process.env.PAYREXX_INSTANCE),
+      apiKeyPresent: Boolean(process.env.PAYREXX_API_KEY),
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.use('/api', routes);
 
 app.use(errorHandler);
