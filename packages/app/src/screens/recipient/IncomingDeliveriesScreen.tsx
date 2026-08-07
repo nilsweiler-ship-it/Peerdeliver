@@ -187,8 +187,16 @@ const styles = StyleSheet.create({
 
   // ── Hero (recipient code moment) ──
   heroWrap: {
+    // Bleeds past the sheet's horizontal padding so the green panel reaches
+    // both edges.
     marginHorizontal: -spacing.lg,
-    marginBottom: -spacing.xxl,
+    // NOT a negative bottom margin. It used to be -spacing.xxl so the panel ran
+    // to the bottom of a sheet that could not scroll. A ScrollView measures
+    // content height including margins, so a negative one made the content
+    // report itself shorter than it is: the sheet decided there was nothing to
+    // scroll while overflow:hidden clipped the part hanging below — taking the
+    // delivery code with it.
+    marginBottom: 0,
     borderRadius: borderRadius.xxl,
     overflow: 'hidden',
   },
