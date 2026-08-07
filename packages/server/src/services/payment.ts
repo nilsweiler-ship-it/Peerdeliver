@@ -2,6 +2,7 @@ import type Stripe from 'stripe';
 import { prisma, env } from '../config';
 import { AppError } from '../middleware';
 import { getStripe, stripeConfigured } from './stripe';
+import * as deliveryService from './delivery';
 
 /**
  * Payments run in one of two modes:
@@ -154,6 +155,9 @@ export async function payWithTwint(deliveryId: string, senderId: string, phone?:
       paymentStatus: 'authorised',
     },
   });
+  // Tell the recipient a parcel is coming. Done here rather than at creation so
+  // a delivery abandoned at payment never emails anyone.
+  void deliveryService.announceToRecipient(deliveryId);
 }
 
 // ───────────────────────── Capture / payout on delivery ─────────────────────────
@@ -348,6 +352,7 @@ export async function markDeliveryPaid(
     },
   });
   console.log(`[payment] ${deliveryId} authorised via ${opts.provider}`);
+  void deliveryService.announceToRecipient(deliveryId);
 }
 
 /** Record a failed or abandoned external payment. */

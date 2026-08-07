@@ -451,3 +451,90 @@ export function sendRecipientPickedUp(opts: {
 
   queue({ to: opts.to, subject: copy.subj, html: shell(body, copy.footer) });
 }
+
+/**
+ * Tell the recipient a parcel has been created for them — before it moves.
+ *
+ * Deliberately WITHOUT the delivery code. The code is proof that the parcel
+ * actually reached them, so it should exist for as short a time as possible
+ * before the handover: an email sent days early gets forwarded, sits in shared
+ * inboxes, and is read by whoever else has access. The code follows at pickup,
+ * when it is about to be needed.
+ *
+ * What this message is for instead: telling someone a parcel is coming, and
+ * inviting them to create an account so they can follow it.
+ */
+export function sendRecipientAnnounced(opts: {
+  to: string;
+  route: string;
+  itemDescription?: string | null;
+  senderName?: string | null;
+  language?: string | null;
+}): void {
+  const l = lang(opts.language);
+  const who = opts.senderName;
+  const copy = {
+    de: {
+      subj: 'Jemand schickt dir ein Paket über Shlep',
+      h: 'Ein Paket ist für dich angemeldet',
+      p: who
+        ? `${who} hat über Shlep eine Sendung an dich aufgegeben. Sobald eine fahrende Person die Strecke übernimmt, informieren wir dich.`
+        : 'Jemand hat über Shlep eine Sendung an dich aufgegeben. Sobald eine fahrende Person die Strecke übernimmt, informieren wir dich.',
+      lblItem: 'Sendung',
+      next: 'Bei der Übergabe nennst du einen Zustellcode. Den schicken wir dir, sobald das Paket abgeholt wurde — nicht vorher, damit er nicht unnötig lange herumliegt.',
+      cta: 'Mit einem Shlep-Konto siehst du den Status live und kannst der fahrenden Person schreiben. Dieselbe E-Mail-Adresse verwenden, dann ist die Sendung sofort verknüpft.',
+      what: 'Shlep ist ein Schweizer Liefernetz: Menschen nehmen ein Paket auf einer Fahrt mit, die sie ohnehin machen.',
+      footer: 'Du erhältst diese Nachricht, weil jemand dir eine Sendung über Shlep geschickt hat.',
+    },
+    en: {
+      subj: 'Someone is sending you a parcel via Shlep',
+      h: 'A parcel has been registered for you',
+      p: who
+        ? `${who} has arranged a delivery to you through Shlep. We will let you know as soon as a driver takes the route.`
+        : 'Someone has arranged a delivery to you through Shlep. We will let you know as soon as a driver takes the route.',
+      lblItem: 'Item',
+      next: 'At handover you give a delivery code. We send it once the parcel has been collected — not before, so it does not sit around longer than needed.',
+      cta: 'With a Shlep account you can follow the status live and message the driver. Use this same email address and the delivery links up automatically.',
+      what: 'Shlep is a Swiss delivery network: people take a parcel along on a journey they are already making.',
+      footer: 'You received this because someone sent you a parcel via Shlep.',
+    },
+    fr: {
+      subj: 'Quelqu\'un vous envoie un colis via Shlep',
+      h: 'Un colis a été enregistré pour vous',
+      p: who
+        ? `${who} a créé une livraison à votre intention via Shlep. Nous vous informerons dès qu'un conducteur prendra le trajet.`
+        : 'Quelqu\'un a créé une livraison à votre intention via Shlep. Nous vous informerons dès qu\'un conducteur prendra le trajet.',
+      lblItem: 'Envoi',
+      next: 'À la remise, vous communiquez un code de livraison. Nous vous l\'enverrons dès que le colis aura été récupéré — pas avant.',
+      cta: 'Avec un compte Shlep, vous suivez le statut en direct et pouvez écrire au conducteur. Utilisez cette même adresse e-mail et la livraison sera liée automatiquement.',
+      what: 'Shlep est un réseau de livraison suisse : des personnes emportent un colis sur un trajet qu\'elles font déjà.',
+      footer: 'Vous recevez ce message car quelqu\'un vous a envoyé un colis via Shlep.',
+    },
+    it: {
+      subj: 'Qualcuno ti sta inviando un pacco tramite Shlep',
+      h: 'Un pacco è stato registrato per te',
+      p: who
+        ? `${who} ha creato una consegna per te tramite Shlep. Ti avviseremo appena un autista prenderà il tragitto.`
+        : 'Qualcuno ha creato una consegna per te tramite Shlep. Ti avviseremo appena un autista prenderà il tragitto.',
+      lblItem: 'Spedizione',
+      next: 'Alla consegna comunicherai un codice. Te lo invieremo appena il pacco sarà stato ritirato — non prima.',
+      cta: 'Con un account Shlep segui lo stato in tempo reale e puoi scrivere all\'autista. Usa questo stesso indirizzo e-mail e la consegna verrà collegata automaticamente.',
+      what: 'Shlep è una rete di consegna svizzera: le persone portano un pacco lungo un tragitto che fanno già.',
+      footer: 'Ricevi questo messaggio perché qualcuno ti ha inviato un pacco tramite Shlep.',
+    },
+  }[l];
+
+  const rows =
+    factRow(T[l].lblRoute, opts.route) +
+    (opts.itemDescription ? factRow(copy.lblItem, opts.itemDescription) : '');
+
+  const body =
+    h1(copy.h) +
+    p(copy.p) +
+    facts(rows) +
+    `<p style="margin:0 0 14px;font-size:13px;color:${C.ink2};">${copy.next}</p>` +
+    `<p style="margin:0 0 14px;font-size:13px;color:${C.ink2};">${copy.cta}</p>` +
+    `<p style="margin:0;font-size:12px;color:${C.ink3};">${copy.what}</p>`;
+
+  queue({ to: opts.to, subject: copy.subj, html: shell(body, copy.footer) });
+}

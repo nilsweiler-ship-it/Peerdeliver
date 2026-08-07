@@ -473,3 +473,33 @@ export async function rejectDriver(deliveryId: string, senderId: string) {
 
   return getDeliveryById(deliveryId);
 }
+
+/**
+ * Tell the recipient a parcel has been registered for them.
+ *
+ * Fired once the payment is authorised rather than at the raw moment of
+ * creation. The gap is usually seconds, but a delivery abandoned at the payment
+ * step would otherwise email someone about a parcel that never existed — a poor
+ * first impression of a service they have never heard of.
+ *
+ * Idempotent by status: only announces while the delivery is still pending or
+ * requested, so a re-authorisation or webhook retry cannot send it twice.
+ */
+export async function announceToRecipient(deliveryId: string): Promise<void> {
+  try {
+    const ctx = await notifyContext(deliveryId);
+    if (!ctx?.d.recipientEmail) return;
+    if (ctx.d.status !== 'pending' && ctx.d.status !== 'requested') return;
+
+    emailService.sendRecipientAnnounced({
+      to: ctx.d.recipientEmail,
+      route: ctx.route,
+      itemDescription: ctx.d.packageDescription ?? null,
+      senderName: ctx.sender?.firstName ?? null,
+      language: ctx.sender?.language,
+    });
+  } catch (err) {
+    // Never let a notification failure affect a payment path.
+    console.error('[announce]', err instanceof Error ? err.message : err);
+  }
+}
