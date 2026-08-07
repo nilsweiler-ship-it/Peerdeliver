@@ -143,6 +143,24 @@ export function notifyDeliveryMatched(senderId: string, driverName: string, deli
   });
 }
 
+/** A sender picked this driver's route and is waiting on them. */
+export function notifyDeliveryOffered(driverId: string, senderName: string, deliveryId: string) {
+  sendToUser(driverId, {
+    title: 'Anfrage für deine Route',
+    body: `${senderName} möchte etwas auf deiner Route mitgeben.`,
+    data: { type: 'delivery_offered', deliveryId },
+  });
+}
+
+/** The offer was declined; the delivery is back in the open pool. */
+export function notifyOfferDeclined(senderId: string, driverName: string, deliveryId: string) {
+  sendToUser(senderId, {
+    title: 'Anfrage abgelehnt',
+    body: `${driverName} kann die Sendung nicht mitnehmen. Deine Lieferung ist wieder offen.`,
+    data: { type: 'offer_declined', deliveryId },
+  });
+}
+
 export function notifyPickedUp(senderId: string, deliveryId: string) {
   sendToUser(senderId, {
     title: 'Dein Paket ist unterwegs',

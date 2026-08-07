@@ -15,7 +15,7 @@ import { SOCKET_EVENTS } from '@peerdeliver/shared';
 
 type FilterTab = 'active' | 'completed' | 'all';
 
-const ACTIVE_STATUSES: DeliveryStatus[] = ['pending', 'requested', 'matched', 'accepted', 'picked_up', 'in_transit'];
+const ACTIVE_STATUSES: DeliveryStatus[] = ['pending', 'requested', 'offered', 'matched', 'accepted', 'picked_up', 'in_transit'];
 const COMPLETED_STATUSES: DeliveryStatus[] = ['delivered', 'cancelled', 'expired'];
 
 // 3-step mini progress nodes shown in the Track view.
@@ -264,7 +264,7 @@ export function MyShipmentsScreen({ navigation }: any) {
             </View>
 
             {/* Driver card overlapping the map */}
-            {sel.driver && sel.status !== 'requested' && (
+            {sel.driver && sel.status !== 'requested' && sel.status !== 'offered' && (
               <View style={styles.driverCardOverlap}>
                 <View style={styles.driverTopRow}>
                   <Avatar
@@ -337,6 +337,39 @@ export function MyShipmentsScreen({ navigation }: any) {
                 <Text style={styles.budgetValue}>CHF {sel.budgetCHF.toFixed(0)}</Text>
               </View>
             </View>
+
+            {/* Nobody has taken this yet — let the sender go looking.
+                This is the entry point to driver search. The screen existed and
+                was registered in the navigator, but nothing ever navigated to
+                it, so it was unreachable from the app. */}
+            {sel.status === 'pending' && (
+              <View style={styles.findCard}>
+                <View style={styles.findHead}>
+                  <Feather name="search" size={14} color={colors.primary} />
+                  <Text style={styles.findTitle}>{t('sender.findDriversTitle')}</Text>
+                </View>
+                <Text style={styles.findHint}>{t('sender.findDriversHint')}</Text>
+                <Button
+                  title={t('sender.findDrivers')}
+                  onPress={() => {
+                    setSelectedId(null);
+                    navigation.navigate('SearchDrivers', { delivery: sel });
+                  }}
+                  style={styles.findButton}
+                />
+              </View>
+            )}
+
+            {/* Waiting on a driver the sender picked */}
+            {sel.status === 'offered' && (
+              <View style={styles.waitCard}>
+                <View style={styles.findHead}>
+                  <Feather name="clock" size={14} color={colors.signalText} />
+                  <Text style={styles.waitTitle}>{t('sender.offerPendingTitle')}</Text>
+                </View>
+                <Text style={styles.waitHint}>{t('sender.offerPendingHint')}</Text>
+              </View>
+            )}
 
             {/* Driver confirmation when status is 'requested' */}
             {sel.status === 'requested' && (
@@ -606,6 +639,58 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     flex: 2,
+  },
+
+  // ── Find drivers (status === pending) ──
+  findCard: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    marginTop: spacing.md,
+    ...shadow.card,
+  },
+  findHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: spacing.xs,
+  },
+  findTitle: {
+    ...typography.overline,
+    color: colors.primary,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  findHint: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
+  },
+  findButton: {
+    marginTop: 0,
+  },
+
+  // ── Waiting on an offered driver (status === offered) ──
+  waitCard: {
+    backgroundColor: colors.signalSoft,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: '#F0D9A8',
+    padding: spacing.md,
+    marginTop: spacing.md,
+  },
+  waitTitle: {
+    ...typography.overline,
+    color: colors.signalText,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  waitHint: {
+    ...typography.bodySmall,
+    color: colors.signalText,
+    opacity: 0.85,
   },
 
   // ── Live tracker ──

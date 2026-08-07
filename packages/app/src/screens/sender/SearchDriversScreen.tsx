@@ -7,27 +7,46 @@ import type { AddressSelection } from '../../components/ui/AddressAutocomplete';
 import { RouteCard } from '../../components/route/RouteCard';
 import { RouteLine, BackChip } from '../../components/brand';
 import { useSearchRoutes } from '../../queries/route';
+import { useOfferRoute } from '../../queries/delivery';
 import { colors, spacing, typography } from '../../theme';
-import type { DriverRoute } from '@peerdeliver/shared';
+import type { DriverRoute, DeliveryRequest } from '@peerdeliver/shared';
 
-export function SearchDriversScreen({ navigation }: any) {
+export function SearchDriversScreen({ navigation, route: navRoute }: any) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  // Opened from a specific shipment, this carries the delivery being matched.
+  // Without it the screen is a browse-only view: you can look at routes but
+  // there is nothing to attach them to.
+  const delivery: DeliveryRequest | undefined = navRoute?.params?.delivery;
+
   // Full addresses from the Swiss federal geo.admin.ch index, the same source
   // the rest of the app uses. This screen previously matched against a
   // hardcoded list of twelve cities and rejected everything else — so a search
   // from a village, or from a street address, always failed.
   const [from, setFrom] = useState<AddressSelection | null>(null);
   const [to, setTo] = useState<AddressSelection | null>(null);
+  // When a delivery is passed in, search its corridor immediately. Making the
+  // sender retype the addresses they just entered would be busywork, and any
+  // typo would silently produce a different search.
   const [searchParams, setSearchParams] = useState<{
     fromLat?: number;
     fromLng?: number;
     toLat?: number;
     toLng?: number;
-  }>({});
+  }>(
+    delivery
+      ? {
+          fromLat: delivery.pickupAddress.point.lat,
+          fromLng: delivery.pickupAddress.point.lng,
+          toLat: delivery.deliveryAddress.point.lat,
+          toLng: delivery.deliveryAddress.point.lng,
+        }
+      : {},
+  );
   const [selectedRoute, setSelectedRoute] = useState<DriverRoute | null>(null);
 
   const { data: routes, isLoading, isFetched } = useSearchRoutes(searchParams);
+  const offerRoute = useOfferRoute();
 
   const handleSearch = () => {
     if (!from || !to) return;
@@ -37,6 +56,24 @@ export function SearchDriversScreen({ navigation }: any) {
       toLat: to.point.lat,
       toLng: to.point.lng,
     });
+  };
+
+  const handleRequest = async (r: DriverRoute) => {
+    if (!delivery) return;
+    try {
+      await offerRoute.mutateAsync({ deliveryId: delivery.id, routeId: r.id });
+      setSelectedRoute(null);
+      Alert.alert(t('sender.offerSentTitle'), t('sender.offerSentBody'));
+      navigation.goBack();
+    } catch (err: any) {
+      // The server's message is specific — no space on this route, route no
+      // longer active, delivery already taken. Passing it through is far more
+      // use than a generic failure.
+      Alert.alert(
+        t('common.error'),
+        err?.response?.data?.error ?? t('sender.offerFailed'),
+      );
+    }
   };
 
   const hasSearched = isFetched && !!searchParams.fromLat;
@@ -50,6 +87,13 @@ export function SearchDriversScreen({ navigation }: any) {
         </View>
         <Text style={styles.eyebrow}>{t('sender.findDrivers', 'Find drivers').toUpperCase()}</Text>
         <Text style={styles.title}>{t('common.search')}</Text>
+        {delivery && (
+          <Text style={styles.forShipment} numberOfLines={2}>
+            {t('sender.matchingFor', {
+              item: delivery.packageDescription || t('sender.delivery'),
+            })}
+          </Text>
+        )}
         <AddressAutocomplete
           label={t('sender.fromLocation')}
           placeholder={t('common.addressPlaceholder', 'Adresse oder Ort')}
@@ -122,14 +166,18 @@ export function SearchDriversScreen({ navigation }: any) {
                 {selectedRoute.routeType === 'recurring' ? t('driver.recurring') : t('driver.oneTime')}
               </Text>
             </View>
-            <Button
-              title={t('sender.requestOnRoute')}
-              onPress={() => {
-                setSelectedRoute(null);
-                Alert.alert(t('sender.requestOnRoute'), 'Feature coming soon');
-              }}
-              style={{ marginTop: spacing.md }}
-            />
+            {delivery ? (
+              <Button
+                title={t('sender.requestOnRoute')}
+                onPress={() => handleRequest(selectedRoute)}
+                loading={offerRoute.isPending}
+                style={{ marginTop: spacing.md }}
+              />
+            ) : (
+              // Reached without a delivery attached — browsing, not matching.
+              // Say so rather than offering a button that cannot do anything.
+              <Text style={styles.browseHint}>{t('sender.openFromShipment')}</Text>
+            )}
           </View>
         )}
       </Modal>
@@ -164,6 +212,17 @@ const styles = StyleSheet.create({
   list: {
     padding: spacing.lg,
     flexGrow: 1,
+  },
+  forShipment: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
+  },
+  browseHint: {
+    ...typography.bodySmall,
+    color: colors.textLight,
+    marginTop: spacing.md,
+    textAlign: 'center',
   },
   detail: {
     gap: spacing.sm,

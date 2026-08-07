@@ -112,7 +112,17 @@
     "recipientEmailRequired": "The recipient's email is required",
     "recipientEmailInvalid": "That email address doesn't look valid",
     "recipientPhoneInvalid": "That number doesn't look valid",
-    "recipientEmailRequiredHint": "Required — it gives the recipient access to tracking."
+    "recipientEmailRequiredHint": "Required — it gives the recipient access to tracking.",
+    "findDrivers": "Find drivers",
+    "findDriversTitle": "No driver yet",
+    "findDriversHint": "Search published routes along your corridor and ask directly.",
+    "matchingFor": "For: {{item}}",
+    "openFromShipment": "Open this search from a shipment to send a request.",
+    "offerSentTitle": "Request sent",
+    "offerSentBody": "The driver has been notified and will decide whether it fits.",
+    "offerFailed": "Could not send the request.",
+    "offerPendingTitle": "Request pending",
+    "offerPendingHint": "Waiting for an answer. If they decline, your delivery reopens automatically."
   },
   "driver": {
     "publishRoute": "Publish Route",
@@ -160,7 +170,12 @@
     "destinationAddress": "Destination City / Address",
     "departureDate": "Departure Date",
     "priceRange": "Price Range (CHF)",
-    "pastDeliveries": "Past deliveries"
+    "pastDeliveries": "Past deliveries",
+    "offerPrompt": "Someone would like to send this along your route.",
+    "acceptOffer": "Accept",
+    "declineOffer": "Decline",
+    "offerAccepted": "Accepted — you can arrange the handover now.",
+    "offerDeclined": "Declined. The delivery is open again."
   },
   "recipient": {
     "incomingDeliveries": "Incoming Deliveries",

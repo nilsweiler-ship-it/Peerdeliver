@@ -12,6 +12,10 @@ router.get('/nearby', deliveryController.getNearby);
 router.get('/:id', deliveryController.getById);
 router.patch('/:id/status', validate(updateDeliveryStatusSchema), deliveryController.updateStatus);
 router.patch('/:id/assign', deliveryController.assign);
+// Sender-initiated matching: offer to one route, driver accepts or declines.
+router.post('/:id/offer', deliveryController.offerRoute);
+router.patch('/:id/offer/accept', deliveryController.acceptOffer);
+router.patch('/:id/offer/decline', deliveryController.declineOffer);
 router.patch('/:id/confirm', deliveryController.confirm);
 router.patch('/:id/reject', deliveryController.reject);
 router.post('/:id/verify-pickup', validate(verifyCodeSchema), deliveryController.verifyPickup);

@@ -146,6 +146,13 @@ const T = {
     verifyP: 'Bestätige deine E-Mail-Adresse, damit wir dich über deine Lieferungen informieren können.',
     verifyCta: 'E-Mail bestätigen',
     verifyIgnore: 'Wenn du kein Shlep-Konto erstellt hast, kannst du diese E-Mail ignorieren.',
+    offeredSubj: 'Anfrage für deine Route',
+    offeredH: '{sender} möchte etwas auf deiner Route mitgeben',
+    offeredP: 'Du entscheidest, ob es passt. Nimmst du an, ist die Sendung dir zugeteilt und ihr könnt die Übergabe direkt in der App absprechen.',
+    lblItem: 'Sendung',
+    declinedSubj: 'Anfrage abgelehnt',
+    declinedH: '{driver} kann die Sendung nicht mitnehmen',
+    declinedP: 'Deine Lieferung ist wieder offen — andere fahrende Personen sehen sie weiterhin, und du kannst eine andere Route anfragen.',
     matchedSubj: 'Deine Lieferung hat eine fahrende Person',
     matchedH: 'Gefunden — {driver} übernimmt deine Lieferung',
     matchedP: 'Die Zahlung ist autorisiert und wird erst nach der per Code bestätigten Zustellung freigegeben. Du kannst die Fahrt live in der App verfolgen.',
@@ -174,6 +181,13 @@ const T = {
     verifyP: 'Confirm your email address so we can keep you posted on your deliveries.',
     verifyCta: 'Confirm email',
     verifyIgnore: 'If you did not create a Shlep account, you can ignore this email.',
+    offeredSubj: 'Request for your route',
+    offeredH: '{sender} would like to send something along your route',
+    offeredP: 'You decide whether it fits. If you accept, the delivery is yours and you can arrange the handover in the app.',
+    lblItem: 'Item',
+    declinedSubj: 'Request declined',
+    declinedH: '{driver} cannot take this delivery',
+    declinedP: 'Your delivery is open again — other drivers can still see it, and you can request a different route.',
     matchedSubj: 'Your delivery has a driver',
     matchedH: 'Matched — {driver} is taking your delivery',
     matchedP: 'Payment is authorised and only released after a code-verified drop-off. You can follow the trip live in the app.',
@@ -202,6 +216,13 @@ const T = {
     verifyP: 'Confirmez votre adresse e-mail pour recevoir les informations sur vos livraisons.',
     verifyCta: 'Confirmer l’e-mail',
     verifyIgnore: 'Si vous n’avez pas créé de compte Shlep, ignorez cet e-mail.',
+    offeredSubj: 'Demande pour votre trajet',
+    offeredH: '{sender} aimerait envoyer quelque chose sur votre trajet',
+    offeredP: 'C’est vous qui décidez. Si vous acceptez, la livraison vous est attribuée et vous pouvez organiser la remise dans l’app.',
+    lblItem: 'Envoi',
+    declinedSubj: 'Demande refusée',
+    declinedH: '{driver} ne peut pas prendre cette livraison',
+    declinedP: 'Votre livraison est à nouveau ouverte — d’autres conducteurs la voient toujours et vous pouvez demander un autre trajet.',
     matchedSubj: 'Votre livraison a un conducteur',
     matchedH: 'Trouvé — {driver} prend votre livraison',
     matchedP: 'Le paiement est autorisé et libéré seulement après une remise confirmée par code. Suivez le trajet en direct dans l’app.',
@@ -230,6 +251,13 @@ const T = {
     verifyP: 'Conferma il tuo indirizzo e-mail così possiamo informarti sulle tue consegne.',
     verifyCta: 'Conferma e-mail',
     verifyIgnore: 'Se non hai creato un account Shlep, ignora questa e-mail.',
+    offeredSubj: 'Richiesta per il tuo tragitto',
+    offeredH: '{sender} vorrebbe mandare qualcosa sul tuo tragitto',
+    offeredP: 'Decidi tu se va bene. Se accetti, la consegna è tua e potete concordare la consegna nell’app.',
+    lblItem: 'Spedizione',
+    declinedSubj: 'Richiesta rifiutata',
+    declinedH: '{driver} non può prendere questa consegna',
+    declinedP: 'La tua consegna è di nuovo aperta — altri conducenti la vedono ancora e puoi richiedere un altro tragitto.',
     matchedSubj: 'La tua consegna ha un conducente',
     matchedH: 'Trovato — {driver} prende la tua consegna',
     matchedP: 'Il pagamento è autorizzato e viene liberato solo dopo una consegna confermata con codice. Segui il tragitto live nell’app.',
@@ -280,6 +308,51 @@ export function sendEmailVerification(opts: {
       t.footer,
     ),
   });
+}
+
+/**
+ * A sender has picked this driver's route and is waiting on them.
+ *
+ * Goes to the driver, not the sender — this is the one message in the offer
+ * flow that asks someone to do something, so it carries the price and what the
+ * parcel is, the two things a driver decides on.
+ */
+export function sendDeliveryOffered(opts: {
+  to: string;
+  senderName: string;
+  route: string;
+  priceCHF: number;
+  itemDescription?: string | null;
+  language?: string | null;
+}): void {
+  const t = T[lang(opts.language)];
+  const body =
+    h1(t.offeredH.replace('{sender}', opts.senderName)) +
+    p(t.offeredP) +
+    facts(
+      factRow(t.lblRoute, opts.route) +
+        factRow(t.lblPrice, chf(opts.priceCHF)) +
+        (opts.itemDescription ? factRow(t.lblItem, opts.itemDescription) : ''),
+    );
+  queue({ to: opts.to, subject: t.offeredSubj, html: shell(body, t.footer) });
+}
+
+/**
+ * The driver declined. Deliberately framed as "open again" rather than as a
+ * rejection: nothing is lost, the delivery simply returns to the pool.
+ */
+export function sendOfferDeclined(opts: {
+  to: string;
+  driverName: string;
+  route: string;
+  language?: string | null;
+}): void {
+  const t = T[lang(opts.language)];
+  const body =
+    h1(t.declinedH.replace('{driver}', opts.driverName)) +
+    p(t.declinedP) +
+    facts(factRow(t.lblRoute, opts.route));
+  queue({ to: opts.to, subject: t.declinedSubj, html: shell(body, t.footer) });
 }
 
 export function sendDeliveryMatched(opts: {

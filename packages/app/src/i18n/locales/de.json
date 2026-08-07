@@ -112,7 +112,17 @@
     "recipientEmailRequired": "E-Mail der empfangenden Person ist erforderlich",
     "recipientEmailInvalid": "Diese E-Mail-Adresse sieht nicht gültig aus",
     "recipientPhoneInvalid": "Diese Nummer sieht nicht gültig aus",
-    "recipientEmailRequiredHint": "Pflicht — die empfangende Person erhält damit Zugang zur Sendungsverfolgung."
+    "recipientEmailRequiredHint": "Pflicht — die empfangende Person erhält damit Zugang zur Sendungsverfolgung.",
+    "findDrivers": "Fahrende Personen suchen",
+    "findDriversTitle": "Noch niemand unterwegs",
+    "findDriversHint": "Such nach veröffentlichten Routen auf deiner Strecke und frag direkt an.",
+    "matchingFor": "Für: {{item}}",
+    "openFromShipment": "Öffne diese Suche aus einer Sendung, um direkt anzufragen.",
+    "offerSentTitle": "Anfrage gesendet",
+    "offerSentBody": "Die fahrende Person wurde benachrichtigt und entscheidet, ob es passt.",
+    "offerFailed": "Anfrage konnte nicht gesendet werden.",
+    "offerPendingTitle": "Anfrage läuft",
+    "offerPendingHint": "Du wartest auf eine Antwort. Lehnt die Person ab, ist deine Lieferung automatisch wieder offen."
   },
   "driver": {
     "publishRoute": "Route veröffentlichen",
@@ -160,7 +170,12 @@
     "destinationAddress": "Zielort / Adresse",
     "departureDate": "Abfahrtsdatum",
     "priceRange": "Preisspanne (CHF)",
-    "pastDeliveries": "Vergangene Lieferungen"
+    "pastDeliveries": "Vergangene Lieferungen",
+    "offerPrompt": "Jemand möchte das auf deiner Route mitgeben.",
+    "acceptOffer": "Annehmen",
+    "declineOffer": "Ablehnen",
+    "offerAccepted": "Angenommen — ihr könnt jetzt die Übergabe absprechen.",
+    "offerDeclined": "Abgelehnt. Die Lieferung ist wieder offen."
   },
   "recipient": {
     "incomingDeliveries": "Eingehende Lieferungen",

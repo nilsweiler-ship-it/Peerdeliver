@@ -2,7 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, RefreshControl, TextInput, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { useMyDeliveries, useVerifyPickup, useVerifyDelivery, useUpdateDeliveryStatus } from '../../queries/delivery';
+import {
+  useMyDeliveries,
+  useVerifyPickup,
+  useVerifyDelivery,
+  useUpdateDeliveryStatus,
+  useAcceptOffer,
+  useDeclineOffer,
+} from '../../queries/delivery';
 import { Button, EmptyState, LoadingSpinner } from '../../components/ui';
 import { StatusTimeline } from '../../components/delivery/StatusTimeline';
 import { LiveMap, BackChip, Pill, RouteLine, TicketStub, CodeBoxes } from '../../components/brand';
@@ -18,7 +25,7 @@ import {
 import type { DeliveryRequest, DeliveryStatus } from '@peerdeliver/shared';
 import { SOCKET_EVENTS } from '@peerdeliver/shared';
 
-const DRIVER_ACTIVE_STATUSES: DeliveryStatus[] = ['requested', 'matched', 'accepted', 'picked_up', 'in_transit'];
+const DRIVER_ACTIVE_STATUSES: DeliveryStatus[] = ['requested', 'offered', 'matched', 'accepted', 'picked_up', 'in_transit'];
 
 function DeliveryActionCard({ delivery }: { delivery: DeliveryRequest }) {
   const { t } = useTranslation();
@@ -26,6 +33,26 @@ function DeliveryActionCard({ delivery }: { delivery: DeliveryRequest }) {
   const verifyPickup = useVerifyPickup();
   const verifyDelivery = useVerifyDelivery();
   const updateStatus = useUpdateDeliveryStatus();
+  const acceptOffer = useAcceptOffer();
+  const declineOffer = useDeclineOffer();
+
+  const handleAcceptOffer = async () => {
+    try {
+      await acceptOffer.mutateAsync(delivery.id);
+      Alert.alert(t('driver.offerAccepted'));
+    } catch (err: any) {
+      Alert.alert(t('common.error'), err?.response?.data?.error || err?.message);
+    }
+  };
+
+  const handleDeclineOffer = async () => {
+    try {
+      await declineOffer.mutateAsync(delivery.id);
+      Alert.alert(t('driver.offerDeclined'));
+    } catch (err: any) {
+      Alert.alert(t('common.error'), err?.response?.data?.error || err?.message);
+    }
+  };
 
   const handleAcceptJob = async () => {
     try {
@@ -89,6 +116,30 @@ function DeliveryActionCard({ delivery }: { delivery: DeliveryRequest }) {
           <Text style={styles.budgetValue}>CHF {delivery.budgetCHF.toFixed(0)}</Text>
         </View>
       </View>
+
+      {/* Offered: a sender picked this driver's route and is waiting on them.
+          Decline is offered as plainly as accept — a driver who cannot fit a
+          parcel should not have to ignore the request until it expires. */}
+      {delivery.status === 'offered' && (
+        <View style={styles.offerSection}>
+          <Text style={styles.offerPrompt}>{t('driver.offerPrompt')}</Text>
+          <View style={styles.offerActions}>
+            <Button
+              title={t('driver.declineOffer')}
+              onPress={handleDeclineOffer}
+              variant="outline"
+              loading={declineOffer.isPending}
+              style={styles.offerDecline}
+            />
+            <Button
+              title={t('driver.acceptOffer')}
+              onPress={handleAcceptOffer}
+              loading={acceptOffer.isPending}
+              style={styles.offerAccept}
+            />
+          </View>
+        </View>
+      )}
 
       {/* Matched: driver can start heading to pickup */}
       {delivery.status === 'matched' && (
@@ -361,6 +412,28 @@ const styles = StyleSheet.create({
   actionButton: {
     marginTop: spacing.xs,
   },
+  // ── Incoming offer (status === offered) ──
+  offerSection: {
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  offerPrompt: {
+    ...typography.body,
+    color: colors.text,
+    fontFamily: typography.bodyStrong.fontFamily,
+    textAlign: 'center',
+  },
+  offerActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  offerDecline: {
+    flex: 1,
+  },
+  offerAccept: {
+    flex: 2,
+  },
+
   codeSection: {
     gap: spacing.sm,
   },

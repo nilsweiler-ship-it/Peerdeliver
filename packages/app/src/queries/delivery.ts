@@ -110,6 +110,56 @@ export function useRejectDriver() {
   });
 }
 
+/**
+ * Sender offers a delivery to one driver's published route.
+ *
+ * The mirror of useAssignDelivery. Until this existed the sender could find a
+ * matching route but had no way to act on it.
+ */
+export function useOfferRoute() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ deliveryId, routeId }: { deliveryId: string; routeId: string }) => {
+      const { data } = await api.post<ApiResponse<DeliveryRequest>>(
+        `/deliveries/${deliveryId}/offer`,
+        { routeId },
+      );
+      return data.data!;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deliveries'] });
+    },
+  });
+}
+
+/** The offered driver accepts — goes straight to matched. */
+export function useAcceptOffer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.patch<ApiResponse<DeliveryRequest>>(`/deliveries/${id}/offer/accept`);
+      return data.data!;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deliveries'] });
+    },
+  });
+}
+
+/** The offered driver declines — the delivery returns to the open pool. */
+export function useDeclineOffer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.patch<ApiResponse<DeliveryRequest>>(`/deliveries/${id}/offer/decline`);
+      return data.data!;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deliveries'] });
+    },
+  });
+}
+
 export function useVerifyPickup() {
   const queryClient = useQueryClient();
   return useMutation({

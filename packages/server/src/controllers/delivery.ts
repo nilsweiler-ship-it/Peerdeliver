@@ -114,6 +114,41 @@ export async function assign(req: Request<{ id: string }>, res: Response, next: 
   }
 }
 
+/** Sender offers this delivery to one driver's published route. */
+export async function offerRoute(req: Request<{ id: string }>, res: Response, next: NextFunction) {
+  try {
+    const { routeId } = req.body as { routeId?: string };
+    if (!routeId) {
+      error(res, 'routeId is required', 400);
+      return;
+    }
+    const delivery = await deliveryService.offerToRoute(req.params.id, req.user!.userId, routeId);
+    success(res, delivery);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** The offered driver accepts. */
+export async function acceptOffer(req: Request<{ id: string }>, res: Response, next: NextFunction) {
+  try {
+    const delivery = await deliveryService.acceptOffer(req.params.id, req.user!.userId);
+    success(res, delivery);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** The offered driver declines; the delivery returns to the open pool. */
+export async function declineOffer(req: Request<{ id: string }>, res: Response, next: NextFunction) {
+  try {
+    const delivery = await deliveryService.declineOffer(req.params.id, req.user!.userId);
+    success(res, delivery);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function confirm(req: Request<{ id: string }>, res: Response, next: NextFunction) {
   try {
     const delivery = await deliveryService.confirmDelivery(req.params.id, req.user!.userId);

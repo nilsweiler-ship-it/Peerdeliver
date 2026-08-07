@@ -112,7 +112,17 @@
     "recipientEmailRequired": "L'e-mail du destinataire est obligatoire",
     "recipientEmailInvalid": "Cette adresse e-mail semble invalide",
     "recipientPhoneInvalid": "Ce numéro semble invalide",
-    "recipientEmailRequiredHint": "Obligatoire — il donne au destinataire accès au suivi."
+    "recipientEmailRequiredHint": "Obligatoire — il donne au destinataire accès au suivi.",
+    "findDrivers": "Trouver des conducteurs",
+    "findDriversTitle": "Pas encore de conducteur",
+    "findDriversHint": "Cherchez les trajets publiés sur votre axe et demandez directement.",
+    "matchingFor": "Pour : {{item}}",
+    "openFromShipment": "Ouvrez cette recherche depuis un envoi pour faire une demande.",
+    "offerSentTitle": "Demande envoyée",
+    "offerSentBody": "La personne au volant a été prévenue et décidera si cela convient.",
+    "offerFailed": "Impossible d’envoyer la demande.",
+    "offerPendingTitle": "Demande en cours",
+    "offerPendingHint": "En attente d’une réponse. En cas de refus, votre livraison se rouvre automatiquement."
   },
   "driver": {
     "publishRoute": "Publier un trajet",
@@ -160,7 +170,12 @@
     "destinationAddress": "Ville / adresse de destination",
     "departureDate": "Date de départ",
     "priceRange": "Fourchette de prix (CHF)",
-    "pastDeliveries": "Livraisons passées"
+    "pastDeliveries": "Livraisons passées",
+    "offerPrompt": "Quelqu’un aimerait envoyer ceci sur votre trajet.",
+    "acceptOffer": "Accepter",
+    "declineOffer": "Refuser",
+    "offerAccepted": "Accepté — vous pouvez organiser la remise.",
+    "offerDeclined": "Refusé. La livraison est à nouveau ouverte."
   },
   "recipient": {
     "incomingDeliveries": "Livraisons à recevoir",

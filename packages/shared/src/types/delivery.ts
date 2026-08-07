@@ -6,7 +6,10 @@ export type PackageSize = 'S' | 'M' | 'L';
 
 export type DeliveryStatus =
   | 'pending'
+  /** A driver claimed this delivery; the sender decides. */
   | 'requested'
+  /** The sender picked this driver's route; the driver decides. */
+  | 'offered'
   | 'matched'
   | 'accepted'
   | 'picked_up'
@@ -55,6 +58,8 @@ export interface DeliveryRequest {
   deliveryWindowStart: string;
   deliveryWindowEnd: string;
   status: DeliveryStatus;
+  /** Set only while status is 'offered' — which route the sender targeted. */
+  offeredRouteId?: string | null;
   pickupCode?: string;
   deliveryCode?: string;
   co2SavedKg?: number;

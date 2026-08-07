@@ -24,7 +24,13 @@ enum VerificationStatus {
 
 enum DeliveryStatus {
   pending
+  /// A driver asked to take this delivery; the sender must confirm.
   requested
+  /// The sender picked a specific driver's published route and is waiting for
+  /// that driver to accept. The mirror image of `requested`, and deliberately
+  /// a separate state: overloading `requested` would make it impossible to tell
+  /// who is waiting on whom, and both sides show a different screen.
+  offered
   matched
   accepted
   picked_up
@@ -136,6 +142,11 @@ model DeliveryRequest {
   deliveryWindowStart DateTime
   deliveryWindowEnd   DateTime
   status              DeliveryStatus @default(pending)
+  /// Which published route the sender targeted, when the match was
+  /// sender-initiated. Intentionally a plain id rather than a relation: a
+  /// driver deleting a route must not be blocked by, or cascade into, an open
+  /// offer. Cleared when the offer is accepted or declined.
+  offeredRouteId      String?
   pickupCode          String?
   deliveryCode        String?
   co2SavedKg          Float?

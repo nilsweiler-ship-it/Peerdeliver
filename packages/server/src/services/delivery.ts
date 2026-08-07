@@ -17,7 +17,7 @@ const DELIVERY_COLS = `
   dr."packageSize", dr."packageWeight", dr."packageDescription", dr."packaging", dr."declaredValue",
   dr."budgetCHF", dr."platformFeeCHF",
   dr."deliveryWindowStart", dr."deliveryWindowEnd",
-  dr.status, dr."pickupCode", dr."deliveryCode",
+  dr.status, dr."offeredRouteId", dr."pickupCode", dr."deliveryCode",
   dr."co2SavedKg", dr."cancelledBy", dr."cancelReason",
   dr."twintRef", dr."twintPhone", dr."paymentStatus", dr."driverPayoutCHF",
   dr."stripePaymentIntentId", dr."stripeTransferId", dr."refundedCHF", dr."refundedAt",
@@ -35,6 +35,7 @@ interface RawDeliveryRow {
   pickupGeoJSON: string;
   deliveryLabel: string;
   deliveryGeoJSON: string;
+  offeredRouteId?: string | null;
   packageSize: string;
   packageWeight?: number;
   packageDescription?: string;
@@ -236,6 +237,174 @@ async function notifyContext(deliveryId: string) {
   ]);
   const route = `${d.pickupAddress.label} → ${d.deliveryAddress.label}`;
   return { d, sender, driver, route };
+}
+
+/**
+ * Sender-initiated match: offer a delivery to one driver's published route.
+ *
+ * The mirror of assignDelivery. A sender who finds a route that suits them can
+ * now act on it instead of waiting to be found — until now the search screen
+ * could show a match the sender had no way to contact.
+ *
+ * Every guard below closes a way this could go wrong for someone: offering a
+ * delivery you do not own, offering one that already has a driver, offering to
+ * yourself, or offering a parcel the driver has already said they cannot fit.
+ * The size check in particular is worth failing loudly rather than letting a
+ * driver discover the problem at the doorstep.
+ */
+export async function offerToRoute(deliveryId: string, senderId: string, routeId: string) {
+  const delivery = await getDeliveryById(deliveryId);
+  if (!delivery || delivery.senderId !== senderId) {
+    throw new AppError(403, 'Not authorized');
+  }
+  if (delivery.status !== 'pending') {
+    throw new AppError(400, 'Diese Lieferung wartet bereits auf eine Antwort');
+  }
+  if (delivery.driverId) {
+    throw new AppError(400, 'Diese Lieferung hat bereits eine fahrende Person');
+  }
+
+  const route = await prisma.driverRoute.findUnique({
+    where: { id: routeId },
+    select: { id: true, driverId: true, isActive: true, availableSize: true },
+  });
+  if (!route) throw new AppError(404, 'Route nicht gefunden');
+  if (!route.isActive) throw new AppError(400, 'Diese Route ist nicht mehr aktiv');
+  if (route.driverId === senderId) {
+    throw new AppError(400, 'Du kannst deine eigene Route nicht anfragen');
+  }
+  if (!sizesUpTo(route.availableSize).includes(delivery.packageSize as PackageSize)) {
+    throw new AppError(400, 'Diese Route hat nicht genug Platz für dieses Paket');
+  }
+
+  await prisma.$queryRawUnsafe(
+    `UPDATE delivery_requests
+        SET "driverId" = $1, "offeredRouteId" = $2,
+            status = 'offered'::"DeliveryStatus", "updatedAt" = NOW()
+      WHERE id = $3 AND status = 'pending'::"DeliveryStatus" AND "driverId" IS NULL`,
+    route.driverId,
+    routeId,
+    deliveryId,
+  );
+
+  const ctx = await notifyContext(deliveryId);
+  if (ctx?.driver?.email) {
+    emailService.sendDeliveryOffered({
+      to: ctx.driver.email,
+      senderName: ctx.sender?.firstName ?? 'Eine Person',
+      route: ctx.route,
+      priceCHF: ctx.d.budgetCHF,
+      itemDescription: ctx.d.packageDescription ?? null,
+      language: ctx.driver.language,
+    });
+  }
+  if (route.driverId) {
+    pushService.notifyDeliveryOffered(
+      route.driverId,
+      ctx?.sender?.firstName ?? 'Eine Person',
+      deliveryId,
+    );
+  }
+
+  return getDeliveryById(deliveryId);
+}
+
+/**
+ * The offered driver accepts. Goes straight to `matched` — the sender already
+ * chose this driver, so there is nothing left for them to confirm.
+ */
+export async function acceptOffer(deliveryId: string, driverId: string) {
+  const delivery = await getDeliveryById(deliveryId);
+  if (!delivery || delivery.driverId !== driverId) {
+    throw new AppError(403, 'Not authorized');
+  }
+  if (delivery.status !== 'offered') {
+    throw new AppError(400, 'Diese Anfrage ist nicht mehr offen');
+  }
+  // Same gate as claiming a delivery: we must be able to pay this person.
+  if (!(await paymentService.driverCanReceivePayouts(driverId))) {
+    throw new AppError(400, 'Complete payout setup before accepting deliveries');
+  }
+
+  await prisma.$queryRawUnsafe(
+    `UPDATE delivery_requests
+        SET status = 'matched'::"DeliveryStatus", "offeredRouteId" = NULL, "updatedAt" = NOW()
+      WHERE id = $1 AND status = 'offered'::"DeliveryStatus"`,
+    deliveryId,
+  );
+
+  const driver = await prisma.user.findUnique({
+    where: { id: driverId },
+    select: { firstName: true },
+  });
+  await prisma.message.create({
+    data: {
+      deliveryRequestId: deliveryId,
+      senderId: driverId,
+      content: `${driver?.firstName ?? 'Driver'} has been confirmed for this delivery. You can now chat about pickup details.`,
+    },
+  });
+
+  const ctx = await notifyContext(deliveryId);
+  if (ctx?.sender?.email) {
+    emailService.sendDeliveryMatched({
+      to: ctx.sender.email,
+      driverName: driver?.firstName ?? 'Eine fahrende Person',
+      route: ctx.route,
+      priceCHF: ctx.d.budgetCHF,
+      pickupCode: ctx.d.pickupCode,
+      language: ctx.sender.language,
+    });
+  }
+  if (ctx?.d.senderId) {
+    pushService.notifyDeliveryMatched(
+      ctx.d.senderId,
+      driver?.firstName ?? 'Eine fahrende Person',
+      deliveryId,
+    );
+  }
+
+  return getDeliveryById(deliveryId);
+}
+
+/**
+ * The offered driver declines. The delivery returns to the open pool rather
+ * than dying — a decline is not a cancellation, and the sender should not have
+ * to re-create it.
+ */
+export async function declineOffer(deliveryId: string, driverId: string) {
+  const delivery = await getDeliveryById(deliveryId);
+  if (!delivery || delivery.driverId !== driverId) {
+    throw new AppError(403, 'Not authorized');
+  }
+  if (delivery.status !== 'offered') {
+    throw new AppError(400, 'Diese Anfrage ist nicht mehr offen');
+  }
+
+  const ctx = await notifyContext(deliveryId);
+  const driverName = ctx?.driver?.firstName ?? 'Die fahrende Person';
+
+  await prisma.$queryRawUnsafe(
+    `UPDATE delivery_requests
+        SET "driverId" = NULL, "offeredRouteId" = NULL,
+            status = 'pending'::"DeliveryStatus", "updatedAt" = NOW()
+      WHERE id = $1 AND status = 'offered'::"DeliveryStatus"`,
+    deliveryId,
+  );
+
+  if (ctx?.sender?.email) {
+    emailService.sendOfferDeclined({
+      to: ctx.sender.email,
+      driverName,
+      route: ctx.route,
+      language: ctx.sender.language,
+    });
+  }
+  if (ctx?.d.senderId) {
+    pushService.notifyOfferDeclined(ctx.d.senderId, driverName, deliveryId);
+  }
+
+  return getDeliveryById(deliveryId);
 }
 
 export async function assignDelivery(deliveryId: string, driverId: string) {
