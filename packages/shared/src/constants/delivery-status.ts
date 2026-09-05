@@ -37,8 +37,24 @@ export const DELIVERY_STATUS_TRANSITIONS: Record<string, string[]> = {
   expired: [],
 };
 
+/**
+ * Size classes, with the Swiss Post boundary made explicit.
+ *
+ * L is capped at exactly Post's Sperrgut limit (30 kg, 200 cm) because that is
+ * where the competitive situation changes: at or below it Post will carry the
+ * item for about CHF 31, so we are competing on convenience. Above it Post
+ * declines entirely and the realistic alternative is a Möbeltaxi at CHF 100+.
+ */
 export const PACKAGE_SIZES = {
   S: { label: 'Small', maxKg: 5, description: 'Fits in a bag' },
   M: { label: 'Medium', maxKg: 15, description: 'Fits in a backpack' },
   L: { label: 'Large', maxKg: 30, description: 'Needs car trunk space' },
+  XL: {
+    label: 'Extra large',
+    maxKg: 120,
+    description: 'Too big for the post — sofa, fridge, wardrobe',
+  },
 } as const;
+
+/** Swiss Post Sperrgut ceiling. Above either figure, Post is not an option. */
+export const POST_BULKY_LIMIT = { maxKg: 30, maxLongestEdgeCm: 200 } as const;

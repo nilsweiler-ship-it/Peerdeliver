@@ -44,6 +44,11 @@ enum PackageSize {
   S
   M
   L
+  /// Beyond Swiss Post's Sperrgut ceiling (30 kg / 200 cm) — a sofa, a fridge,
+  /// a wardrobe. No postal option exists at any price, so this is the class
+  /// where a peer with an estate car is the cheapest route, not merely the
+  /// most convenient one.
+  XL
 }
 
 enum RouteType {

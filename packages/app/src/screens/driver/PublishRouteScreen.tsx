@@ -22,6 +22,9 @@ const SIZES: { key: PackageSize; label: string }[] = [
   { key: 'S', label: 'Small' },
   { key: 'M', label: 'Medium' },
   { key: 'L', label: 'Large' },
+  // Declaring XL is what makes a driver eligible for the best-paid jobs: the
+  // items Post refuses, where the sender's alternative costs CHF 100+.
+  { key: 'XL', label: 'Extra large' },
 ];
 
 // DayPicker uses lowercase keys; the API/state stays uppercase DayOfWeek.

@@ -38,6 +38,10 @@
     '.shlepw__meta{display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:9px}',
     '.shlepw__chip{font-size:11.5px;font-weight:600;letter-spacing:.02em;background:#EFEADF;border:1px solid var(--sw-line);border-radius:999px;padding:3px 9px;white-space:nowrap}',
     '.shlepw__chip--eco{background:#E7F0E9;border-color:#c3ddc9;color:var(--sw-green)}',
+    // Price comparison: quiet by default, never shouty. It is there to be
+    // checked, not to sell.
+    '.shlepw__cmp{margin-top:8px;font-size:12.5px;color:var(--sw-green);font-weight:600}',
+    '.shlepw__cmp--worse{color:var(--sw-ink2);font-weight:500}',
     '.shlepw__cta{display:inline-block;margin-top:12px;background:var(--sw-accent);color:var(--sw-ink);font-weight:700;font-size:14px;',
     'padding:9px 18px;border-radius:999px;text-decoration:none;border:none;cursor:pointer;font-family:inherit}',
     '.shlepw__cta:hover{background:#d69922}',
@@ -68,6 +72,9 @@
       unavailable: 'Für diese Strecke noch nicht verfügbar.',
       err: 'Shlep-Lieferung gerade nicht verfügbar.',
       approx: 'ca.',
+      vs: 'statt',
+      cheaperElsewhere: 'Die Post ist hier günstiger',
+      saves: 'du sparst',
     },
     en: {
       title: 'Get it delivered with Shlep',
@@ -84,6 +91,9 @@
       unavailable: 'Not available for this route yet.',
       err: 'Shlep delivery unavailable right now.',
       approx: 'approx.',
+      vs: 'instead of',
+      cheaperElsewhere: 'The post is cheaper for this one',
+      saves: 'you save',
     },
   };
 
@@ -118,6 +128,40 @@
     return '<span class="shlepw__dot" style="background:' + c + '"></span>';
   }
 
+  /**
+   * What the buyer would otherwise pay.
+   *
+   * Shown including the cases where an alternative is cheaper than us. A price
+   * with nothing beside it invites the reader to assume the worst, and a
+   * comparison that hid the cheaper option would not survive the first person
+   * who checks post.ch — on a partner's own checkout page, that is their
+   * credibility as much as ours.
+   */
+  function comparisonHtml(quote, L) {
+    var c = quote.comparison;
+    if (!c || c.cheapestAlternativeCHF == null) return '';
+
+    var alt = c.alternatives.filter(function (a) {
+      return a.priceCHF === c.cheapestAlternativeCHF;
+    })[0];
+    var altLabel = alt ? alt.label : '';
+
+    if (!c.beatsAlternative) {
+      return (
+        '<div class="shlepw__cmp shlepw__cmp--worse">' +
+        L.cheaperElsewhere +
+        ': ' + altLabel + ' ' + chf(c.cheapestAlternativeCHF) +
+        '</div>'
+      );
+    }
+    return (
+      '<div class="shlepw__cmp">' +
+      L.vs + ' ' + altLabel + ' ' + chf(c.cheapestAlternativeCHF) +
+      ' — ' + L.saves + ' ' + chf(c.savingCHF) +
+      '</div>'
+    );
+  }
+
   function render(el, quote, L) {
     if (!quote.available || (quote.coverage.level === 'none' && !quote.estimated)) {
       el.innerHTML =
@@ -146,6 +190,7 @@
       '<span class="shlepw__chip">' + L.code + '</span>' +
       '<span class="shlepw__chip shlepw__chip--eco">' + quote.co2SavedKg + ' ' + L.co2 + '</span>' +
       '</div>' +
+      comparisonHtml(quote, L) +
       '<a class="shlepw__cta" href="' + quote.deepLink + '" target="_blank" rel="noopener">' + L.cta + '</a>' +
       '</div>';
 
@@ -177,9 +222,36 @@
     var h = Math.pow(Math.sin(dLat / 2), 2) +
       Math.pow(Math.sin(dLng / 2), 2) * Math.cos(r(body.fromLat)) * Math.cos(r(body.toLat));
     var km = Math.round(2 * R * Math.asin(Math.sqrt(h)) * 10) / 10;
-    var F = { small: 1, medium: 1.35, large: 1.9 }[body.size || 'small'] || 1;
-    var price = Math.min(Math.max(Math.round((8 + km * 0.55) * F), 8), 200);
+    // Must mirror SIZE_PRICING in packages/shared/src/constants/pricing.ts.
+    // These are anchored to published alternatives: Post Sperrgut CHF 31 for
+    // anything up to 30 kg / 200 cm, and a Möbeltaxi at CHF 90 + 1.50/km above
+    // that. If those constants change, change them here too.
+    var RATES = {
+      small: { base: 10, perKm: 0.35 },
+      medium: { base: 12, perKm: 0.45 },
+      large: { base: 14, perKm: 0.55 },
+      xl: { base: 35, perKm: 1.6 },
+    };
+    var rate = RATES[body.size || 'small'] || RATES.small;
+    var price = Math.min(Math.max(Math.round(rate.base + km * rate.perKm), 8), 300);
     var fee = Math.min(Math.round(Math.max(price * 0.09, 1.5) * 100) / 100, price);
+
+    // Same alternatives the server reports, so an offline card says the same
+    // thing an online one does — including when the post is the better buy.
+    var alts = [];
+    if ((body.size || 'small') === 'small') {
+      alts.push({ key: 'post_parcel', label: 'Post PostPac Economy', priceCHF: 9 });
+    }
+    if (body.size !== 'xl') {
+      alts.push({ key: 'post_bulky', label: 'Post Sperrgut Priority', priceCHF: 31 });
+    }
+    alts.push({
+      key: 'moebeltaxi',
+      label: 'Möbeltaxi / Kleintransport',
+      priceCHF: Math.round(90 + km * 1.5),
+    });
+    var cheapest = Math.min.apply(null, alts.map(function (a) { return a.priceCHF; }));
+    var saving = Math.round(cheapest - price);
 
     var p = new URLSearchParams({
       fromLat: body.fromLat.toFixed(5), fromLng: body.fromLng.toFixed(5),
@@ -198,6 +270,12 @@
       coverage: { level: 'unknown', matchingRoutes: null, estimatedMatchHours: null },
       insuredUpToCHF: 1000,
       co2SavedKg: Math.round(km * 0.18 * 10) / 10,
+      comparison: {
+        alternatives: alts,
+        cheapestAlternativeCHF: cheapest,
+        savingCHF: saving,
+        beatsAlternative: saving > 0,
+      },
       deepLink: 'https://shlep.ch/new?' + p.toString(),
       estimated: true,
     };

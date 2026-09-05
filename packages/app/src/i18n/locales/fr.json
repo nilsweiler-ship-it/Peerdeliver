@@ -124,7 +124,11 @@
     "offerPendingTitle": "Demande en cours",
     "offerPendingHint": "En attente d’une réponse. En cas de refus, votre livraison se rouvre automatiquement.",
     "withdrawOffer": "Retirer la demande",
-    "offerWithdrawn": "Demande retirée — votre livraison est à nouveau ouverte."
+    "offerWithdrawn": "Demande retirée — votre livraison est à nouveau ouverte.",
+    "sizeXL": "XL — trop grand pour la poste",
+    "suggestedPrice": "Indicatif pour ce trajet : CHF {{price}}",
+    "cheaperThan": "Moins cher que {{label}} (CHF {{price}})",
+    "cheaperElsewhere": "{{label}} coûterait CHF {{price}} — mais nous venons chez vous."
   },
   "driver": {
     "publishRoute": "Publier un trajet",

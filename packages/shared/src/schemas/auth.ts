@@ -11,7 +11,7 @@ export const registerSchema = z.object({
   licensePlate: z.string().max(10).optional(),
   carModel: z.string().max(100).optional(),
   maxLoadKg: z.number().positive().optional(),
-  vehicleSize: z.enum(['S', 'M', 'L']).optional(),
+  vehicleSize: z.enum(['S', 'M', 'L', 'XL']).optional(),
 });
 
 export const loginSchema = z.object({

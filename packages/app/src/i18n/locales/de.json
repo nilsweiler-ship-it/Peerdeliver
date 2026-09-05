@@ -124,7 +124,11 @@
     "offerPendingTitle": "Anfrage läuft",
     "offerPendingHint": "Du wartest auf eine Antwort. Lehnt die Person ab, ist deine Lieferung automatisch wieder offen.",
     "withdrawOffer": "Anfrage zurückziehen",
-    "offerWithdrawn": "Anfrage zurückgezogen — deine Lieferung ist wieder offen."
+    "offerWithdrawn": "Anfrage zurückgezogen — deine Lieferung ist wieder offen.",
+    "sizeXL": "XL — zu gross für die Post",
+    "suggestedPrice": "Richtwert für diese Strecke: CHF {{price}}",
+    "cheaperThan": "Günstiger als {{label}} (CHF {{price}})",
+    "cheaperElsewhere": "{{label}} wäre mit CHF {{price}} günstiger — dafür holen wir bei dir ab."
   },
   "driver": {
     "publishRoute": "Route veröffentlichen",

@@ -15,7 +15,8 @@ export const createRouteSchema = z.object({
   recurringDays: z
     .array(z.enum(['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']))
     .optional(),
-  availableSize: z.enum(['S', 'M', 'L']),
+  // XL = a van or estate car that can take what Post refuses (>30 kg / >200 cm).
+  availableSize: z.enum(['S', 'M', 'L', 'XL']),
   maxDetourMinutes: z.number().int().min(0).max(60).default(15),
 });
 

@@ -1,5 +1,7 @@
 import { prisma, env } from '../config';
 import { computeSplit } from './payment';
+import { estimatePriceCHF, priceComparison } from '@peerdeliver/shared';
+import type { PackageSize, AlternativeQuote } from '@peerdeliver/shared';
 
 /**
  * Partner integration service.
@@ -18,8 +20,11 @@ export interface QuoteInput {
   fromLng: number;
   toLat: number;
   toLng: number;
-  /** Rough size class of the item; drives the base price. */
-  size?: 'small' | 'medium' | 'large';
+  /**
+   * Rough size class. 'xl' means beyond Swiss Post's Sperrgut ceiling
+   * (30 kg / 200 cm) — a sofa, a fridge, a wardrobe.
+   */
+  size?: 'small' | 'medium' | 'large' | 'xl';
   /** Declared item value in CHF — used for the insurance note, not the price. */
   declaredValueCHF?: number;
 }
@@ -43,6 +48,18 @@ export interface QuoteResult {
   };
   insuredUpToCHF: number;
   co2SavedKg: number;
+  /**
+   * What the sender would otherwise pay, including when an alternative is
+   * cheaper than us. A price with no reference invites the buyer to assume the
+   * worst; a comparison that hides a cheaper option would not survive the first
+   * person who checks post.ch.
+   */
+  comparison: {
+    alternatives: AlternativeQuote[];
+    cheapestAlternativeCHF: number | null;
+    savingCHF: number | null;
+    beatsAlternative: boolean;
+  };
   /** Ready-to-use deep link that opens Shlep with this delivery prefilled. */
   deepLink: string;
 }
@@ -60,23 +77,28 @@ export function haversineKm(aLat: number, aLng: number, bLat: number, bLng: numb
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(h));
 }
 
-/** Size multipliers: a sofa is worth more to carry than a charger cable. */
-const SIZE_FACTOR: Record<NonNullable<QuoteInput['size']>, number> = {
-  small: 1,
-  medium: 1.35,
-  large: 1.9,
+/** Partner-facing size words → internal size classes. */
+const SIZE_WORD_TO_CLASS: Record<NonNullable<QuoteInput['size']>, PackageSize> = {
+  small: 'S',
+  medium: 'M',
+  large: 'L',
+  xl: 'XL',
 };
 
+export function sizeClassFor(size: QuoteInput['size'] = 'small'): PackageSize {
+  return SIZE_WORD_TO_CLASS[size] ?? 'S';
+}
+
 /**
- * Suggested price. Deliberately simple and explainable — senders set the final
- * price in Shlep, this is the anchor a marketplace shows at checkout.
+ * Suggested price.
+ *
+ * Now delegates to the shared model, whose constants are anchored to published
+ * Post and Möbeltaxi prices. The old version multiplied an invented base by an
+ * invented size factor and produced CHF 37 for a couch table — more than Post
+ * charges to carry the same item.
  */
 export function estimatePrice(distanceKm: number, size: QuoteInput['size'] = 'small'): number {
-  const base = 8;
-  const perKm = 0.55;
-  const raw = (base + distanceKm * perKm) * SIZE_FACTOR[size];
-  // Round to the nearest franc; keep it inside sane bounds.
-  return Math.min(Math.max(Math.round(raw), 8), 200);
+  return estimatePriceCHF(distanceKm, sizeClassFor(size));
 }
 
 /** How many published, active driver routes plausibly serve this corridor. */
@@ -149,6 +171,7 @@ export async function quote(input: QuoteInput): Promise<QuoteResult> {
     insuredUpToCHF: 1000,
     // ~0.18 kg CO2 per km avoided vs. a dedicated van trip; conservative estimate.
     co2SavedKg: Math.round(distanceKm * 0.18 * 10) / 10,
+    comparison: priceComparison(priceCHF, distanceKm, sizeClassFor(input.size)),
     deepLink: buildDeepLink(input, priceCHF),
   };
 }

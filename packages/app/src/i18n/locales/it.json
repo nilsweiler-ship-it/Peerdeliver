@@ -124,7 +124,11 @@
     "offerPendingTitle": "Richiesta in corso",
     "offerPendingHint": "In attesa di risposta. Se rifiuta, la tua consegna torna aperta automaticamente.",
     "withdrawOffer": "Ritira richiesta",
-    "offerWithdrawn": "Richiesta ritirata — la tua consegna è di nuovo aperta."
+    "offerWithdrawn": "Richiesta ritirata — la tua consegna è di nuovo aperta.",
+    "sizeXL": "XL — troppo grande per la posta",
+    "suggestedPrice": "Indicativo per questo tragitto: CHF {{price}}",
+    "cheaperThan": "Più conveniente di {{label}} (CHF {{price}})",
+    "cheaperElsewhere": "{{label}} costerebbe CHF {{price}} — ma noi ritiriamo da te."
   },
   "driver": {
     "publishRoute": "Pubblica un tragitto",

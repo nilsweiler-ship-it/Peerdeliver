@@ -1,7 +1,8 @@
 import type { PackageSize } from '../types/delivery';
+import { POST_BULKY_LIMIT } from './delivery-status';
 
-export const SIZE_ORDER: Record<PackageSize, number> = { S: 1, M: 2, L: 3 };
-export const ALL_SIZES: PackageSize[] = ['S', 'M', 'L'];
+export const SIZE_ORDER: Record<PackageSize, number> = { S: 1, M: 2, L: 3, XL: 4 };
+export const ALL_SIZES: PackageSize[] = ['S', 'M', 'L', 'XL'];
 
 /** Sizes a vehicle of capacity `max` can carry (everything up to and including max). */
 export function sizesUpTo(max: PackageSize): PackageSize[] {
@@ -41,11 +42,25 @@ const CATEGORY_RULES: {
   category: string;
 }[] = [
   {
-    // Furniture and white goods
-    match: /sofa|couch|canape|divano|schrank|wardrobe|armoire|armadio|kuhlschrank|fridge|frigo|gefrierschrank|freezer|congelateur|waschmaschine|washing\s?machine|lave-linge|lavatrice|tumbler|trockner|dryer|geschirrspuler|dishwasher|lave-vaisselle|lavastoviglie|matratze|mattress|matelas|materasso|\bbett\b|\bbed\b|\blit\b|letto|kommode|dresser|commode|schreibtisch|\bdesk\b|bureau|scrivania|regal|bookshelf|etagere|scaffale|sessel|armchair|fauteuil|poltrona|esstisch|dining table|\btisch\b|\btable\b|tavolo|buffet|vitrine|sideboard|\bherd\b|backofen|\boven\b|\bfour\b|forno/i,
+    // Beyond Swiss Post entirely: over 30 kg or over 200 cm, usually both.
+    // These are the items with no postal alternative at any price, where the
+    // realistic comparison is a Möbeltaxi at CHF 100+ rather than Sperrgut at
+    // CHF 31. Split out of the old single "furniture" rule, which priced a
+    // sofa and a bookshelf identically.
+    // couch(?!tisch): a Couchtisch is a coffee table, not a sofa. Without the
+    // lookahead it matched here and a small side table was priced as a
+    // three-seater — the exact item that started this whole pricing review.
+    match: /sofa|couch(?!tisch)|canape|divano|schrank|wardrobe|armoire|armadio|kuhlschrank|fridge|frigo|gefrierschrank|freezer|congelateur|waschmaschine|washing\s?machine|lave-linge|lavatrice|tumbler|trockner|dryer|geschirrspuler|dishwasher|lave-vaisselle|lavastoviglie|matratze|mattress|matelas|materasso|\bbett\b|\bbed\b|\blit\b|letto|\bherd\b|backofen|\boven\b|\bfour\b|forno|klavier|piano|pianoforte|buffet|vitrine|sideboard/i,
+    size: 'XL',
+    weightKg: 60,
+    category: 'Grossmöbel / Weissware',
+  },
+  {
+    // Furniture that still fits inside Post's Sperrgut limits.
+    match: /kommode|dresser|commode|schreibtisch|\bdesk\b|bureau|scrivania|regal|bookshelf|etagere|scaffale|sessel|armchair|fauteuil|poltrona|esstisch|dining table|\btisch\b|\btable\b|tavolo|couchtisch|coffee table|nachttisch|stuhl|\bchair\b|chaise|sedia/i,
     size: 'L',
-    weightKg: 35,
-    category: 'Möbel / Grossgerät',
+    weightKg: 25,
+    category: 'Möbel',
   },
   {
     // Bulky but liftable by one person
@@ -116,13 +131,21 @@ function parseLongestEdgeCm(text: string): number | null {
   return Number.isFinite(longest) && longest > 0 ? longest : null;
 }
 
+/**
+ * The L/XL boundaries below are not judgement calls — they are Swiss Post's
+ * published Sperrgut limits (30 kg, 200 cm longest side). An item over either
+ * one cannot be posted at any price, which is exactly the case where this
+ * service is the cheap option rather than the convenient one.
+ */
 function sizeFromWeight(kg: number): PackageSize {
+  if (kg > POST_BULKY_LIMIT.maxKg) return 'XL';
   if (kg >= 15) return 'L';
   if (kg >= 3) return 'M';
   return 'S';
 }
 
 function sizeFromLongestEdge(cm: number): PackageSize {
+  if (cm > POST_BULKY_LIMIT.maxLongestEdgeCm) return 'XL';
   if (cm >= 100) return 'L';
   if (cm >= 40) return 'M';
   return 'S';
@@ -159,7 +182,9 @@ export function estimateSize(text: string): SizeEstimate {
     size: best.size,
     // A stated weight always beats a category average.
     weightKg:
-      weightKg ?? keyword?.weightKg ?? (best.size === 'L' ? 15 : best.size === 'M' ? 6 : 1.5),
+      weightKg ??
+      keyword?.weightKg ??
+      { XL: 60, L: 20, M: 6, S: 1.5 }[best.size],
     category: keyword?.category ?? 'Allgemeines Objekt',
     basis: best.basis,
   };

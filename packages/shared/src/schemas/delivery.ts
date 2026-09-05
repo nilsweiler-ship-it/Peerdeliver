@@ -18,7 +18,8 @@ export const createDeliverySchema = z.object({
   // form, because a client-side rule is a suggestion, not a requirement.
   recipientEmail: z.string().email(),
   recipientPhone: z.string().min(6).max(25).optional(),
-  packageSize: z.enum(['S', 'M', 'L']),
+  // XL = beyond Swiss Post's Sperrgut ceiling; no postal alternative exists.
+  packageSize: z.enum(['S', 'M', 'L', 'XL']),
   packageWeight: z.number().positive().optional(),
   packageDescription: z.string().max(500).optional(),
   packaging: z.enum(['none', 'reused', 'cardboard', 'other']).optional(),

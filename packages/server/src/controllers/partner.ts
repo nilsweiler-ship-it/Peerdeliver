@@ -9,7 +9,9 @@ export const quoteSchema = z.object({
   fromLng: z.number().min(5).max(11),
   toLat: z.number().min(45).max(48),
   toLng: z.number().min(5).max(11),
-  size: z.enum(['small', 'medium', 'large']).optional(),
+  // 'xl' = past Swiss Post's Sperrgut ceiling (30 kg / 200 cm), where no postal
+  // option exists and the comparison becomes a Möbeltaxi.
+  size: z.enum(['small', 'medium', 'large', 'xl']).optional(),
   declaredValueCHF: z.number().positive().max(100000).optional(),
 });
 

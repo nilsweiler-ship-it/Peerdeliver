@@ -124,7 +124,11 @@
     "offerPendingTitle": "Request pending",
     "offerPendingHint": "Waiting for an answer. If they decline, your delivery reopens automatically.",
     "withdrawOffer": "Withdraw request",
-    "offerWithdrawn": "Request withdrawn — your delivery is open again."
+    "offerWithdrawn": "Request withdrawn — your delivery is open again.",
+    "sizeXL": "XL — too big for the post",
+    "suggestedPrice": "Typical for this route: CHF {{price}}",
+    "cheaperThan": "Cheaper than {{label}} (CHF {{price}})",
+    "cheaperElsewhere": "{{label}} would cost CHF {{price}} — but we collect from your door."
   },
   "driver": {
     "publishRoute": "Publish Route",

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -20,12 +20,28 @@ import { Stepper, BackChip, Pill, RouteLine } from '../../components/brand';
 import { useCreateDelivery } from '../../queries/delivery';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { PackageSize, Packaging, CreateDeliveryInput } from '@peerdeliver/shared';
-import { estimateSize } from '@peerdeliver/shared';
+import { estimateSize, estimatePriceCHF, priceComparison } from '@peerdeliver/shared';
+
+/** Straight-line km. Good enough to anchor a price; no routing call needed. */
+function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const R = 6371;
+  const rad = (d: number) => (d * Math.PI) / 180;
+  const dLat = rad(b.lat - a.lat);
+  const dLng = rad(b.lng - a.lng);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.sin(dLng / 2) ** 2 * Math.cos(rad(a.lat)) * Math.cos(rad(b.lat));
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
 
 const SIZES: { key: PackageSize; labelKey: string }[] = [
   { key: 'S', labelKey: 'sender.sizeSmall' },
   { key: 'M', labelKey: 'sender.sizeMedium' },
   { key: 'L', labelKey: 'sender.sizeLarge' },
+  // The class that matters: past Post's 30 kg / 200 cm ceiling there is no
+  // postal option at all, and a peer with an estate car becomes the cheapest
+  // route rather than merely the most convenient one.
+  { key: 'XL', labelKey: 'sender.sizeXL' },
 ];
 
 const SELECTED_FILL = '#ECF1EC';
@@ -71,6 +87,28 @@ export function CreateRequestScreen({ navigation }: any) {
   const [instructions, setInstructions] = useState('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  /**
+   * Suggested price plus the cheapest real alternative for this corridor.
+   *
+   * Needs both addresses, so it appears on the budget step once the route is
+   * known. Straight-line distance is close enough for an anchor and avoids a
+   * routing call the moment a slider moves.
+   */
+  const priceHint = useMemo(() => {
+    if (!pickupAddress || !deliveryAddress) return null;
+    const km = haversineKm(pickupAddress.point, deliveryAddress.point);
+    const suggested = estimatePriceCHF(km, packageSize);
+    const cmp = priceComparison(budget, km, packageSize);
+    if (cmp.cheapestAlternativeCHF == null) return null;
+    const alt = cmp.alternatives.find((a) => a.priceCHF === cmp.cheapestAlternativeCHF);
+    return {
+      suggested,
+      alt: cmp.cheapestAlternativeCHF,
+      label: alt?.label ?? '',
+      beats: cmp.beatsAlternative,
+    };
+  }, [pickupAddress, deliveryAddress, packageSize, budget]);
 
   const validateStep = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -392,6 +430,37 @@ export function CreateRequestScreen({ navigation }: any) {
                 <Text style={styles.sliderRangeText}>CHF 200</Text>
               </View>
               {errors.budget && <Text style={styles.sliderError}>{errors.budget}</Text>}
+
+              {/* What this would otherwise cost.
+                  Senders have no idea what a fair price is — the one real data
+                  point we have is a couch table offered at CHF 15, well below
+                  what a driver would accept for the detour. An anchor helps
+                  them, and showing it even when the post is cheaper is the only
+                  version of this worth having. */}
+              {priceHint && (
+                <View style={styles.compareBox}>
+                  <Text style={styles.compareLead}>
+                    {t('sender.suggestedPrice', { price: priceHint.suggested })}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.compareLine,
+                      !priceHint.beats && styles.compareLineWarn,
+                    ]}
+                  >
+                    {priceHint.beats
+                      ? t('sender.cheaperThan', {
+                          label: priceHint.label,
+                          price: priceHint.alt,
+                        })
+                      : t('sender.cheaperElsewhere', {
+                          label: priceHint.label,
+                          price: priceHint.alt,
+                        })}
+                  </Text>
+                </View>
+              )}
+
               <View style={styles.breakdown}>
                 <View style={styles.breakdownRow}>
                   <Text style={styles.breakdownLabel}>{t('createRequestExtra.platformFee')}</Text>
@@ -618,6 +687,25 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     color: colors.error,
     marginTop: spacing.xs,
+  },
+  compareBox: {
+    marginTop: spacing.md,
+    padding: spacing.md,
+    backgroundColor: colors.surfaceSunken,
+    borderRadius: borderRadius.lg,
+    gap: 4,
+  },
+  compareLead: {
+    ...typography.bodySmall,
+    color: colors.text,
+    fontFamily: typography.bodyStrong.fontFamily,
+  },
+  compareLine: {
+    ...typography.caption,
+    color: colors.impact,
+  },
+  compareLineWarn: {
+    color: colors.textSecondary,
   },
   breakdown: {
     marginTop: spacing.md,

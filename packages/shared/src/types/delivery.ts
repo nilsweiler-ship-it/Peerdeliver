@@ -2,7 +2,17 @@ export type Packaging = 'none' | 'reused' | 'cardboard' | 'other';
 
 import { PublicUser } from './user';
 
-export type PackageSize = 'S' | 'M' | 'L';
+/**
+ * Package size.
+ *
+ * The boundary that matters commercially sits between L and XL, not between the
+ * smaller classes: Swiss Post's Sperrgut tops out at 30 kg / 200 cm, and above
+ * that there is no postal option at all — the alternative jumps from CHF 31 to a
+ * Möbeltaxi at CHF 100+. XL exists to name that segment, because it is the one
+ * where a peer with an estate car is genuinely the cheapest way to move
+ * something rather than a marginal saving.
+ */
+export type PackageSize = 'S' | 'M' | 'L' | 'XL';
 
 export type DeliveryStatus =
   | 'pending'
