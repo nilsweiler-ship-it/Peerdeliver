@@ -128,7 +128,8 @@
     "sizeXL": "XL — trop grand pour la poste",
     "suggestedPrice": "Indicatif pour ce trajet : CHF {{price}}",
     "cheaperThan": "Moins cher que {{label}} (CHF {{price}})",
-    "cheaperElsewhere": "{{label}} coûterait CHF {{price}} — mais nous venons chez vous."
+    "cheaperElsewhere": "{{label}} coûterait CHF {{price}} — mais nous venons chez vous.",
+    "onlyOption": "La poste refuse cet objet — nous non."
   },
   "driver": {
     "publishRoute": "Publier un trajet",

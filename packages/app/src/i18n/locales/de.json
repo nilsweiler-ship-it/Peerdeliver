@@ -128,7 +128,8 @@
     "sizeXL": "XL — zu gross für die Post",
     "suggestedPrice": "Richtwert für diese Strecke: CHF {{price}}",
     "cheaperThan": "Günstiger als {{label}} (CHF {{price}})",
-    "cheaperElsewhere": "{{label}} wäre mit CHF {{price}} günstiger — dafür holen wir bei dir ab."
+    "cheaperElsewhere": "{{label}} wäre mit CHF {{price}} günstiger — dafür holen wir bei dir ab.",
+    "onlyOption": "Die Post nimmt dieses Stück nicht an — wir schon."
   },
   "driver": {
     "publishRoute": "Route veröffentlichen",

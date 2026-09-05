@@ -79,11 +79,28 @@ export function estimatePriceCHF(distanceKm: number, size: PackageSize = 'S'): n
   return Math.min(Math.max(Math.round(raw), MIN_PRICE_CHF), MAX_PRICE_CHF);
 }
 
+/**
+ * How soon the item arrives. Ordered, so speeds can be compared.
+ *
+ * `scheduled` means you book a slot — a Möbeltaxi can often come today, but
+ * only if someone is free, so it is not reliably faster than next-day.
+ */
+export type DeliverySpeed = 'same_day' | 'next_day' | 'scheduled';
+
+export const SPEED_RANK: Record<DeliverySpeed, number> = {
+  same_day: 3,
+  scheduled: 2,
+  next_day: 1,
+};
+
 export interface AlternativeQuote {
   key: 'post_parcel' | 'post_bulky' | 'moebeltaxi';
   label: string;
   /** null when this option cannot carry the item at all. */
   priceCHF: number | null;
+  speed: DeliverySpeed;
+  /** Does someone collect from the sender, or must they take it somewhere? */
+  doorToDoor: boolean;
   /** Plain-language reason it is or is not an option. */
   note: string;
 }
@@ -104,6 +121,8 @@ export function marketAlternatives(distanceKm: number, size: PackageSize): Alter
       key: 'post_parcel',
       label: 'Post PostPac Economy',
       priceCHF: size === 'S' ? MARKET_REFERENCE.postParcelCHF : null,
+      speed: 'next_day',
+      doorToDoor: false,
       note:
         size === 'S'
           ? 'Next day, up to 2 kg. You pack it and hand it in.'
@@ -113,6 +132,8 @@ export function marketAlternatives(distanceKm: number, size: PackageSize): Alter
       key: 'post_bulky',
       label: 'Post Sperrgut Priority',
       priceCHF: overPostLimit ? null : MARKET_REFERENCE.postBulkyCHF,
+      speed: 'next_day',
+      doorToDoor: false,
       note: overPostLimit
         ? `Over Post's limit of ${POST_BULKY_LIMIT.maxKg} kg / ${POST_BULKY_LIMIT.maxLongestEdgeCm} cm — not accepted at any price.`
         : 'Next day. You pack it and hand it in.',
@@ -123,38 +144,105 @@ export function marketAlternatives(distanceKm: number, size: PackageSize): Alter
       priceCHF: Math.round(
         MARKET_REFERENCE.moebeltaxiBaseCHF + distanceKm * MARKET_REFERENCE.moebeltaxiPerKmCHF,
       ),
-      note: 'Same day, two people, carried to the door.',
+      speed: 'scheduled',
+      doorToDoor: true,
+      note: 'Booked slot, two people, carried to the door.',
     },
   ];
 }
 
 /**
- * The cheapest alternative, and whether we actually beat it.
+ * Where we stand against the alternatives, on both dimensions people care
+ * about.
  *
- * `beatsAlternative: false` is a legitimate and expected answer — over long
- * distances Post's flat Sperrgut price wins, and saying so is the only version
- * of this feature worth shipping.
+ * - `only_option`  nothing else will carry this item at all
+ * - `cheaper_and_faster`
+ * - `cheaper`      costs less, but no speed advantage we can promise
+ * - `faster`       costs more, arrives sooner
+ * - `no_advantage` slower and dearer — say so
+ *
+ * `no_advantage` is a real and expected outcome, not a bug: Post carries a
+ * small parcel for a flat CHF 9 next day, and no base fare that also pays a
+ * driver can undercut that.
+ */
+export type ComparisonVerdict =
+  | 'only_option'
+  | 'cheaper_and_faster'
+  | 'cheaper'
+  | 'faster'
+  | 'no_advantage';
+
+export interface ComparisonResult {
+  alternatives: AlternativeQuote[];
+  cheapestAlternativeCHF: number | null;
+  savingCHF: number | null;
+  beatsAlternative: boolean;
+  /** True only when we can actually deliver today — see `sameDayRealistic`. */
+  fasterThanAlternative: boolean;
+  /** Neither party has to take the item anywhere. */
+  doorToDoorAdvantage: boolean;
+  verdict: ComparisonVerdict;
+}
+
+/**
+ * Compare on price, speed and effort.
+ *
+ * `sameDayRealistic` is the honest gate on the speed claim, and it defaults to
+ * false. Same-day is not a property of the product — it is a property of
+ * whether a driver happens to be going that way today. Deriving it from live
+ * coverage means an empty corridor produces "cheaper" rather than "cheaper and
+ * faster", which is the difference between a comparison and an advert. A
+ * marketplace embedding this on its own checkout page is lending us its
+ * credibility; a same-day promise we cannot keep spends it.
  */
 export function priceComparison(
   ourPriceCHF: number,
   distanceKm: number,
   size: PackageSize,
-): {
-  alternatives: AlternativeQuote[];
-  cheapestAlternativeCHF: number | null;
-  savingCHF: number | null;
-  beatsAlternative: boolean;
-} {
+  sameDayRealistic = false,
+): ComparisonResult {
   const alternatives = marketAlternatives(distanceKm, size);
-  const prices = alternatives
-    .map((a) => a.priceCHF)
-    .filter((p): p is number => typeof p === 'number');
-  const cheapest = prices.length ? Math.min(...prices) : null;
+  const carriable = alternatives.filter(
+    (a): a is AlternativeQuote & { priceCHF: number } => typeof a.priceCHF === 'number',
+  );
+
+  const cheapest = carriable.length ? Math.min(...carriable.map((a) => a.priceCHF)) : null;
   const saving = cheapest == null ? null : Math.round(cheapest - ourPriceCHF);
+  const beats = saving != null && saving > 0;
+
+  // Our speed, stated conservatively: same-day only when supply supports it.
+  const ourSpeed: DeliverySpeed = sameDayRealistic ? 'same_day' : 'next_day';
+
+  // Compare against the fastest thing that could actually take the item —
+  // beating a slow option while a fast one exists is not an advantage.
+  const bestRivalSpeed = carriable.reduce(
+    (best, a) => Math.max(best, SPEED_RANK[a.speed]),
+    0,
+  );
+  const faster = carriable.length > 0 && SPEED_RANK[ourSpeed] > bestRivalSpeed;
+
+  // Everything else either wants the item brought to a counter, or sends two
+  // people and charges for them.
+  const doorToDoorAdvantage = carriable.every((a) => !a.doorToDoor);
+
+  const verdict: ComparisonVerdict =
+    carriable.length === 0
+      ? 'only_option'
+      : beats && faster
+        ? 'cheaper_and_faster'
+        : beats
+          ? 'cheaper'
+          : faster
+            ? 'faster'
+            : 'no_advantage';
+
   return {
     alternatives,
     cheapestAlternativeCHF: cheapest,
     savingCHF: saving,
-    beatsAlternative: saving != null && saving > 0,
+    beatsAlternative: beats,
+    fasterThanAlternative: faster,
+    doorToDoorAdvantage,
+    verdict,
   };
 }

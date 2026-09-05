@@ -1,7 +1,7 @@
 import { prisma, env } from '../config';
 import { computeSplit } from './payment';
 import { estimatePriceCHF, priceComparison } from '@peerdeliver/shared';
-import type { PackageSize, AlternativeQuote } from '@peerdeliver/shared';
+import type { PackageSize, ComparisonResult } from '@peerdeliver/shared';
 
 /**
  * Partner integration service.
@@ -54,12 +54,7 @@ export interface QuoteResult {
    * worst; a comparison that hides a cheaper option would not survive the first
    * person who checks post.ch.
    */
-  comparison: {
-    alternatives: AlternativeQuote[];
-    cheapestAlternativeCHF: number | null;
-    savingCHF: number | null;
-    beatsAlternative: boolean;
-  };
+  comparison: ComparisonResult;
   /** Ready-to-use deep link that opens Shlep with this delivery prefilled. */
   deepLink: string;
 }
@@ -171,7 +166,16 @@ export async function quote(input: QuoteInput): Promise<QuoteResult> {
     insuredUpToCHF: 1000,
     // ~0.18 kg CO2 per km avoided vs. a dedicated van trip; conservative estimate.
     co2SavedKg: Math.round(distanceKm * 0.18 * 10) / 10,
-    comparison: priceComparison(priceCHF, distanceKm, sizeClassFor(input.size)),
+    // Same-day is only claimed when supply on this corridor plausibly supports
+    // it. `coverageFor` maps high/medium to a 2–6 hour expected match; low is
+    // 24 hours and none has no drivers at all, neither of which is same-day in
+    // any sense a buyer would accept.
+    comparison: priceComparison(
+      priceCHF,
+      distanceKm,
+      sizeClassFor(input.size),
+      cov.level === 'high' || cov.level === 'medium',
+    ),
     deepLink: buildDeepLink(input, priceCHF),
   };
 }

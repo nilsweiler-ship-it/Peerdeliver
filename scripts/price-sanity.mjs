@@ -40,23 +40,44 @@ const notes = [];
 console.log('\nPricing vs. the real alternatives');
 console.log(dim('Post Sperrgut CHF 31 (max 30 kg / 200 cm) · PostPac CHF 9 · Möbeltaxi CHF 90 + 1.50/km'));
 console.log('');
-console.log('size   km   Shlep     alt   verdict          driver  platform');
-console.log('─'.repeat(63));
+console.log('size   km   Shlep     alt   verdict (no supply)   verdict (supply)  driver');
+console.log('─'.repeat(78));
 
 for (const size of SIZES) {
   for (const km of DISTANCES) {
     const price = estimatePriceCHF(km, size);
-    const cmp = priceComparison(price, km, size);
+    // Both worlds: an empty corridor, and one where a driver is going today.
+    // The difference between them is the entire speed claim, so both are shown.
+    const cold = priceComparison(price, km, size, false);
+    const warm = priceComparison(price, km, size, true);
+    const cmp = cold;
     const { fee, driver } = split(price);
     const alt = cmp.cheapestAlternativeCHF;
 
-    const verdict = cmp.beatsAlternative
-      ? g(`saves ${cmp.savingCHF}`)
-      : r('alternative wins');
+    const paint = (v) =>
+      v === 'no_advantage' ? r(v) : v === 'only_option' ? g(v) : g(v);
 
     console.log(
-      `${size.padEnd(5)} ${String(km).padStart(4)}   ${String(price).padStart(5)}   ${String(alt ?? '—').padStart(5)}   ${verdict.padEnd(25)} ${driver.toFixed(2).padStart(6)}    ${fee.toFixed(2).padStart(5)}`,
+      `${size.padEnd(5)} ${String(km).padStart(4)}   ${String(price).padStart(5)}   ${String(alt ?? '—').padStart(5)}   ${paint(cold.verdict).padEnd(30)} ${paint(warm.verdict).padEnd(28)} ${driver.toFixed(2).padStart(6)}`,
     );
+
+    // The speed claim must depend on supply, never on the product alone.
+    // If these two ever agree for every input, the coverage gate has been
+    // bypassed and we are promising same-day to empty corridors.
+    if (cold.fasterThanAlternative) {
+      failures.push(
+        `${size} @ ${km} km claims to be faster with no driver coverage — the same-day gate is not working.`,
+      );
+    }
+    // Conversely, with supply we must beat a next-day post on speed.
+    const rivalsAllNextDay = warm.alternatives
+      .filter((a) => typeof a.priceCHF === 'number')
+      .every((a) => a.speed === 'next_day');
+    if (rivalsAllNextDay && !warm.fasterThanAlternative) {
+      failures.push(
+        `${size} @ ${km} km: every alternative is next-day, yet we do not register as faster even with coverage.`,
+      );
+    }
 
     // ── Conditions that would break the business ───────────────────────────
     // XL is the whole thesis: no postal option exists, so if we cannot beat a
@@ -96,7 +117,7 @@ for (const size of SIZES) {
     );
   }
 
-  console.log('─'.repeat(63));
+  console.log('─'.repeat(78));
 }
 
 if (notes.length) {
@@ -109,11 +130,15 @@ if (failures.length) {
   for (const f of failures) console.log(r('  ✗ ' + f));
   process.exitCode = 1;
 } else {
-  console.log(g('\n✓ Every class beats its alternative where it claims to, and no trip pays a driver below vehicle cost.'));
+  console.log(
+    g(
+      '\n✓ Every class beats its alternative where it claims to, no trip underpays a driver,\n  and no same-day claim is made without driver coverage.',
+    ),
+  );
 }
 
 console.log(
   dim(
-    '\nA red "alternative wins" row is not a bug. Post charges a flat CHF 31 regardless\nof distance, so it wins on long hauls — the quote API says so rather than hiding it.\n',
+    '\nTwo verdict columns: what a buyer is told when no driver is on this corridor,\nand when one is. A red no_advantage is not a bug — Post charges a flat CHF 31\nregardless of distance, so it wins long hauls, and the quote says so rather than\nhiding it. The columns must differ: that gap is the same-day claim being earned.\n',
   ),
 );

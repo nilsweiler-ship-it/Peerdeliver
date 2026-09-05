@@ -99,14 +99,17 @@ export function CreateRequestScreen({ navigation }: any) {
     if (!pickupAddress || !deliveryAddress) return null;
     const km = haversineKm(pickupAddress.point, deliveryAddress.point);
     const suggested = estimatePriceCHF(km, packageSize);
+    // No same-day claim here: this screen has no coverage data, and whether a
+    // driver is on this corridor today is the only thing that would make it
+    // true. Leaving it false means the sender is never promised speed we
+    // cannot supply — the server's quote, which does know, may say more.
     const cmp = priceComparison(budget, km, packageSize);
-    if (cmp.cheapestAlternativeCHF == null) return null;
     const alt = cmp.alternatives.find((a) => a.priceCHF === cmp.cheapestAlternativeCHF);
     return {
       suggested,
       alt: cmp.cheapestAlternativeCHF,
       label: alt?.label ?? '',
-      beats: cmp.beatsAlternative,
+      verdict: cmp.verdict,
     };
   }, [pickupAddress, deliveryAddress, packageSize, budget]);
 
@@ -445,18 +448,20 @@ export function CreateRequestScreen({ navigation }: any) {
                   <Text
                     style={[
                       styles.compareLine,
-                      !priceHint.beats && styles.compareLineWarn,
+                      priceHint.verdict === 'no_advantage' && styles.compareLineWarn,
                     ]}
                   >
-                    {priceHint.beats
-                      ? t('sender.cheaperThan', {
-                          label: priceHint.label,
-                          price: priceHint.alt,
-                        })
-                      : t('sender.cheaperElsewhere', {
-                          label: priceHint.label,
-                          price: priceHint.alt,
-                        })}
+                    {priceHint.verdict === 'only_option'
+                      ? t('sender.onlyOption')
+                      : priceHint.verdict === 'no_advantage'
+                        ? t('sender.cheaperElsewhere', {
+                            label: priceHint.label,
+                            price: priceHint.alt,
+                          })
+                        : t('sender.cheaperThan', {
+                            label: priceHint.label,
+                            price: priceHint.alt,
+                          })}
                   </Text>
                 </View>
               )}

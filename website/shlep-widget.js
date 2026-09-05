@@ -73,8 +73,12 @@
       err: 'Shlep-Lieferung gerade nicht verfügbar.',
       approx: 'ca.',
       vs: 'statt',
-      cheaperElsewhere: 'Die Post ist hier günstiger',
       saves: 'du sparst',
+      vCheaperFaster: 'Günstiger und schneller als {alt} ({price}) — heute statt morgen',
+      vCheaper: 'Günstiger als {alt} ({price}) — du sparst {saving}',
+      vFaster: 'Heute statt morgen — {alt} kostet {price}',
+      vOnly: 'Für dieses Stück die einzige Option — die Post nimmt es nicht an',
+      vNone: '{alt} ist mit {price} günstiger. Dafür holen wir bei dir ab.',
     },
     en: {
       title: 'Get it delivered with Shlep',
@@ -92,8 +96,12 @@
       err: 'Shlep delivery unavailable right now.',
       approx: 'approx.',
       vs: 'instead of',
-      cheaperElsewhere: 'The post is cheaper for this one',
       saves: 'you save',
+      vCheaperFaster: 'Cheaper and faster than {alt} ({price}) — today, not tomorrow',
+      vCheaper: 'Cheaper than {alt} ({price}) — you save {saving}',
+      vFaster: 'Today, not tomorrow — {alt} costs {price}',
+      vOnly: 'The only option for this item — the post will not take it',
+      vNone: '{alt} is cheaper at {price}. We collect from your door.',
     },
   };
 
@@ -139,27 +147,34 @@
    */
   function comparisonHtml(quote, L) {
     var c = quote.comparison;
-    if (!c || c.cheapestAlternativeCHF == null) return '';
+    if (!c) return '';
 
-    var alt = c.alternatives.filter(function (a) {
-      return a.priceCHF === c.cheapestAlternativeCHF;
-    })[0];
-    var altLabel = alt ? alt.label : '';
-
-    if (!c.beatsAlternative) {
-      return (
-        '<div class="shlepw__cmp shlepw__cmp--worse">' +
-        L.cheaperElsewhere +
-        ': ' + altLabel + ' ' + chf(c.cheapestAlternativeCHF) +
-        '</div>'
-      );
+    var alt = null;
+    for (var i = 0; i < c.alternatives.length; i++) {
+      if (c.alternatives[i].priceCHF === c.cheapestAlternativeCHF) { alt = c.alternatives[i]; break; }
     }
-    return (
-      '<div class="shlepw__cmp">' +
-      L.vs + ' ' + altLabel + ' ' + chf(c.cheapestAlternativeCHF) +
-      ' — ' + L.saves + ' ' + chf(c.savingCHF) +
-      '</div>'
-    );
+    var label = alt ? alt.label : '';
+    var altPrice = c.cheapestAlternativeCHF == null ? '' : chf(c.cheapestAlternativeCHF);
+
+    var tpl = {
+      only_option: L.vOnly,
+      cheaper_and_faster: L.vCheaperFaster,
+      cheaper: L.vCheaper,
+      faster: L.vFaster,
+      no_advantage: L.vNone,
+    }[c.verdict];
+    if (!tpl) return '';
+
+    var text = tpl
+      .replace('{alt}', label)
+      .replace('{price}', altPrice)
+      .replace('{saving}', chf(c.savingCHF));
+
+    // Only 'no_advantage' is rendered in the muted style. The point is that a
+    // reader can tell at a glance whether we are actually the better choice,
+    // without having to parse the numbers themselves.
+    var cls = c.verdict === 'no_advantage' ? ' shlepw__cmp--worse' : '';
+    return '<div class="shlepw__cmp' + cls + '">' + text + '</div>';
   }
 
   function render(el, quote, L) {
@@ -240,18 +255,27 @@
     // thing an online one does — including when the post is the better buy.
     var alts = [];
     if ((body.size || 'small') === 'small') {
-      alts.push({ key: 'post_parcel', label: 'Post PostPac Economy', priceCHF: 9 });
+      alts.push({ key: 'post_parcel', label: 'Post PostPac Economy', priceCHF: 9, speed: 'next_day', doorToDoor: false });
     }
     if (body.size !== 'xl') {
-      alts.push({ key: 'post_bulky', label: 'Post Sperrgut Priority', priceCHF: 31 });
+      alts.push({ key: 'post_bulky', label: 'Post Sperrgut Priority', priceCHF: 31, speed: 'next_day', doorToDoor: false });
     }
     alts.push({
       key: 'moebeltaxi',
       label: 'Möbeltaxi / Kleintransport',
       priceCHF: Math.round(90 + km * 1.5),
+      speed: 'scheduled',
+      doorToDoor: true,
     });
     var cheapest = Math.min.apply(null, alts.map(function (a) { return a.priceCHF; }));
     var saving = Math.round(cheapest - price);
+    // Offline we have no coverage data, so we cannot honestly claim same-day —
+    // the speed advantage depends entirely on a driver being on this corridor
+    // today, which only the server knows. Verdict therefore never says
+    // 'faster' here.
+    var verdict = alts.length === 0
+      ? 'only_option'
+      : saving > 0 ? 'cheaper' : 'no_advantage';
 
     var p = new URLSearchParams({
       fromLat: body.fromLat.toFixed(5), fromLng: body.fromLng.toFixed(5),
@@ -275,6 +299,9 @@
         cheapestAlternativeCHF: cheapest,
         savingCHF: saving,
         beatsAlternative: saving > 0,
+        fasterThanAlternative: false,
+        doorToDoorAdvantage: alts.every(function (a) { return !a.doorToDoor; }),
+        verdict: verdict,
       },
       deepLink: 'https://shlep.ch/new?' + p.toString(),
       estimated: true,

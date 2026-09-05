@@ -128,7 +128,8 @@
     "sizeXL": "XL — too big for the post",
     "suggestedPrice": "Typical for this route: CHF {{price}}",
     "cheaperThan": "Cheaper than {{label}} (CHF {{price}})",
-    "cheaperElsewhere": "{{label}} would cost CHF {{price}} — but we collect from your door."
+    "cheaperElsewhere": "{{label}} would cost CHF {{price}} — but we collect from your door.",
+    "onlyOption": "The post will not take this one — we will."
   },
   "driver": {
     "publishRoute": "Publish Route",
