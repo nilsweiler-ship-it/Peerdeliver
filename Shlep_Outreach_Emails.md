@@ -71,7 +71,7 @@ Hi [First name],
 
 Quick one: **Shlep** lets people earn money on trips they're already driving by carrying a neighbour's parcel along the way. Members of [Community/Group] who regularly commute [route, e.g. Zürich–Winterthur] are exactly who we're looking for as founding drivers.
 
-It takes a minute to publish a recurring route, payouts are automatic (90% goes to the driver), and every delivery is code-verified and insured-feeling. It's flexible, local, and low-carbon by design.
+It takes a minute to publish a recurring route, payouts are automatic (90% goes to the driver), and every delivery is confirmed by a code at pickup and at drop-off. It's flexible, local, and low-carbon by design.
 
 Could we offer [Community/Group] early access and a small referral bonus for founding drivers? Happy to explain in 10 minutes.
 
@@ -90,7 +90,7 @@ Hallo [Vorname],
 
 bei [Marktplatz] scheitern viele Deals nicht am Preis, sondern an der Logistik: Der Sessel, der Fernseher, das Velo — zu sperrig für den Paketkanal, Originalkarton längst entsorgt, also bleibt „nur Selbstabholung". Damit fällt jede Käuferin ausserhalb der Region weg.
 
-Genau da setzt **Shlep** an: verifizierte Nachbarn nehmen den Artikel auf einer Fahrt mit, die sie ohnehin machen. Versichert bis CHF 1'000, Übergabe per 6-stelligem Code bestätigt, live verfolgbar — und weil von Hand zu Hand geliefert wird, braucht es keine Verpackung.
+Genau da setzt **Shlep** an: verifizierte Nachbarn nehmen den Artikel auf einer Fahrt mit, die sie ohnehin machen. Übergabe per 6-stelligem Code bestätigt, live verfolgbar, bezahlt wird erst nach der Zustellung — und weil von Hand zu Hand geliefert wird, braucht es keine Verpackung.
 
 Für euch ist die Integration bewusst klein gehalten:
 

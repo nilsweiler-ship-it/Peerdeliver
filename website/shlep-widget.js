@@ -61,7 +61,7 @@
       title: 'Mit Shlep liefern lassen',
       sub: 'Verifizierte Fahrer:innen nehmen dein Paket auf einer Fahrt mit, die sie ohnehin machen.',
       cta: 'Mit Shlep senden',
-      insured: 'Bis CHF 1’000 versichert',
+      paidAfter: 'Zahlung erst nach Zustellung',
       code: 'Code-verifizierte Übergabe',
       co2: 'kg CO₂ gespart',
       high: 'Viele Fahrten auf dieser Strecke',
@@ -84,7 +84,7 @@
       title: 'Get it delivered with Shlep',
       sub: 'Verified drivers carry your parcel on a trip they are already making.',
       cta: 'Send with Shlep',
-      insured: 'Insured up to CHF 1,000',
+      paidAfter: 'Paid only after delivery',
       code: 'Code-verified handoff',
       co2: 'kg CO₂ saved',
       high: 'Many trips on this route',
@@ -201,7 +201,7 @@
       '<div class="shlepw__sub">' + L.sub + '</div>' +
       '<div class="shlepw__meta">' +
       '<span class="shlepw__chip">' + coverageDot(quote.coverage.level) + covText + eta + '</span>' +
-      '<span class="shlepw__chip">' + L.insured + '</span>' +
+      '<span class="shlepw__chip">' + L.paidAfter + '</span>' +
       '<span class="shlepw__chip">' + L.code + '</span>' +
       '<span class="shlepw__chip shlepw__chip--eco">' + quote.co2SavedKg + ' ' + L.co2 + '</span>' +
       '</div>' +
@@ -292,7 +292,6 @@
       platformFeeCHF: fee,
       driverPayoutCHF: Math.round((price - fee) * 100) / 100,
       coverage: { level: 'unknown', matchingRoutes: null, estimatedMatchHours: null },
-      insuredUpToCHF: 1000,
       co2SavedKg: Math.round(km * 0.18 * 10) / 10,
       comparison: {
         alternatives: alts,

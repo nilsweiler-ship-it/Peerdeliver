@@ -6,7 +6,7 @@
 
 ## Das Angebot in einem Satz
 
-Shlep ist das Schweizer Peer-to-Peer-Liefernetz: verifizierte Nachbarn nehmen ein Paket auf einer Fahrt mit, die sie ohnehin machen — **versichert bis CHF 1'000, per 6-stelligem Code bestätigt, CO₂-arm**. Für einen Marktplatz ist es eine zusätzliche Lieferoption, die genau dort greift, wo der klassische Paketkanal schwach ist.
+Shlep ist das Schweizer Peer-to-Peer-Liefernetz: verifizierte Nachbarn nehmen ein Paket auf einer Fahrt mit, die sie ohnehin machen — **per 6-stelligem Code bestätigt, bezahlt erst nach Zustellung, CO₂-arm**. Für einen Marktplatz ist es eine zusätzliche Lieferoption, die genau dort greift, wo der klassische Paketkanal schwach ist.
 
 ## Warum gerade für Gebraucht- und Sperrgut
 
@@ -16,7 +16,7 @@ Shlep ist das Schweizer Peer-to-Peer-Liefernetz: verifizierte Nachbarn nehmen ei
 | Originalkarton längst entsorgt | Übergabe von Hand zu Hand, keine Verpackungspflicht |
 | „Nur Selbstabholung" killt Reichweite | Käufer:innen ausserhalb der Region werden erreichbar |
 | Versand teuer im Verhältnis zum Artikelwert | Preis wird pro Fahrt gesetzt, nicht pro Tarifzone |
-| Kein Vertrauen zwischen Fremden | Verifizierte Profile, Code-Bestätigung, Versicherung, beidseitige Bewertung |
+| Kein Vertrauen zwischen Fremden | Verifizierte Profile, Code-Bestätigung bei Abholung und Zustellung, Zahlung erst nach Übergabe, beidseitige Bewertung |
 
 **Zusätzlich:** jede Lieferung weist die eingesparte CO₂-Menge aus — verwendbar für eure Nachhaltigkeitskommunikation.
 
@@ -80,7 +80,8 @@ X-Shlep-Key: pk_live_deinkey
     "distanceKm": 20.8,
     "driverPayoutCHF": 33.67, "platformFeeCHF": 3.33,
     "coverage": { "level": "medium", "matchingRoutes": 4, "estimatedMatchHours": 6 },
-    "insuredUpToCHF": 1000, "co2SavedKg": 3.7,
+    "liability": { "model": "intermediary", "transportCoverCHF": null },
+    "co2SavedKg": 3.7,
     "deepLink": "https://shlep.ch/new?…" } }
 ```
 
@@ -92,7 +93,8 @@ X-Shlep-Key: pk_live_deinkey
 
 - **Für den Marktplatz kostenlos.** Keine Setup-Gebühr, keine Lizenz.
 - **Abrechnung direkt zwischen Shlep und der sendenden Person** (TWINT oder Karte). Ihr leitet kein Geld weiter und tragt kein Inkasso-Risiko.
-- Shlep behält 9 % (mind. CHF 1.50) und deckt damit Versicherung, Zahlungsabwicklung und Support; 91 % gehen an die fahrende Person.
+- Shlep behält 9 % (mind. CHF 1.50) und deckt damit Vermittlung, Zahlungsabwicklung und Support; 91 % gehen an die fahrende Person.
+- Shlep ist Vermittlungsplattform und nicht Partei des Transportvertrags. Eine Transportversicherung bieten wir derzeit nicht an — abgesichert ist die Zahlung, die erst nach der per Code bestätigten Zustellung freigegeben wird.
 - **Revenue-Share für Volumenpartner** ist verhandelbar — sprecht uns an.
 
 ## Was wir von euch brauchen

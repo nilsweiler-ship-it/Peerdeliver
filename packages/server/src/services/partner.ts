@@ -46,7 +46,24 @@ export interface QuoteResult {
     matchingRoutes: number;
     estimatedMatchHours: number | null;
   };
-  insuredUpToCHF: number;
+  /**
+   * What Shlep is, stated in the API rather than left to a partner's
+   * imagination.
+   *
+   * Shlep introduces a sender to a driver and verifies the handover; the
+   * transport agreement is between those two people, exactly as the terms have
+   * always said. This field replaced `insuredUpToCHF: 1000`, which was a
+   * hardcoded number with no policy, no underwriter and no claims process
+   * behind it — a promise the terms simultaneously disclaimed.
+   */
+  liability: {
+    model: 'intermediary';
+    /** No transport cover exists today. Null, not zero: zero implies a policy. */
+    transportCoverCHF: null;
+    /** What genuinely protects the sender, and does so today. */
+    paymentHeldUntilDelivery: boolean;
+    note: string;
+  };
   co2SavedKg: number;
   /**
    * What the sender would otherwise pay, including when an alternative is
@@ -163,7 +180,12 @@ export async function quote(input: QuoteInput): Promise<QuoteResult> {
     driverPayoutCHF,
     platformFeeCHF,
     coverage: { level: cov.level, matchingRoutes, estimatedMatchHours: cov.estimatedMatchHours },
-    insuredUpToCHF: 1000,
+    liability: {
+      model: 'intermediary',
+      transportCoverCHF: null,
+      paymentHeldUntilDelivery: true,
+      note: 'Shlep introduces senders and drivers and is not a party to the transport agreement. No transport insurance is offered. The payment is held and released only after a code-confirmed handover.',
+    },
     // ~0.18 kg CO2 per km avoided vs. a dedicated van trip; conservative estimate.
     co2SavedKg: Math.round(distanceKm * 0.18 * 10) / 10,
     // Same-day is only claimed when supply on this corridor plausibly supports
