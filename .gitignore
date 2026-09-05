@@ -22,3 +22,6 @@ google-play-key.json
 *.p8
 *.p12
 *.mobileprovision
+
+# Local Netlify folder
+.netlify

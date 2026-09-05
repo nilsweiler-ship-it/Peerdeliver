@@ -425,10 +425,10 @@
         <div class="splitrow"><span class="lbl"><span class="sw" style="background:var(--accent);"></span>Shlep&nbsp;<span class="pct">9 % · min. CHF 1.50</span></span><strong id="feeLabel">CHF 2.16</strong></div>
       </div>
       <div class="compare">
-        <div class="k" data-i18n="price.compareK">IM VERGLEICH · ZÜRICH SAME-DAY</div>
-        <div class="comparerow"><span class="lbl" data-i18n="price.courier">Velokurier</span><div class="bar"><div class="fill" style="width:100%;"></div></div><span class="val">~CHF 39</span></div>
+        <div class="k" data-i18n="price.compareK">IM VERGLEICH · SPERRGUT SCHWEIZWEIT</div>
+        <div class="comparerow"><span class="lbl" data-i18n="price.courier">Post Sperrgut</span><div class="bar"><div class="fill" style="width:100%;"></div></div><span class="val">CHF 31</span></div>
         <div class="comparerow"><span class="lbl me">Shlep</span><div class="bar"><div class="fill me" id="compareFill" style="width:53%;"></div></div><span class="val me" id="comparePrice">CHF 24.00</span></div>
-        <div class="comparenote" data-i18n="price.compareNote">Vergleichswerte illustrativ, Stadt Zürich.</div>
+        <div class="comparenote" data-i18n="price.compareNote">Post Sperrgut Priority, Listenpreis inkl. Online-Rabatt. Nächster Werktag, Aufgabe am Schalter.</div>
       </div>
     </div>
   </div>
@@ -446,13 +446,13 @@
       <div class="safecard"><div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div><h3 data-i18n="safe.t1">Zahlung abgesichert</h3><p data-i18n="safe.d1">Der Betrag wird bei der Bestellung reserviert und erst freigegeben, wenn die Zustellung per Code bestätigt ist.</p></div>
       <div class="safecard"><div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div><h3 data-i18n="safe.t2">Code-verifiziert</h3><p data-i18n="safe.d2">6-stellige Codes sichern Abholung und Zustellung. Kein Code, keine Zahlung.</p></div>
       <div class="safecard"><div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17.6 6.6 20l1-6.1L3.2 9.5l6.1-.9z"/></svg></div><h3 data-i18n="safe.t3">Bewertet</h3><p data-i18n="safe.d3">Verifizierte Profile und beidseitige Bewertungen — keine anonyme Flotte.</p></div>
-      <div class="safecard"><div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.5A8 8 0 1 1 21 12z"/></svg></div><h3 data-i18n="safe.t4">Support</h3><p data-i18n="safe.d4">Ein Team in Zürich, das bei jeder Übergabe erreichbar ist.</p></div>
+      <div class="safecard"><div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.5A8 8 0 1 1 21 12z"/></svg></div><h3 data-i18n="safe.t4">Wenn etwas schiefgeht</h3><p data-i18n="safe.d4">Ohne bestätigten Code wird nichts ausbezahlt. Melde dich über die App oder hello@shlep.ch.</p></div>
     </div>
     <div class="founder">
       <div class="avatar"><svg height="44" viewBox="14 8 20 24" fill="none"><path d="M30 12 C 17 12, 17 20, 24 20 C 31 20, 31 28, 18 28" stroke="#F3EFE6" stroke-width="3.7" stroke-linecap="round"/><circle cx="30" cy="12" r="2.7" fill="#F3EFE6"/><circle cx="18" cy="28" r="3.6" fill="#F3EFE6"/></svg></div>
       <div>
         <blockquote data-i18n="safe.quote">„Wir starten mit echten Menschen, verifizierten Profilen und einer Übergabe, die beide Seiten per Code bestätigen. Vertrauen baut man nicht mit einem Logo auf, sondern mit jeder gelungenen Übergabe.“</blockquote>
-        <div class="attr"><strong data-i18n="safe.attrName">Das Shlep-Team</strong> · <span data-i18n="safe.attrRole">Gründung, Zürich</span></div>
+        <div class="attr"><strong data-i18n="safe.attrName">Nils Weiler</strong> · <span data-i18n="safe.attrRole">Gründer, Shlep</span></div>
       </div>
     </div>
   </div>
@@ -565,7 +565,7 @@
     </div>
     <div class="footmeta">
       <span data-i18n="foot.rights">© 2026 SHLEP. ALLE RECHTE VORBEHALTEN.</span>
-      <span>MADE IN ZÜRICH · CH</span>
+      <span>MADE IN SWITZERLAND</span>
     </div>
   </div>
 </footer>
@@ -638,8 +638,14 @@
       document.getElementById('driverLabel').textContent = chf(p - fee);
       document.getElementById('feeLabel').textContent = chf(fee);
       document.getElementById('driverPct').textContent = Math.round(((p - fee) / p) * 100) + ' %';
+      // Scaled against Post's Sperrgut price (CHF 31), so the two bars are
+      // directly comparable. The old divisor of 45 came from an invented
+      // "~CHF 39" bike-courier figure and made our bar look shorter than the
+      // numbers beside it justified.
+      var POST_BULKY = 31;
       document.getElementById('comparePrice').textContent = chf(p);
-      document.getElementById('compareFill').style.width = Math.min(100, Math.round((p / 45) * 100)) + '%';
+      document.getElementById('compareFill').style.width =
+        Math.min(100, Math.round((p / POST_BULKY) * 100)) + '%';
     }
     range.addEventListener('input', update);
     update();
