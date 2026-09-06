@@ -15,7 +15,8 @@
     "verify": "npm run db:generate && npm run typecheck && echo \"\\n✅ GREEN — types clean across server and app\"",
     "preflight": "node scripts/preflight.mjs",
     "seed:testusers": "node scripts/seed-test-users.mjs",
-    "price:check": "npm run shared:build && node scripts/price-sanity.mjs"
+    "price:check": "npm run shared:build && node scripts/price-sanity.mjs",
+    "stripe:test": "node scripts/stripe-e2e.mjs"
   },
   "prisma": {
     "schema": "packages/server/prisma/schema.prisma"
