@@ -52,14 +52,51 @@ const cents = (chfAmount) => Math.round(chfAmount * 100);
 
 let step = 0;
 const say = (msg) => console.log(`${g('✓')} ${String(++step).padStart(2)}. ${msg}`);
+
+/**
+ * Report the failure that actually happened.
+ *
+ * An earlier version printed "Is Connect enabled?" for every error at this
+ * step, including network failures — which sent the reader to the Stripe
+ * dashboard to check a setting that was already correct. The SDK distinguishes
+ * these clearly; the script should too.
+ */
 const fail = (msg, err) => {
-  console.error(r(`\n✗ ${msg}`));
+  const type = err?.type ?? '';
+  console.error(r(`\n✗ ${type === 'StripeConnectionError' ? 'Could not reach Stripe' : msg}`));
   console.error(r(`  ${err?.message ?? err}`));
-  if (err?.raw?.doc_url) console.error(dim(`  ${err.raw.doc_url}`));
+
+  if (type === 'StripeConnectionError') {
+    console.error(dim('\n  This never reached api.stripe.com — nothing about your Stripe'));
+    console.error(dim('  account is implicated. Usual causes: no internet, a VPN or'));
+    console.error(dim('  corporate proxy, or TLS interception.\n'));
+    console.error('  Check the connection directly:');
+    console.error(dim('    curl -sS -o /dev/null -w "%{http_code}\\n" https://api.stripe.com/v1/account \\'));
+    console.error(dim('      -u "$STRIPE_SECRET_KEY:"'));
+    console.error(dim('\n  401 means you reached Stripe and the key is wrong.'));
+    console.error(dim('  200 means the key works and something in this process is blocked.'));
+    console.error(dim('  A timeout or DNS error means the network is the problem.\n'));
+  } else if (type === 'StripeAuthenticationError') {
+    console.error(dim('\n  The key was rejected. Copy it again from Developers → API keys.\n'));
+  } else if (type === 'StripePermissionError') {
+    console.error(dim('\n  Reached Stripe, but this account may not have Connect enabled.'));
+    console.error(dim('  Enable it at https://dashboard.stripe.com/connect/overview\n'));
+  } else if (err?.raw?.doc_url) {
+    console.error(dim(`  ${err.raw.doc_url}`));
+  }
   process.exit(1);
 };
 
 console.log(`\nStripe Connect — end-to-end test  ${dim('(test mode)')}\n`);
+
+// Fail fast and unambiguously if the network is the problem, rather than
+// letting it surface as a confusing error three calls later.
+try {
+  await stripe.balance.retrieve();
+  say('Reached Stripe and the key authenticates');
+} catch (err) {
+  fail('Could not authenticate with Stripe.', err);
+}
 
 // ── 1. The driver's connected account ────────────────────────────────────────
 let account;
