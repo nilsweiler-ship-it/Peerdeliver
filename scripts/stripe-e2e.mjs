@@ -31,7 +31,16 @@ if (!KEY) {
   console.error('  export STRIPE_SECRET_KEY=sk_test_…');
   process.exit(1);
 }
-if (!KEY.startsWith('sk_test_')) {
+// `stripe login` stores a restricted test key rather than the secret key, and
+// it usually carries enough scope for this. Warn rather than refuse — being
+// turned away here sends people back to fighting the dashboard clipboard,
+// which is how this script came to exist in its current form.
+if (KEY.startsWith('rk_test_')) {
+  console.warn(
+    dim('Note: this is a restricted test key (from `stripe login`), not the full secret key.'),
+  );
+  console.warn(dim('      If a step fails with a permissions error, that is why.\n'));
+} else if (!KEY.startsWith('sk_test_')) {
   // Name what was actually found. "Not a test key" sends the reader back to
   // the dashboard without saying which of four plausible mistakes they made,
   // and the publishable key is the likeliest of them: it is displayed openly
