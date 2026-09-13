@@ -112,8 +112,19 @@ async function req(method, path, params = {}, opts = {}) {
     // guard against. The server sets one on the calls that matter.
     try {
       const out = execFileSync('stripe', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
-      return JSON.parse(out);
+      const parsed = JSON.parse(out);
+      // The CLI prints Stripe's error body and still exits 0, so a failed
+      // request arrives here looking like a normal response. Without this the
+      // script reported a transfer that never happened — the very failure mode
+      // it exists to catch.
+      if (parsed?.error) {
+        const e = new Error(parsed.error.message ?? JSON.stringify(parsed.error));
+        e.stripe = JSON.stringify(parsed.error);
+        throw e;
+      }
+      return parsed;
     } catch (err) {
+      if (err.stripe) throw err;
       const text = (err.stderr || err.stdout || err.message || '').toString().trim();
       const e = new Error(text.split('\n').slice(0, 4).join(' '));
       e.stripe = text;
@@ -283,6 +294,11 @@ try {
     },
     { idempotencyKey: `e2e-transfer-${deliveryId}` },
   );
+  // Insist on an id. A response without one is not a transfer, whatever the
+  // HTTP status said.
+  if (!transfer?.id) {
+    throw new Error(`no transfer id returned — response was ${JSON.stringify(transfer).slice(0, 200)}`);
+  }
   say(`Transferred ${chf(driverPayoutCHF)} to the driver  ${dim(transfer.id)}`);
 } catch (err) {
   console.error(r(`\n✗ Transfer failed`));
@@ -302,16 +318,32 @@ console.log(`  Sender pays          ${chf(AMOUNT_CHF)}`);
 console.log(`  Driver receives      ${g(chf(driverPayoutCHF))}`);
 console.log(`  Shlep keeps          ${chf(platformFeeCHF)}   ${dim(`(${FEE_PCT}%, min ${chf(FEE_MIN_CHF)})`)}`);
 
+// The money actually arriving is the only evidence that counts. An earlier
+// version printed "works end to end" while the driver's balance sat at zero.
+let landed = null;
 try {
   const bal = await req('get', '/v1/balance', {}, { stripeAccount: account.id });
-  const pending = (bal.pending ?? [])
-    .map((b) => `${chf(b.amount / 100)} ${String(b.currency).toUpperCase()}`)
-    .join(', ');
-  console.log(`\n  Driver's Stripe balance (pending): ${pending || 'none yet'}`);
-} catch {
-  /* a nicety, not a result */
+  const buckets = [...(bal.pending ?? []), ...(bal.available ?? [])];
+  landed = buckets.reduce((sum, b) => sum + (b.amount ?? 0), 0) / 100;
+  console.log(`\n  Driver's Stripe balance  ${landed > 0 ? g(chf(landed)) : r(chf(landed))}`);
+} catch (err) {
+  console.log(dim(`\n  Could not read the driver's balance: ${err.message}`));
 }
 
-console.log(g('\n✓ The money path works end to end.\n'));
+if (landed !== null && Math.abs(landed - driverPayoutCHF) < 0.01) {
+  console.log(g('\n✓ The money path works end to end — the driver actually received it.\n'));
+} else if (landed === 0) {
+  console.log(r('\n✗ The transfer was accepted but nothing reached the driver.'));
+  console.log(dim('  Almost always the connected account has not onboarded, so its transfers'));
+  console.log(dim('  capability is inactive. Open the link from step 3, complete it with'));
+  console.log(dim("  Stripe's test data, then run this again.\n"));
+  process.exitCode = 1;
+} else {
+  console.log(
+    dim(`\n  Balance is ${chf(landed ?? 0)}, expected ${chf(driverPayoutCHF)} — check the dashboard.\n`),
+  );
+  process.exitCode = 1;
+}
+
 console.log(dim('  Not proven here: TWINT specifically (needs the app to confirm),'));
 console.log(dim('  webhook delivery, and the hold-until-delivery question in section 0.\n'));
