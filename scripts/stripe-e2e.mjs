@@ -31,6 +31,7 @@
  * their own auth. Nobody has to move a 107-character secret by hand.
  */
 import { execFileSync } from 'node:child_process';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 const KEY = process.env.STRIPE_SECRET_KEY;
 const AMOUNT_CHF = Number(process.env.TEST_AMOUNT_CHF || 69); // an XL delivery
@@ -195,20 +196,55 @@ try {
 }
 
 // ── 2. The driver's connected account ────────────────────────────────────────
+//
+// Reused across runs, deliberately. A fresh Express account cannot receive a
+// transfer until someone completes Stripe's hosted onboarding, and only the
+// account holder can do that. Creating a new account every run made that
+// impossible to satisfy: you would onboard one account and the next run would
+// create another. The id is cached beside the repo so the sequence works —
+// run, onboard once, run again.
+const ACCOUNT_CACHE = new URL('../.stripe-e2e-account', import.meta.url).pathname;
+
+function cachedAccountId() {
+  if (process.env.TEST_DRIVER_ACCOUNT) return process.env.TEST_DRIVER_ACCOUNT.trim();
+  try {
+    const id = readFileSync(ACCOUNT_CACHE, 'utf8').trim();
+    return id.startsWith('acct_') ? id : null;
+  } catch {
+    return null;
+  }
+}
+
 let account;
-try {
-  account = await req('post', '/v1/accounts', {
-    type: 'express',
-    country: 'CH',
-    // Drivers are private individuals, not registered businesses — the exact
-    // case that made Payrexx and Mangopay hard.
-    business_type: 'individual',
-    capabilities: { transfers: { requested: true } },
-    metadata: { userId: 'e2e-test-driver' },
-  });
-  say(`Connected account created  ${dim(account.id)}`);
-} catch (err) {
-  fail('Could not create a connected account. Is Connect enabled on this sandbox?', err);
+const reuseId = cachedAccountId();
+if (reuseId) {
+  try {
+    account = await req('get', `/v1/accounts/${reuseId}`);
+    say(`Reusing connected account  ${dim(account.id)}`);
+  } catch {
+    console.log(dim(`     Cached account ${reuseId} is gone; creating a new one.`));
+  }
+}
+if (!account) {
+  try {
+    account = await req('post', '/v1/accounts', {
+      type: 'express',
+      country: 'CH',
+      // Drivers are private individuals, not registered businesses — the exact
+      // case that made Payrexx and Mangopay hard.
+      business_type: 'individual',
+      capabilities: { transfers: { requested: true } },
+      metadata: { userId: 'e2e-test-driver' },
+    });
+    try {
+      writeFileSync(ACCOUNT_CACHE, account.id);
+    } catch {
+      /* cache is a convenience, not a requirement */
+    }
+    say(`Connected account created  ${dim(account.id)}`);
+  } catch (err) {
+    fail('Could not create a connected account. Is Connect enabled on this sandbox?', err);
+  }
 }
 
 // ── 3. Onboarding link ───────────────────────────────────────────────────────

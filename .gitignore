@@ -25,3 +25,4 @@ google-play-key.json
 
 # Local Netlify folder
 .netlify
+.stripe-e2e-account
