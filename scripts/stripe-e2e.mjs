@@ -107,7 +107,9 @@ async function req(method, path, params = {}, opts = {}) {
     const args = [method.toLowerCase(), path];
     for (const [k, v] of pairs) args.push('-d', `${k}=${v}`);
     if (opts.stripeAccount) args.push('--stripe-account', opts.stripeAccount);
-    if (opts.idempotencyKey) args.push('-H', `Idempotency-Key: ${opts.idempotencyKey}`);
+    // No idempotency key here: `stripe post` has no header flag. It costs
+    // nothing — every run uses a fresh delivery id, so there is no repeat to
+    // guard against. The server sets one on the calls that matter.
     try {
       const out = execFileSync('stripe', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
       return JSON.parse(out);
@@ -212,35 +214,28 @@ try {
   fail('Could not create an onboarding link.', err);
 }
 
-// A fresh Express account has not onboarded, so a transfer would be rejected.
-// Fill in what Stripe's test mode accepts, then verify rather than assume.
+// Two different permissions, routinely confused, and only one matters here.
+//
+//   capabilities.transfers  — may the platform move money TO this account?
+//   payouts_enabled         — may this account withdraw to its own bank?
+//
+// A transfer needs the first. The second is the driver's business and only
+// completes when they finish Stripe's hosted onboarding, which an Express
+// account does itself — the platform cannot pre-fill those fields, which is
+// why an earlier version of this script tried and got nowhere.
 try {
-  await req('post', `/v1/accounts/${account.id}`, {
-    business_profile: { url: 'https://shlep.ch', mcc: '4215' }, // courier services
-    individual: {
-      first_name: 'Dario',
-      last_name: 'Driver',
-      dob: { day: 1, month: 1, year: 1990 },
-      address: { line1: 'address_full_match', city: 'Winterthur', postal_code: '8400', country: 'CH' },
-      id_number: '000000000',
-    },
-    external_account: {
-      object: 'bank_account',
-      country: 'CH',
-      currency: 'chf',
-      account_number: 'CH9300762011623852957', // Stripe test IBAN
-    },
-    tos_acceptance: { date: Math.floor(Date.now() / 1000), ip: '127.0.0.1' },
-  });
   const fresh = await req('get', `/v1/accounts/${account.id}`);
-  if (fresh.payouts_enabled) say('Account satisfies payout requirements');
-  else {
+  const transfersCap = fresh.capabilities?.transfers ?? 'unknown';
+  if (transfersCap === 'active') {
+    say(`Transfers capability active  ${dim('(payouts to their bank need onboarding)')}`);
+  } else {
+    warn(`Transfers capability is "${transfersCap}" — the transfer below will likely fail`);
     const due = fresh.requirements?.currently_due ?? [];
-    warn(`Not payout-ready yet — still due: ${due.slice(0, 4).join(', ') || 'unknown'}`);
-    console.log(dim('     The transfer below may fail. This is what a driver sees mid-onboarding.'));
+    if (due.length) console.log(dim(`     Driver must still provide: ${due.slice(0, 4).join(', ')}`));
+    console.log(dim('     That is the hosted onboarding link from step 3, which only they can complete.'));
   }
 } catch (err) {
-  warn(`Could not pre-fill the test account: ${err.message}`);
+  warn(`Could not read the account back: ${err.message}`);
 }
 
 // ── 4. The sender pays ───────────────────────────────────────────────────────
@@ -290,7 +285,15 @@ try {
   );
   say(`Transferred ${chf(driverPayoutCHF)} to the driver  ${dim(transfer.id)}`);
 } catch (err) {
-  fail('Transfer failed — usually the account is not payout-ready, or the test balance is empty.', err);
+  console.error(r(`\n✗ Transfer failed`));
+  console.error(r(`  ${err.message}`));
+  console.error(dim('\n  The payment succeeded, so charging works. Two usual causes:'));
+  console.error(dim('   · the connected account has not finished onboarding, so its'));
+  console.error(dim('     transfers capability is not active — open the link from step 3'));
+  console.error(dim('     and complete it with Stripe\'s test data, then re-run;'));
+  console.error(dim('   · the platform test balance is empty. Card payments settle after a'));
+  console.error(dim('     short delay, so an immediate transfer can outrun the funds.\n'));
+  process.exit(1);
 }
 
 // ── 6. What each side ends up with ───────────────────────────────────────────
