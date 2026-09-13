@@ -227,12 +227,26 @@ if (reuseId) {
 }
 if (!account) {
   try {
+    // Mirrors getOrCreateConnectAccount() in payment.ts, prefill included, so
+    // the onboarding link this prints is the one a real driver would see.
     account = await req('post', '/v1/accounts', {
       type: 'express',
       country: 'CH',
+      email: 'dario.driver@example.com',
       // Drivers are private individuals, not registered businesses — the exact
       // case that made Payrexx and Mangopay hard.
       business_type: 'individual',
+      individual: {
+        first_name: 'Dario',
+        last_name: 'Driver',
+        phone: '+41791234567',
+        email: 'dario.driver@example.com',
+      },
+      business_profile: {
+        mcc: '4215',
+        url: 'https://shlep.ch',
+        product_description: 'Occasional parcel delivery on trips already being made',
+      },
       capabilities: { transfers: { requested: true } },
       metadata: { userId: 'e2e-test-driver' },
     });

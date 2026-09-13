@@ -42,10 +42,37 @@ export async function getOrCreateConnectAccount(userId: string): Promise<string>
   if (user.stripeAccountId) return user.stripeAccountId;
 
   const stripe = getStripe();
+  // Prefill everything Shlep already knows. Stripe's hosted onboarding shows
+  // prefilled values for confirmation rather than asking again, so each field
+  // sent here is one fewer thing a driver has to type — and this form is the
+  // most likely place to lose someone who signed up to earn CHF 60 carrying a
+  // sofa. We previously sent only the email, so drivers re-entered a name and
+  // a phone number we had already collected and verified.
+  //
+  // What cannot be prefilled away: date of birth, residential address, ID and
+  // bank details. That is Stripe performing KYC as the regulated party — which
+  // is precisely what keeps Shlep an intermediary rather than a financial
+  // intermediary. Collecting a driver's IBAN ourselves would undo that.
   const account = await stripe.accounts.create({
     type: 'express',
     country: env.STRIPE_PLATFORM_COUNTRY,
     email: user.email,
+    business_type: 'individual',
+    individual: {
+      first_name: user.firstName,
+      last_name: user.lastName,
+      // Already verified by us via Twilio, and stored in E.164.
+      ...(user.phone ? { phone: user.phone } : {}),
+      ...(user.email ? { email: user.email } : {}),
+    },
+    business_profile: {
+      // MCC 4215 — courier services. Set explicitly so Stripe does not ask the
+      // driver to classify their own "business", a question that makes no
+      // sense to someone giving a parcel a lift.
+      mcc: '4215',
+      url: 'https://shlep.ch',
+      product_description: 'Occasional parcel delivery on trips already being made',
+    },
     capabilities: { transfers: { requested: true } },
     metadata: { userId: user.id },
   });
