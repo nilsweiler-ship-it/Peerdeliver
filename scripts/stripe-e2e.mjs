@@ -32,8 +32,25 @@ if (!KEY) {
   process.exit(1);
 }
 if (!KEY.startsWith('sk_test_')) {
-  console.error(r('Refusing to run: this is not a test key.'));
-  console.error('  This script creates accounts, charges and transfers. Test mode only.');
+  // Name what was actually found. "Not a test key" sends the reader back to
+  // the dashboard without saying which of four plausible mistakes they made,
+  // and the publishable key is the likeliest of them: it is displayed openly
+  // while the secret key hides behind a Reveal button.
+  const prefix = KEY.slice(0, 8);
+  const diagnosis =
+    {
+      pk_test_: 'That is the PUBLISHABLE test key. The secret key is on the same page, behind "Reveal".',
+      pk_live_: 'That is the publishable LIVE key. Switch the dashboard to Test mode and take the secret key.',
+      sk_live_: 'That is a LIVE secret key. Switch the dashboard to Test mode — this script creates real charges otherwise.',
+      rk_test_: 'That is a restricted test key. It may lack Connect permissions; use the full secret key.',
+      rk_live_: 'That is a restricted live key. Switch to Test mode and use the full secret key.',
+      whsec_ee: 'That is a webhook signing secret, not an API key.',
+    }[prefix] ?? `Found a key starting with "${prefix}".`;
+
+  console.error(r('Refusing to run: this is not a test secret key.'));
+  console.error(`  ${diagnosis}`);
+  console.error(dim('\n  Needed: Developers → API keys → Secret key → Reveal, starting sk_test_'));
+  console.error(dim('  This script creates accounts, charges and transfers. Test mode only.\n'));
   process.exit(1);
 }
 
