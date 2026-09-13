@@ -15,8 +15,47 @@
  * Refuses to run against a live key.
  */
 import Stripe from 'stripe';
+import { readFileSync } from 'node:fs';
 
-const KEY = process.env.STRIPE_SECRET_KEY;
+/**
+ * Find a test key without anyone having to copy one.
+ *
+ * Getting a key from the dashboard into a shell variable turned out to be the
+ * hardest part of this whole exercise: a placeholder ellipsis, a live key, and
+ * a clipboard that produced something that was not a Stripe key at all. The
+ * Stripe CLI already stores a test key after `stripe login`, so read that
+ * directly rather than asking a human to move a 107-character secret by hand.
+ *
+ * Order: an explicit STRIPE_SECRET_KEY always wins, so nothing here can
+ * override a deliberate choice.
+ */
+function keyFromStripeCli() {
+  const home = process.env.HOME || process.env.USERPROFILE || '';
+  const candidates = [
+    `${home}/.config/stripe/config.toml`,
+    `${home}/Library/Application Support/stripe/config.toml`,
+  ];
+  for (const path of candidates) {
+    try {
+      const toml = readFileSync(path, 'utf8');
+      // test_mode_api_key = 'rk_test_…'  — quoting varies by CLI version.
+      const m = toml.match(/test_mode_api_key\s*=\s*['"]?([A-Za-z0-9_]+)['"]?/);
+      if (m?.[1]) return { key: m[1], source: path };
+    } catch {
+      /* not there; try the next */
+    }
+  }
+  return null;
+}
+
+let KEY = process.env.STRIPE_SECRET_KEY;
+if (!KEY) {
+  const found = keyFromStripeCli();
+  if (found) {
+    KEY = found.key;
+    console.log(`\x1b[2mUsing the Stripe CLI's test key from ${found.source}\x1b[0m`);
+  }
+}
 const AMOUNT_CHF = Number(process.env.TEST_AMOUNT_CHF || 69); // an XL delivery
 const FEE_PCT = 9;
 const FEE_MIN_CHF = 1.5;
@@ -27,8 +66,13 @@ const dim = (s) => `\x1b[2m${s}\x1b[0m`;
 const chf = (n) => `CHF ${n.toFixed(2)}`;
 
 if (!KEY) {
-  console.error(r('STRIPE_SECRET_KEY is not set.'));
-  console.error('  export STRIPE_SECRET_KEY=sk_test_…');
+  console.error(r('No Stripe test key found.'));
+  console.error('\n  Easiest — let the Stripe CLI hold it for you:');
+  console.error('    brew install stripe/stripe-cli/stripe');
+  console.error('    stripe login          # confirm the pairing code in the browser');
+  console.error('    npm run stripe:test   # picks the key up automatically');
+  console.error('\n  Or set it explicitly, without it entering shell history:');
+  console.error("    read -rs \"STRIPE_SECRET_KEY?key: \" && export STRIPE_SECRET_KEY");
   process.exit(1);
 }
 // `stripe login` stores a restricted test key rather than the secret key, and
