@@ -37,6 +37,29 @@ if (!KEY.startsWith('sk_test_')) {
   process.exit(1);
 }
 
+/**
+ * Catch a placeholder before it becomes a mystery.
+ *
+ * The docs here used to read `export STRIPE_SECRET_KEY=sk_test_…`, and pasting
+ * that literally gives a value that passes the sk_test_ check above. The
+ * ellipsis is U+2026, which is not valid in an HTTP header, so Node fails at
+ * the transport layer and reports a *connection* error — while curl sends it
+ * and gets a clean 401. Two contradictory symptoms, one stray character.
+ */
+if (!/^[\x20-\x7E]+$/.test(KEY)) {
+  console.error(r('Refusing to run: the key contains a non-ASCII character.'));
+  console.error('  This is almost always a placeholder pasted from documentation —');
+  console.error('  for example the "…" in sk_test_… . Copy the real key from');
+  console.error('  Developers → API keys → Secret key (reveal), which is one long');
+  console.error('  line of letters and digits.');
+  process.exit(1);
+}
+if (KEY.length < 40) {
+  console.error(r(`Refusing to run: the key is only ${KEY.length} characters.`));
+  console.error('  A Stripe secret key is far longer. This looks truncated or a placeholder.');
+  process.exit(1);
+}
+
 const stripe = new Stripe(KEY, { typescript: true });
 
 /** Mirrors computeSplit() in packages/server/src/services/payment.ts. */

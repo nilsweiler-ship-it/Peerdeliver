@@ -108,7 +108,7 @@ bleibt der Auszahlungsstatus der Fahrer:innen für immer auf `false`.
 ## 4. Testlauf, bevor ein echter Schlüssel gesetzt wird
 
 ```bash
-export STRIPE_SECRET_KEY=sk_test_…
+export STRIPE_SECRET_KEY=sk_test_51AbC...   # the real key, one long line
 node scripts/stripe-e2e.mjs
 ```
 
