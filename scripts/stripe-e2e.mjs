@@ -269,8 +269,14 @@ try {
     return_url: 'https://shlep.ch/driver/onboarding/done',
     type: 'account_onboarding',
   });
-  say('Onboarding link created');
-  console.log(dim(`     ${String(link.url).slice(0, 92)}…`));
+  say('Onboarding link created — open this to onboard as the driver would:');
+  // In full. An earlier version truncated it to 92 characters and appended an
+  // ellipsis, which produced a link that looked copy-pasteable and led to a
+  // 404. Never abbreviate something a person is meant to use.
+  console.log(`\n${link.url}\n`);
+  // Account links are single-use and expire within minutes, so there is no
+  // point saving one — re-run to get another.
+  console.log(dim('     Single-use and expires in a few minutes. Re-run for a fresh one.'));
 } catch (err) {
   fail('Could not create an onboarding link.', err);
 }
