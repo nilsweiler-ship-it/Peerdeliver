@@ -100,13 +100,17 @@ main()
       // does not override a variable already set — so prefixing the command
       // works without touching the file.
       console.error(`\nCould not reach the database at ${dbHost()}.`);
-      console.error('\nThe production signups are in the Render Postgres. Get its');
-      console.error('External Database URL from the Render dashboard (the database');
-      console.error('instance, not the web service), then:\n');
-      console.error('  cd packages/server');
-      console.error('  DATABASE_URL="postgresql://…the external URL…" npx tsx scripts/waitlist.ts\n');
-      console.error(dim('Use the EXTERNAL URL — the internal one only resolves inside Render.'));
-      console.error(dim('Or open a shell on the Render service and run it there.\n'));
+      console.error('\nThe production signups are in the Render Postgres. Two ways in:\n');
+      console.error('  1. Render dashboard → your web service → Shell, then:');
+      console.error('       cd packages/server && npx tsx scripts/waitlist.ts');
+      console.error(dim('     Nothing to copy — the connection string is already set there.\n'));
+      console.error('  2. From here, pasting the External Database URL when prompted:');
+      console.error('       cd packages/server');
+      console.error('       read -rs "DB?Render External Database URL: " \\');
+      console.error('         && DATABASE_URL="$DB" npx tsx scripts/waitlist.ts');
+      console.error(
+        dim('\n     EXTERNAL, not internal — the internal one only resolves inside Render.\n'),
+      );
     } else {
       console.error('Failed:', msg);
     }
