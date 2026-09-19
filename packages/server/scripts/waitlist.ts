@@ -20,7 +20,25 @@ const g = (s: string) => `\x1b[32m${s}\x1b[0m`;
 const dim = (s: string) => `\x1b[2m${s}\x1b[0m`;
 const bold = (s: string) => `\x1b[1m${s}\x1b[0m`;
 
+/** Host only — never print the credentials in a connection string. */
+function dbHost(): string {
+  try {
+    const u = new URL(process.env.DATABASE_URL ?? '');
+    return u.hostname + (u.port ? `:${u.port}` : '');
+  } catch {
+    return 'unset';
+  }
+}
+
 async function main() {
+  const host = dbHost();
+  console.log(dim(`\nReading ${host}`));
+  if (host.startsWith('localhost') || host.startsWith('127.0.0.1')) {
+    console.log(
+      dim('That is the local dev database — real signups live in the Render Postgres.'),
+    );
+  }
+
   const rows = await prisma.waitlistSignup.findMany({ orderBy: { createdAt: 'asc' } });
 
   if (!rows.length) {
@@ -76,7 +94,22 @@ async function main() {
 
 main()
   .catch((err) => {
-    console.error('Failed:', err instanceof Error ? err.message : err);
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/Can't reach database server/i.test(msg)) {
+      // packages/server/.env points at localhost for development, and dotenv
+      // does not override a variable already set — so prefixing the command
+      // works without touching the file.
+      console.error(`\nCould not reach the database at ${dbHost()}.`);
+      console.error('\nThe production signups are in the Render Postgres. Get its');
+      console.error('External Database URL from the Render dashboard (the database');
+      console.error('instance, not the web service), then:\n');
+      console.error('  cd packages/server');
+      console.error('  DATABASE_URL="postgresql://…the external URL…" npx tsx scripts/waitlist.ts\n');
+      console.error(dim('Use the EXTERNAL URL — the internal one only resolves inside Render.'));
+      console.error(dim('Or open a shell on the Render service and run it there.\n'));
+    } else {
+      console.error('Failed:', msg);
+    }
     process.exitCode = 1;
   })
   .finally(() => prisma.$disconnect());
