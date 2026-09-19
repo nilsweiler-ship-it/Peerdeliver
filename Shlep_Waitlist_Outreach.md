@@ -156,3 +156,55 @@ keine Erinnerungen.
 - „Versichert" — es gibt keine Transportversicherung
 - Eine Bitte, die App herunterzuladen. Sie ist noch nicht im Store, und eine
   Bitte, die ins Leere läuft, verbrennt die Antwortbereitschaft für später.
+
+---
+
+## 4 · Antwort an jemanden, den das Formular abgewiesen hat
+
+Ömür Ergen wollte sich als Fahrer eintragen, bekam die Fehlermeldung und hat
+daraufhin von Hand geschrieben. Er ist damit der erste dokumentierte Beleg für
+den Rollen-Bug — und zugleich genau das Profil, das auf der Angebotsseite
+fehlte: eigenes Auto, Kategorie B, zeitlich flexibel, auch längere Strecken.
+
+**Den Fehler benennen, nicht kaschieren.** Wer sich die Mühe macht, nach einer
+Fehlermeldung trotzdem zu schreiben, merkt eine Ausrede sofort. Und er hat uns
+einen Gefallen getan.
+
+**Betreff:** Du bist eingetragen — und danke für den Hinweis
+
+> Guten Tag Herr Ergen
+>
+> Danke, dass Sie trotz der Fehlermeldung geschrieben haben. Die meisten hätten
+> die Seite geschlossen, und ich hätte nie erfahren, dass etwas kaputt ist.
+>
+> Der Fehler lag bei uns: Die Schaltflächen „Senden" und „Fahren" haben Werte
+> an unsere Schnittstelle geschickt, die diese nicht akzeptiert hat. Wer
+> ausdrücklich eine Rolle gewählt hat, wurde abgewiesen — nur wer die
+> Voreinstellung stehen liess, kam durch. Das ist behoben, und es gibt jetzt
+> eine automatische Prüfung, die genau diesen Fall vor jedem Release abfängt.
+>
+> Sie sind als **fahrende Person** auf der Warteliste eingetragen. Weitere
+> Angaben brauche ich im Moment nicht — Fahrzeug und Führerausweis werden
+> erfasst, sobald Sie eine Route veröffentlichen.
+>
+> Zwei Fragen, falls Sie Lust haben:
+>
+> **1. Welche Strecke fahren Sie regelmässig?**
+> Wir starten dort, wo sich mehrere Leute auf demselben Korridor finden — nicht
+> in der ganzen Schweiz gleichzeitig.
+>
+> **2. Was würden Sie mitnehmen, und was eher nicht?**
+> Ein Sofa? Nur Kleineres? Etwas, das Sie nicht im Auto haben möchten?
+>
+> Ehrlich zum Stand: Die App ist noch nicht im Store, und die Auszahlung an
+> fahrende Personen läuft noch nicht über echtes Geld. Ich sage Ihnen Bescheid,
+> sobald sich das ändert — und melde mich bei Ihnen zuerst, wenn wir auf Ihrer
+> Strecke starten.
+>
+> Freundliche Grüsse
+> Nils Weiler
+>
+> --
+> DeltaSci Solutions GmbH · Shlep
+> Jonas-Furrer-Strasse 104, 8400 Winterthur
+> hello@shlep.ch · shlep.ch
