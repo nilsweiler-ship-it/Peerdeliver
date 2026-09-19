@@ -16,7 +16,8 @@
     "preflight": "node scripts/preflight.mjs",
     "seed:testusers": "node scripts/seed-test-users.mjs",
     "price:check": "npm run shared:build && node scripts/price-sanity.mjs",
-    "stripe:test": "node scripts/stripe-e2e.mjs"
+    "stripe:test": "node scripts/stripe-e2e.mjs",
+    "waitlist": "cd packages/server && npx tsx scripts/waitlist.ts"
   },
   "prisma": {
     "schema": "packages/server/prisma/schema.prisma"
