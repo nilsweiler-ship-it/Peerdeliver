@@ -124,6 +124,32 @@ try {
   warn('i18n check skipped', e.message);
 }
 
+// ── Waitlist role values agree between the markup and the API ──────────────
+//
+// The website is plain JS with no build step, so it cannot import the shared
+// constant — the two definitions can drift, and they did. For weeks the
+// buttons sent `send` and `drive` while the API accepted `sender` and
+// `driver`, so every signup that expressed a preference was rejected with a
+// 400 and lost. Nothing failed visibly: the email fallback still returned
+// success and the form said thank you. This is the check that would have
+// caught it on day one.
+try {
+  const { WAITLIST_ROLES } = await import('../packages/shared/dist/constants/roles.js');
+  const html = readFileSync('website/index.html', 'utf8');
+  const inMarkup = [...html.matchAll(/data-role="([^"]+)"/g)].map((m) => m[1]);
+  const unknown = inMarkup.filter((r) => !WAITLIST_ROLES.includes(r));
+  if (!inMarkup.length) {
+    warn('waitlist roles match the API', 'no data-role buttons found');
+  } else if (unknown.length) {
+    fail('waitlist roles match the API',
+         `markup sends ${unknown.join(', ')} — API accepts ${WAITLIST_ROLES.join(', ')}`);
+  } else {
+    ok('waitlist roles match the API', inMarkup.join(', '));
+  }
+} catch (e) {
+  warn('waitlist role check skipped', e.message.includes('dist') ? 'run npm run shared:build' : e.message);
+}
+
 // ── Report ─────────────────────────────────────────────────────────────────
 const icon = { ok: '\x1b[32m✓\x1b[0m', fail: '\x1b[31m✗\x1b[0m', warn: '\x1b[33m!\x1b[0m' };
 console.log('\nPreflight — QA_PROTOCOL Stage 0\n' + '─'.repeat(60));

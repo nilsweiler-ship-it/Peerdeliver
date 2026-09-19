@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
+import { WAITLIST_ROLES } from '@peerdeliver/shared';
 import { prisma } from '../config';
 import { emailService } from '../services';
 
@@ -25,7 +26,7 @@ const honeypot = z.string().max(0).optional();
 
 const waitlistSchema = z.object({
   email: z.string().email().max(200),
-  role: z.enum(['sender', 'driver', 'both']).optional(),
+  role: z.enum(WAITLIST_ROLES).optional(),
   language: z.string().max(5).optional(),
   source: z.string().max(40).optional(),
   routeHint: z.string().max(300).optional(),
@@ -50,6 +51,15 @@ export async function waitlist(req: Request, res: Response, next: NextFunction) 
   try {
     const parsed = waitlistSchema.safeParse(req.body);
     if (!parsed.success) {
+      // Log it. A rejected signup is almost always our bug, not a bad actor —
+      // the site is the only caller, and for weeks it sent role=send while
+      // this schema wanted role=sender. Every one of those was a person who
+      // wanted to join, turned away in silence because the email fallback
+      // still reported success. Field names and values only; no email address.
+      const issues = parsed.error.issues
+        .map((i) => `${i.path.join('.')}=${JSON.stringify((req.body ?? {})[i.path[0] as string])}`)
+        .join(', ');
+      console.warn(`[waitlist:rejected] ${issues}`);
       return res.status(400).json({ success: false, error: 'Invalid submission' });
     }
     const { company, ...data } = parsed.data;
