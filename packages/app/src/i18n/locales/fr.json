@@ -284,7 +284,8 @@
     "earningsPayouts": "Revenus et versements",
     "payoutSetup": "Configurer les versements",
     "verificationTrust": "Vérification et confiance",
-    "helpSupport": "Aide et assistance"
+    "helpSupport": "Aide et assistance",
+    "impactEarly": "Encore au début — les économies arrivent avec les objets encombrants."
   },
   "verification": {
     "title": "Vérification et confiance",
@@ -417,7 +418,6 @@
   "more": {
     "memberSince": "Membre depuis {{year}}",
     "carTrips": "≈ {{count}} trajets en voiture évités",
-    "kmShared": "km partagés",
     "toNext": "{{kg}} kg avant {{name}}",
     "fullyGrown": "Pleinement développé 🌳",
     "phoneError": "Impossible de vérifier votre numéro de téléphone.",

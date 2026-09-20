@@ -1,6 +1,6 @@
 import { prisma, env } from '../config';
 import { computeSplit } from './payment';
-import { estimatePriceCHF, priceComparison } from '@peerdeliver/shared';
+import { estimatePriceCHF, priceComparison, computeCo2Saved } from '@peerdeliver/shared';
 import type { PackageSize, ComparisonResult } from '@peerdeliver/shared';
 
 /**
@@ -65,6 +65,14 @@ export interface QuoteResult {
     note: string;
   };
   co2SavedKg: number;
+  /** How that figure was arrived at, so a partner can explain or check it. */
+  co2: {
+    savedKg: number;
+    transportSavedKg: number;
+    packagingSavedKg: number;
+    beatsAlternativeOnTransport: boolean;
+    basis: string;
+  };
   /**
    * What the sender would otherwise pay, including when an alternative is
    * cheaper than us. A price with no reference invites the buyer to assume the
@@ -165,6 +173,14 @@ export async function quote(input: QuoteInput): Promise<QuoteResult> {
   const priceCHF = estimatePrice(distanceKm, input.size);
   const { platformFeeCHF, driverPayoutCHF } = computeSplit(priceCHF);
 
+  const co2 = computeCo2Saved({
+    distanceKm,
+    size: sizeClassFor(input.size),
+    // A partner quote happens before any driver is known, so the detour cannot
+    // be measured — the conservative assumed fraction applies.
+    packaging: null,
+  });
+
   const matchingRoutes = await countMatchingRoutes(input).catch(() => 0);
   const cov = coverageFor(matchingRoutes);
 
@@ -186,8 +202,21 @@ export async function quote(input: QuoteInput): Promise<QuoteResult> {
       paymentHeldUntilDelivery: true,
       note: 'Shlep introduces senders and drivers and is not a party to the transport agreement. No transport insurance is offered. The payment is held and released only after a code-confirmed handover.',
     },
-    // ~0.18 kg CO2 per km avoided vs. a dedicated van trip; conservative estimate.
-    co2SavedKg: Math.round(distanceKm * 0.18 * 10) / 10,
+    // Measured against what would otherwise have happened, marginally on both
+    // sides. For sizes the post would carry this comes out at or near zero —
+    // Post's consolidated round is hard to beat — and the quote says so rather
+    // than inventing a saving. See computeCo2Saved for the reasoning.
+    co2SavedKg: co2.savedKg,
+    co2: {
+      savedKg: co2.savedKg,
+      transportSavedKg: co2.transportSavedKg,
+      packagingSavedKg: co2.packagingSavedKg,
+      beatsAlternativeOnTransport: co2.beatsAlternativeOnTransport,
+      basis:
+        sizeClassFor(input.size) === 'XL'
+          ? 'Ersetzt eine eigene Fahrt (Möbeltaxi, Hin- und Rückweg).'
+          : 'Die Post fährt diese Adresse ohnehin an; der Transportvorteil liegt bei null. Gutgeschrieben wird nur die eingesparte Verpackung.',
+    },
     // Same-day is only claimed when supply on this corridor plausibly supports
     // it. `coverageFor` maps high/medium to a 2–6 hour expected match; low is
     // 24 hours and none has no drivers at all, neither of which is same-day in

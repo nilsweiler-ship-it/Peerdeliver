@@ -2,7 +2,7 @@ import { prisma } from '../config';
 import { generateCode } from '../utils';
 import { AppError } from '../middleware';
 import type { CreateDeliveryInput, PackageSize } from '@peerdeliver/shared';
-import { sizesUpTo, ALL_SIZES, DELIVERY_STATUS_TRANSITIONS } from '@peerdeliver/shared';
+import { sizesUpTo, ALL_SIZES, DELIVERY_STATUS_TRANSITIONS, computeCo2Saved } from '@peerdeliver/shared';
 import * as paymentService from './payment';
 import * as emailService from './email';
 import * as pushService from './push';
@@ -681,40 +681,57 @@ export async function verifyDelivery(deliveryId: string, driverId: string, code:
   );
 
   // ── Impact + stats ──────────────────────────────────────────────
-  // CO₂ saved ≈ the dedicated car trip this delivery avoided (the driver was
-  // already heading that way). distance_km × 0.12 kg CO₂/km (avg small car).
+  //
+  // The saving is measured against what would otherwise have happened,
+  // marginally on both sides — see computeCo2Saved in @peerdeliver/shared for
+  // the full reasoning. In short: the old figure here was distance × 0.12,
+  // which assumed the alternative was a dedicated car trip and that our own
+  // trip was free. For anything the post would have carried, both assumptions
+  // are wrong, and the honest transport saving is usually zero.
   const [{ km }] = await prisma.$queryRawUnsafe<{ km: number }[]>(
     `SELECT ST_Distance(dr."pickupPoint"::geography, dr."deliveryPoint"::geography) / 1000 AS km
        FROM delivery_requests dr WHERE dr.id = $1`,
     deliveryId,
   );
-  // Packaging avoided, in kg CO2e. A courier shipment of this size would need a
-  // new corrugated box; a hand-to-hand handover often needs nothing at all.
-  //
-  // Basis: roughly 0.7 kg CO2e per kg of corrugated board produced. Typical box
-  // weights by parcel size are ~0.15 kg (S), ~0.35 kg (M), ~0.8 kg (L), giving
-  // the figures below. Deliberately conservative — we would rather understate
-  // this number than have a partner audit it and find it inflated.
-  const PACKAGING_SAVED_KG: Record<string, Record<string, number>> = {
-    none: { S: 0.11, M: 0.25, L: 0.56 },
-    // Reusing a box that already exists avoids producing a new one, but the
-    // material was still made once, so credit is partial.
-    reused: { S: 0.05, M: 0.12, L: 0.28 },
-    // A new box is the courier baseline: no saving, but no penalty either.
-    cardboard: { S: 0, M: 0, L: 0 },
-    other: { S: 0, M: 0, L: 0 },
-  };
 
   const row = await prisma.deliveryRequest.findUnique({
     where: { id: deliveryId },
     select: { packaging: true, packageSize: true },
   });
 
-  const transportSavedKg = (km || 0) * 0.12;
-  const packagingSavedKg =
-    PACKAGING_SAVED_KG[row?.packaging ?? 'cardboard']?.[row?.packageSize ?? 'M'] ?? 0;
+  // Where this came from a driver's published route, the detour is knowable
+  // rather than assumed: how much further they drove than they would have.
+  let measuredDetourKm: number | undefined;
+  if (delivery.driverId) {
+    try {
+      const rows = await prisma.$queryRawUnsafe<{ detour: number }[]>(
+        `SELECT (
+             ST_Distance(r."originPoint"::geography, d."pickupPoint"::geography)
+           + ST_Distance(d."pickupPoint"::geography, d."deliveryPoint"::geography)
+           + ST_Distance(d."deliveryPoint"::geography, r."destinationPoint"::geography)
+           - ST_Distance(r."originPoint"::geography, r."destinationPoint"::geography)
+         ) / 1000 AS detour
+         FROM delivery_requests d
+         JOIN driver_routes r ON r."driverId" = d."driverId"
+        WHERE d.id = $1 AND r."isActive" = true
+        ORDER BY detour ASC
+        LIMIT 1`,
+        deliveryId,
+      );
+      if (rows[0]?.detour != null && rows[0].detour >= 0) measuredDetourKm = rows[0].detour;
+    } catch {
+      // Fall back to the assumed fraction; an impact figure must never break a
+      // delivery completing.
+    }
+  }
 
-  const co2SavedKg = Math.round((transportSavedKg + packagingSavedKg) * 100) / 100;
+  const impact = computeCo2Saved({
+    distanceKm: km || 0,
+    size: (row?.packageSize ?? 'M') as PackageSize,
+    packaging: row?.packaging ?? null,
+    detourKm: measuredDetourKm,
+  });
+  const co2SavedKg = impact.savedKg;
 
   await prisma.deliveryRequest.update({ where: { id: deliveryId }, data: { co2SavedKg } });
   // Credit both parties' lifetime impact; the driver also gets a completed delivery.

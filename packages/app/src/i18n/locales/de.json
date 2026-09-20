@@ -284,7 +284,8 @@
     "earningsPayouts": "Einnahmen & Auszahlungen",
     "payoutSetup": "Auszahlung einrichten",
     "verificationTrust": "Verifizierung & Vertrauen",
-    "helpSupport": "Hilfe & Support"
+    "helpSupport": "Hilfe & Support",
+    "impactEarly": "Noch am Anfang — spürbar wird es bei sperrigen Sendungen."
   },
   "verification": {
     "title": "Verifizierung & Vertrauen",
@@ -417,7 +418,6 @@
   "more": {
     "memberSince": "Mitglied seit {{year}}",
     "carTrips": "≈ {{count}} nie gefahrene Autofahrten",
-    "kmShared": "km geteilt",
     "toNext": "{{kg}} kg bis {{name}}",
     "fullyGrown": "Voll gewachsen 🌳",
     "phoneError": "Deine Telefonnummer konnte nicht verifiziert werden.",

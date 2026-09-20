@@ -47,7 +47,6 @@ export function ProfileScreen() {
   const co2Saved = user?.co2Saved ?? 0;
   const totalDeliveries = user?.totalDeliveries ?? 0;
   const carTrips = Math.max(0, Math.round(co2Saved / 1.6));
-  const kmShared = Math.round(co2Saved / 0.12); // ~120 g CO₂ / km saved
   const peopleConnected = totalDeliveries; // one person connected per delivery
   const rating = user?.averageRating ? user.averageRating.toFixed(1) : 'N/A';
   const memberYear = user?.createdAt ? new Date(user.createdAt).getFullYear() : '';
@@ -129,16 +128,13 @@ export function ProfileScreen() {
             <Text style={styles.impactOverline}>{t('profileExtra.lifetimeImpact').toUpperCase()}</Text>
           </View>
           <Text style={styles.impactAmount}>{co2Saved.toFixed(1)} kg</Text>
-          <Text style={styles.impactSub}>{t('more.carTrips', { count: carTrips })}</Text>
+          <Text style={styles.impactSub}>
+            {carTrips >= 1 ? t('more.carTrips', { count: carTrips }) : t('profileExtra.impactEarly')}
+          </Text>
           <View style={styles.impactStats}>
             <View style={styles.impactStat}>
               <Text style={styles.impactStatValue}>{totalDeliveries}</Text>
               <Text style={styles.impactStatLabel}>{t('profileExtra.deliveries')}</Text>
-            </View>
-            <View style={styles.impactDivider} />
-            <View style={styles.impactStat}>
-              <Text style={styles.impactStatValue}>{kmShared}</Text>
-              <Text style={styles.impactStatLabel}>{t('more.kmShared')}</Text>
             </View>
             <View style={styles.impactDivider} />
             <View style={styles.impactStat}>

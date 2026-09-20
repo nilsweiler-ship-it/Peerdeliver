@@ -284,7 +284,8 @@
     "earningsPayouts": "Guadagni e pagamenti",
     "payoutSetup": "Configura i pagamenti",
     "verificationTrust": "Verifica e fiducia",
-    "helpSupport": "Aiuto e assistenza"
+    "helpSupport": "Aiuto e assistenza",
+    "impactEarly": "Siamo agli inizi — il risparmio si vede con gli oggetti ingombranti."
   },
   "verification": {
     "title": "Verifica e fiducia",
@@ -417,7 +418,6 @@
   "more": {
     "memberSince": "Membro dal {{year}}",
     "carTrips": "≈ {{count}} viaggi in auto evitati",
-    "kmShared": "km condivisi",
     "toNext": "{{kg}} kg a {{name}}",
     "fullyGrown": "Completamente cresciuto 🌳",
     "phoneError": "Impossibile verificare il tuo numero di telefono.",

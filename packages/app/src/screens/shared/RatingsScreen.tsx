@@ -16,7 +16,7 @@ export function RatingsScreen({ navigation, route }: any) {
   const city = params.city ?? 'Bern';
   const driver = params.driver ?? 'your driver';
   const co2SavedKg =
-    typeof params.co2SavedKg === 'number' ? params.co2SavedKg : 1.8;
+    typeof params.co2SavedKg === 'number' ? params.co2SavedKg : 0;
 
   const [rating, setRating] = useState<number>(4.5);
 
@@ -45,7 +45,8 @@ export function RatingsScreen({ navigation, route }: any) {
           </Text>
         </View>
 
-        {/* Impact panel */}
+        {/* Impact panel — only when there is a saving to show. */}
+        {co2SavedKg >= 0.05 && (
         <View style={styles.impactCard}>
           <LeafMark size={22} color={colors.impactLeaf} />
           <Text style={styles.impactAmount}>{co2SavedKg.toFixed(1)} kg</Text>
@@ -54,6 +55,7 @@ export function RatingsScreen({ navigation, route }: any) {
             {t('delivered.because', { driver })}
           </Text>
         </View>
+        )}
 
         {/* Rating */}
         <View style={styles.ratingBlock}>

@@ -284,7 +284,8 @@
     "earningsPayouts": "Earnings & payouts",
     "payoutSetup": "Payout setup",
     "verificationTrust": "Verification & trust",
-    "helpSupport": "Help & support"
+    "helpSupport": "Help & support",
+    "impactEarly": "Early days — the savings show up on bulky items."
   },
   "verification": {
     "title": "Verification & trust",
@@ -417,7 +418,6 @@
   "more": {
     "memberSince": "Member since {{year}}",
     "carTrips": "≈ {{count}} car trips never made",
-    "kmShared": "km shared",
     "toNext": "{{kg}} kg to {{name}}",
     "fullyGrown": "Fully grown 🌳",
     "phoneError": "Could not verify your phone number.",
