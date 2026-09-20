@@ -25,6 +25,13 @@ Punkte und drückt auf Senden. Fünfzehn Sekunden, kein Nachdenken über Form.
 **Einzeln senden, nicht als Verteiler.** Ein BCC-Block sieht aus wie ein
 Newsletter und wird auch so behandelt.
 
+**Keinen Ausweg anbieten.** Eine frühere Fassung endete mit „Fällt dir nichts
+ein, ist das auch eine Antwort". Gut gemeint, aber die letzte Zeile vor der
+Grussformel wiegt schwer — und sie lud zum Nichtstun ein, bevor jemand auch nur
+nachgedacht hatte. Das Nein bekommen wir ohnehin: Wer nicht antwortet, hat
+geantwortet. Stattdessen steht dort jetzt, dass Ungefähres reicht und warum die
+eigene Strecke zählt. Das senkt die Hürde, ohne die Tür zu öffnen.
+
 **Absender:** hello@shlep.ch
 
 ---
@@ -49,8 +56,8 @@ Newsletter und wird auch so behandelt.
 > *Was: Kommode von Tutti*
 > *Bisher: Lieferwagen gemietet, CHF 140*
 >
-> Fällt dir nichts ein, ist das auch eine Antwort — dann bauen wir das Falsche,
-> und das will ich wissen.
+> Ungefähr reicht. Wir starten dort, wo sich die Strecken häufen — deine zählt
+> also mit.
 >
 > Danke
 > Nils
@@ -86,8 +93,8 @@ die Strecke an erster Stelle.
 > *Quoi : une commode achetée sur Anibis*
 > *Jusqu'ici : camionnette louée, CHF 140*
 >
-> Si rien ne vous vient, c'est aussi une réponse — cela voudra dire qu'on
-> construit la mauvaise chose, et je préfère le savoir.
+> Approximatif suffit. On démarre là où les trajets se recoupent — le vôtre
+> compte donc.
 >
 > Merci
 > Nils
