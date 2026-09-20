@@ -12,12 +12,13 @@
     "db:migrate": "prisma migrate dev --schema packages/server/prisma/schema.prisma",
     "db:studio": "prisma studio --schema packages/server/prisma/schema.prisma",
     "typecheck": "tsc -p packages/server/tsconfig.json --noEmit && tsc -p packages/app/tsconfig.json --noEmit",
-    "verify": "npm run db:generate && npm run typecheck && echo \"\\n✅ GREEN — types clean across server and app\"",
+    "verify": "npm run db:generate && npm run typecheck && echo \"\\n\u2705 GREEN \u2014 types clean across server and app\"",
     "preflight": "node scripts/preflight.mjs",
     "seed:testusers": "node scripts/seed-test-users.mjs",
     "price:check": "npm run shared:build && node scripts/price-sanity.mjs",
     "stripe:test": "node scripts/stripe-e2e.mjs",
-    "waitlist": "cd packages/server && npx tsx scripts/waitlist.ts"
+    "waitlist": "cd packages/server && npx tsx scripts/waitlist.ts",
+    "payment:battle": "npm run shared:build --silent && node scripts/payment-battle.mjs"
   },
   "prisma": {
     "schema": "packages/server/prisma/schema.prisma"

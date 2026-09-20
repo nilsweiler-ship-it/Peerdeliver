@@ -3,6 +3,7 @@ import { prisma, env } from '../config';
 import { AppError } from '../middleware';
 import { getStripe, stripeConfigured } from './stripe';
 import * as deliveryService from './delivery';
+import { splitBudget } from '@peerdeliver/shared';
 
 /**
  * Payments run in one of two modes:
@@ -21,11 +22,21 @@ export function computeSplit(budgetCHF: number): { platformFeeCHF: number; drive
   // 9% platform fee with a CHF 1.50 minimum: per-delivery costs (payment
   // processing, insurance, payout rails) are mostly fixed, so small tickets
   // need a floor to stay cost-covering.
-  const feePct = env.PLATFORM_FEE_PERCENT / 100;
-  const rawFee = Math.max(budgetCHF * feePct, env.PLATFORM_FEE_MIN_CHF);
-  const platformFeeCHF = Math.min(Math.round(rawFee * 100) / 100, budgetCHF);
-  const driverPayoutCHF = Math.round((budgetCHF - platformFeeCHF) * 100) / 100;
-  return { platformFeeCHF, driverPayoutCHF };
+  //
+  // The arithmetic itself moved to @peerdeliver/shared so it can be tested
+  // adversarially without booting a server or a database — see
+  // scripts/payment-battle.mjs.
+  //
+  // The previous version here was correct on rounding (checked: zero drift
+  // across every amount from CHF 0 to CHF 500) but passed hostile input
+  // straight through: computeSplit(NaN) returned NaN for both sides,
+  // Infinity returned an infinite fee, and a negative budget returned a
+  // negative fee. Any of those reaching stripe.transfers.create is an API
+  // error raised mid-delivery, with a driver already holding the parcel.
+  return splitBudget(budgetCHF, {
+    percent: env.PLATFORM_FEE_PERCENT,
+    minCHF: env.PLATFORM_FEE_MIN_CHF,
+  });
 }
 
 function makeTwintRef(): string {
@@ -202,26 +213,51 @@ export async function captureAndPayoutOnDelivered(deliveryId: string) {
   if (stripeConfigured() && delivery.stripePaymentIntentId) {
     const driver = await prisma.user.findUnique({ where: { id: delivery.driverId } });
     if (!driver?.stripeAccountId) throw new AppError(400, 'Driver has no Stripe account');
+
+    // A budget at or below the fee floor leaves the driver nothing, and Stripe
+    // rejects a zero-amount transfer. Refusing here turns an API error raised
+    // after a completed handover into a refusal at delivery creation time.
+    // (payment-battle.mjs 2.2 confirms Stripe's side of this.)
+    const payoutCents = roundCents(driverPayoutCHF);
+    if (payoutCents <= 0) {
+      throw new AppError(
+        400,
+        `Delivery ${deliveryId} would pay the driver nothing (budget ${delivery.budgetCHF} CHF is at or below the platform fee floor)`,
+      );
+    }
+
     const stripe = getStripe();
     let transferId: string | null = null;
     try {
       const transfer = await stripe.transfers.create(
         {
-          amount: roundCents(driverPayoutCHF),
+          amount: payoutCents,
           currency: 'chf',
           destination: driver.stripeAccountId,
           transfer_group: deliveryId,
           metadata: { deliveryRequestId: deliveryId },
         },
+        // Two concurrent captures of the same delivery — a retried webhook, a
+        // double-tapped verify — resolve to one transfer.
         { idempotencyKey: `delivery-transfer-${deliveryId}` },
       );
       transferId = transfer.id;
     } catch (err) {
-      if (env.NODE_ENV === 'development') {
-        console.warn(`[payments] Transfer failed for ${deliveryId}:`, (err as Error).message);
-      } else {
-        throw err;
-      }
+      // Previously this swallowed the error in development and then fell
+      // through to mark the delivery 'captured' with a null transfer id — the
+      // driver saw a completed payout that had never happened, which is the
+      // same false success the e2e script used to print.
+      //
+      // Leave the delivery 'authorised': the sender has paid, the driver has
+      // not been paid, and that is exactly what the row now says. The split is
+      // recorded so the amount owed is visible, and the idempotency key makes
+      // a later retry safe — it cannot produce a second transfer.
+      console.error(`[payments] Transfer failed for ${deliveryId}:`, (err as Error).message);
+      await prisma.deliveryRequest.update({
+        where: { id: deliveryId },
+        data: { platformFeeCHF, driverPayoutCHF },
+      });
+      throw err;
     }
     await prisma.deliveryRequest.update({
       where: { id: deliveryId },
@@ -248,17 +284,77 @@ export async function voidOnCancel(deliveryId: string) {
   if (stripeConfigured() && delivery.stripePaymentIntentId) {
     const stripe = getStripe();
     if (delivery.paymentStatus === 'authorised' || delivery.paymentStatus === 'captured') {
+      // Claw the driver's cut back BEFORE refunding the sender, and refund
+      // only what we actually recovered plus what never left.
+      //
+      // This used to be `.catch(() => {})` followed by an unconditional full
+      // refund. A reversal fails for an ordinary reason — the driver has
+      // already cashed out, so the connected balance is empty — and the old
+      // code then refunded the sender in full anyway, silently eating the
+      // payout. payment-battle.mjs 2.5 reproduces it end to end.
+      //
+      // Honest scope: this state is not currently reachable. A transfer only
+      // exists once the delivery is 'delivered', and DELIVERY_STATUS_TRANSITIONS
+      // allows nothing out of 'delivered', so no cancellation can arrive after
+      // a payout today. The guard is here because that is one transition-table
+      // edit away from being false, and the failure is silent when it happens.
+      let recoveredCHF = 0;
+      let reversalFailed: string | null = null;
       if (delivery.stripeTransferId) {
-        await stripe.transfers.createReversal(delivery.stripeTransferId, {}).catch(() => {});
+        try {
+          const reversal = await stripe.transfers.createReversal(
+            delivery.stripeTransferId,
+            {},
+            { idempotencyKey: `delivery-reversal-${deliveryId}` },
+          );
+          recoveredCHF = (reversal.amount ?? 0) / 100;
+        } catch (err) {
+          reversalFailed = (err as Error).message;
+        }
       }
+
+      if (reversalFailed) {
+        // Refund what is unambiguously ours to refund: the platform fee, which
+        // never left our balance. The driver's cut is now a debt to chase, not
+        // a number to quietly absorb — and refusing to guess keeps the sender
+        // from being told a full refund is on its way when it is not.
+        console.error(
+          `[payments] Reversal failed for ${deliveryId} (transfer ${delivery.stripeTransferId}): ${reversalFailed}. ` +
+            `Refunding the platform fee only; ${delivery.driverPayoutCHF ?? '?'} CHF is still with the driver.`,
+        );
+      }
+
+      const refundableCHF = reversalFailed
+        ? Math.max(0, delivery.budgetCHF - (delivery.driverPayoutCHF ?? 0))
+        : delivery.budgetCHF;
+
+      if (refundableCHF <= 0) {
+        await prisma.deliveryRequest.update({
+          where: { id: deliveryId },
+          data: { refundedCHF: 0, refundedAt: new Date() },
+        });
+        return;
+      }
+
       const refund = await stripe.refunds.create(
-        { payment_intent: delivery.stripePaymentIntentId },
+        { payment_intent: delivery.stripePaymentIntentId, amount: roundCents(refundableCHF) },
         { idempotencyKey: `delivery-refund-${deliveryId}` },
       );
+      const refundedCHF = (refund.amount ?? 0) / 100;
+
       await prisma.deliveryRequest.update({
         where: { id: deliveryId },
-        data: { paymentStatus: 'refunded', refundedCHF: (refund.amount ?? 0) / 100, refundedAt: new Date() },
+        data: {
+          // A partial refund is not a refunded delivery. Leaving it 'captured'
+          // keeps it visible as unfinished rather than filing it as resolved.
+          paymentStatus: reversalFailed ? delivery.paymentStatus : 'refunded',
+          refundedCHF,
+          refundedAt: new Date(),
+        },
       });
+      if (!reversalFailed && recoveredCHF > 0) {
+        console.log(`[payments] ${deliveryId} cancelled: recovered ${recoveredCHF} CHF, refunded ${refundedCHF} CHF`);
+      }
       return;
     }
     await stripe.paymentIntents.cancel(delivery.stripePaymentIntentId).catch(() => {});

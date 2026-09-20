@@ -246,3 +246,61 @@ export function priceComparison(
     verdict,
   };
 }
+
+// ───────────────────────── Fee split ─────────────────────────
+
+export interface FeePolicy {
+  /** Percent of the budget taken as platform fee. */
+  percent: number;
+  /** Floor in CHF, because per-delivery costs are mostly fixed. */
+  minCHF: number;
+}
+
+export const DEFAULT_FEE_POLICY: FeePolicy = { percent: 9, minCHF: 1.5 };
+
+export interface FeeSplit {
+  platformFeeCHF: number;
+  driverPayoutCHF: number;
+}
+
+/**
+ * Split a sender's budget into the platform's cut and the driver's payout.
+ *
+ * Lives in shared rather than in the server's payment service because it is
+ * pure arithmetic over money, and money arithmetic is the one thing worth
+ * testing adversarially without standing up a database. The server passes its
+ * configured policy in; nothing here reads env.
+ *
+ * Two properties this must hold for every input, and which payment-battle.mjs
+ * checks exhaustively:
+ *
+ *   1. fee + payout === budget, exactly, in integer cents. Any drift is money
+ *      created or destroyed by rounding.
+ *   2. Neither side is ever negative, NaN or Infinite. A NaN budget that
+ *      reached Stripe would become an API error mid-delivery, with a driver
+ *      already holding someone's sofa.
+ *
+ * Note what this deliberately does NOT do: it does not refuse a payout of
+ * zero. At a budget of CHF 1.50 the floor consumes the whole amount. That is
+ * arithmetically correct and the caller's problem — a zero-amount transfer is
+ * rejected by Stripe, so the guard belongs where the transfer is made, not
+ * here where it would silently invent a different fee.
+ */
+export function splitBudget(budgetCHF: number, policy: FeePolicy = DEFAULT_FEE_POLICY): FeeSplit {
+  // Work in integer cents throughout. Doing this in francs and rounding twice
+  // is how fee + payout stops adding up to the budget.
+  const budgetCents = Number.isFinite(budgetCHF) ? Math.max(0, Math.round(budgetCHF * 100)) : 0;
+  const pct = Number.isFinite(policy.percent) ? Math.max(0, policy.percent) : 0;
+  const minCents = Number.isFinite(policy.minCHF) ? Math.max(0, Math.round(policy.minCHF * 100)) : 0;
+
+  const rawFeeCents = Math.round((budgetCents * pct) / 100);
+  // The fee can never exceed the budget: a floor bigger than the ticket would
+  // otherwise produce a negative payout and a transfer Stripe would reject.
+  const feeCents = Math.min(Math.max(rawFeeCents, minCents), budgetCents);
+  const payoutCents = budgetCents - feeCents;
+
+  return {
+    platformFeeCHF: feeCents / 100,
+    driverPayoutCHF: payoutCents / 100,
+  };
+}
