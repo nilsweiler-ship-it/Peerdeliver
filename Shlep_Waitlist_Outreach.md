@@ -203,10 +203,87 @@ schreibt, merkt eine Ausrede.
 
 ---
 
+## 5 · Wenn ein Geschäft antwortet — die zweite Mail
+
+Die erste Mail fragt nur. Antwortet jemand, braucht es einen Grund
+weiterzumachen, und der muss aus ihrem Geschäft kommen, nicht aus unserem.
+
+**Warum nicht mit CO₂ eröffnen.** Naheliegend wäre „Shlep senkt euren
+CO₂-Fussabdruck". Nach der Neurechnung stimmt das nur für Sperriges. Bei einem
+normalen Paket ist die Post mit ihren gebündelten Touren kaum zu schlagen — pro
+Paket rund 0,1 kg, und eine fahrende Person, die extra einen Umweg macht, liegt
+eher darüber. Ein Shop, der nachrechnet oder eine Beraterin fragt, merkt das in
+zehn Minuten. Und wer beim CO₂ übertreibt, dem glaubt man den Rest auch nicht
+mehr. Also: CO₂ ja, aber an zweiter Stelle und nur dort, wo es trägt.
+
+**Womit stattdessen eröffnen: dem Umsatz, der heute nicht zustande kommt.**
+Jedes Sortiment hat Artikel, die nicht verschickt werden können — über 30 kg,
+über 200 cm, sperrig, zerbrechlich. Dafür steht im Shop „nur Abholung", und
+jede Kundin ohne Auto klickt weg. Das ist kein Kostenthema, sondern verlorener
+Umsatz, und niemand misst ihn, weil ein Nicht-Kauf keine Zeile in der
+Buchhaltung hinterlässt. Genau diese Artikel sind unser Fall.
+
+**Der Ablauf:** erst die drei Zeilen aus Mail 3 verstehen. Wer bei „Geht nicht
+gut" etwas Sperriges nennt, bekommt diese Mail. Wer nur kleine Pakete
+verschickt, bekommt sie nicht — für den sind wir heute nicht besser, und das
+sagen wir lieber selbst.
+
+**Betreff:** Die Artikel mit „nur Abholung"
+
+> Guten Tag
+>
+> Danke für die drei Zeilen — besonders für die zweite.
+>
+> Genau dort sind wir interessant. Artikel, bei denen im Shop „nur Abholung"
+> steht, verkaufen sich an alle ohne Auto nicht. Dieser Umsatz taucht nirgends
+> auf, weil ein Nicht-Kauf keine Zahl hinterlässt.
+>
+> Was Shlep dort tut: Im Checkout steht neben „Abholung" eine zweite Option mit
+> Preis und Zeitfenster. Jemand, der die Strecke ohnehin fährt, bringt den
+> Artikel. Ihr übergebt im Laden, bezahlt wird über uns, ihr habt mit dem
+> Transport nichts zu tun.
+>
+> Zum Vergleich, damit die Grössenordnung klar ist: Ein Möbeltaxi beginnt bei
+> rund CHF 90 plus CHF 1.50 pro Kilometer. Für dieselbe Strecke liegen wir
+> deutlich darunter, weil niemand eine Fahrt extra macht.
+>
+> Zum CO₂, ehrlich gerechnet: Bei sperrigen Artikeln ersetzen wir eine
+> Transporterfahrt hin und zurück — bei rund 20 km sind das etwa 10 kg CO₂ pro
+> Sendung. Bei normalen Paketen behaupten wir nichts: Die Post fährt die Adresse
+> ohnehin an und ist dort schwer zu schlagen. Wir rechnen es euch lieber richtig
+> vor als gross.
+>
+> Zwei Dinge fehlen noch, damit ihr nicht überrascht werdet: Die App ist noch
+> nicht im Store, und es gibt keine Transportversicherung — Shlep vermittelt und
+> ist nicht Partei des Transportvertrags. Für Artikel mit hohem Wert ist das
+> heute nichts.
+>
+> Wenn es passt: 20 Minuten, und ich zeige euch die Checkout-Option an einem
+> eurer Artikel statt an einem Beispiel.
+>
+> Freundliche Grüsse
+> Nils Weiler
+>
+> --
+> DeltaSci Solutions GmbH · Shlep
+> Jonas-Furrer-Strasse 104, 8400 Winterthur
+> hello@shlep.ch · shlep.ch
+
+**Was diese Mail bewusst nicht tut:** keine Prozentzahl zu Kaufabbrüchen. Es
+gibt Studien zu Versandkosten als Abbruchgrund, aber keine zu „nur Abholung" im
+Schweizer Möbel- und Sperrgutsegment. Eine fremde Zahl zu importieren und so
+klingen zu lassen, als sei sie ihre, wäre derselbe Fehler wie die alte
+CO₂-Formel. Der Shop kennt seine Artikel mit „nur Abholung" selbst — das reicht.
+
+---
+
 ## Was nicht hineingehört
 
 - Ein Startdatum, das wir nicht halten können
 - „Versichert" — es gibt keine Transportversicherung
+- Eine CO₂-Ersparnis pro Paket. Sie gilt für Sperriges, nicht für alles. Die
+  Zahl, die jede Lieferung gleich behandelt hat, ist aus Website, App und API
+  entfernt — sie gehört auch nicht in eine Mail zurück.
 - Eine Bitte, die App zu laden. Sie ist nicht im Store, und eine Bitte ins
   Leere verbrennt die Antwortbereitschaft für später.
 - Erklärungen, wie Shlep funktioniert. Sie haben sich eingetragen, sie wissen
