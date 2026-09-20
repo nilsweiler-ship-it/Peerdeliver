@@ -32,6 +32,14 @@ nachgedacht hatte. Das Nein bekommen wir ohnehin: Wer nicht antwortet, hat
 geantwortet. Stattdessen steht dort jetzt, dass Ungefähres reicht und warum die
 eigene Strecke zählt. Das senkt die Hürde, ohne die Tür zu öffnen.
 
+**Anrede: nur „Hallo" bzw. „Bonjour".** Aus einer Adresse lässt sich der
+Vorname meist nicht sicher ableiten, und mehrere der Adressen sehen nach
+Nachname-zuerst aus. Ein falscher Vorname ist schlimmer als keiner — er liest
+sich wie ein misslungener Serienbrief, also genau das, was wir vermeiden
+wollen. Wer den Namen sicher kennt (z. B. `vorname.nachname@`), darf ihn
+natürlich verwenden. Das Persönliche kommt ohnehin nicht aus der Anrede,
+sondern aus der Kürze und der konkreten Frage.
+
 **Absender:** hello@shlep.ch
 
 ---
@@ -40,7 +48,7 @@ eigene Strecke zählt. Das senkt die Hürde, ohne die Tür zu öffnen.
 
 **Betreff:** 3 Zeilen, 15 Sekunden?
 
-> Hallo [Vorname]
+> Hallo
 >
 > Du stehst auf der Shlep-Warteliste — danke. Ich bin Nils, ich baue Shlep.
 >
@@ -76,7 +84,7 @@ die Strecke an erster Stelle.
 
 **Objet :** 3 lignes, 15 secondes ?
 
-> Bonjour [Prénom]
+> Bonjour
 >
 > Vous êtes sur la liste d'attente de Shlep — merci. Je suis Nils, je construis
 > Shlep.
