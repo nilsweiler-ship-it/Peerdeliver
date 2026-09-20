@@ -115,9 +115,16 @@ die Strecke an erster Stelle.
 
 ## 3 · Geschäftskunden
 
-`info@kidslovevintage.ch` ist ein Shop, keine Privatperson. Unterschied: Privat
-fragen wir, was jemand verschickt *hätte*. Ein Geschäft hat Versandkosten in
-der Buchhaltung — echte Zahlen statt Erinnerungen.
+**Erst prüfen, dann schreiben.** Eine Anmeldung kam von
+`info@kidslovevintage.ch`. Eine `info@`-Adresse auf einer eigenen Domain
+*deutet* auf ein Unternehmen hin — mehr nicht. Die Website liess sich nicht
+aufrufen, es könnte also ein Laden, ein Einzelunternehmen, ein Hobbyprojekt
+oder eine geparkte Domain sein. Diese Mail erst senden, wenn klar ist, dass es
+dort ein Geschäft mit Versand gibt; sonst die normale Privatversion nehmen.
+
+Falls es ein Geschäft ist, lohnt der Unterschied: Privatpersonen fragen wir,
+was sie verschickt *hätten*. Ein Geschäft hat Versandkosten in der Buchhaltung
+— echte Zahlen statt Erinnerungen.
 
 **Betreff:** 3 Zeilen zu eurem Versand?
 
