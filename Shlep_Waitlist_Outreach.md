@@ -190,6 +190,12 @@ schreibt, merkt eine Ausrede.
 > **Strecke, die Sie regelmässig fahren:**
 > **Würde ich mitnehmen / eher nicht:**
 >
+> Damit es später keine Überraschung gibt, das Wichtigste zur Bezahlung: Geld
+> fliesst erst, wenn die Lieferung vollständig übergeben ist — die empfangende
+> Person bestätigt das mit einem Code. Wird unterwegs abgebrochen, gibt es
+> keine Teilzahlung. Dafür ist der Betrag ab dem Moment der Buchung
+> zurückbehalten, die sendende Person kann ihn also nicht mehr abziehen.
+>
 > Ehrlich zum Stand: Die App ist noch nicht im Store, und die Auszahlung läuft
 > noch nicht über echtes Geld. Ich melde mich, sobald sich das ändert.
 >

@@ -325,7 +325,7 @@
   "earnings": {
     "title": "Einnahmen",
     "pendingPayout": "Ausstehende Auszahlung",
-    "paidWeekly": "Wöchentlich auf dein Bankkonto ausgezahlt",
+    "paidWeekly": "Auszahlung erst nach bestätigter Übergabe",
     "thisWeek": "Diese Woche",
     "recentPayouts": "Letzte Auszahlungen",
     "noEarnings": "Noch keine Einnahmen"
@@ -430,5 +430,10 @@
     "onbStep3Sub": "Dein Anteil kommt nach jeder Zustellung an.",
     "earningsEmpty": "Abgeschlossene Lieferungen erscheinen hier."
   },
-  "tagline": "Dein Paket ist schon unterwegs."
+  "tagline": "Dein Paket ist schon unterwegs.",
+  "payout": {
+    "condition": "Bezahlt wird erst, wenn die Lieferung vollständig übergeben ist. Die empfangende Person bestätigt das mit einem Code.",
+    "conditionShort": "Auszahlung erst nach bestätigter Übergabe",
+    "partialNone": "Bei Abbruch unterwegs gibt es keine Teilzahlung."
+  }
 }

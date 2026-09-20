@@ -325,7 +325,7 @@
   "earnings": {
     "title": "Guadagni",
     "pendingPayout": "Pagamento in sospeso",
-    "paidWeekly": "Versato ogni settimana sul tuo conto bancario",
+    "paidWeekly": "Pagato solo dopo una consegna confermata",
     "thisWeek": "Questa settimana",
     "recentPayouts": "Pagamenti recenti",
     "noEarnings": "Ancora nessun guadagno"
@@ -430,5 +430,10 @@
     "onbStep3Sub": "La tua quota arriva dopo ogni consegna.",
     "earningsEmpty": "Le consegne completate appariranno qui."
   },
-  "tagline": "Il tuo pacco è già in viaggio."
+  "tagline": "Il tuo pacco è già in viaggio.",
+  "payout": {
+    "condition": "Il pagamento avviene quando la consegna è stata completata. Chi riceve lo conferma con un codice.",
+    "conditionShort": "Pagato solo dopo una consegna confermata",
+    "partialNone": "Un viaggio interrotto lungo il percorso non viene pagato in parte."
+  }
 }

@@ -70,7 +70,11 @@ export function EarningsScreen({ navigation }: any) {
           <RouteWatermark size={260} opacity={0.1} style={{ right: -60, top: -30 }} />
           <Text style={styles.heroOverline}>PENDING PAYOUT</Text>
           <Text style={styles.heroAmount}>CHF {pending.toFixed(2)}</Text>
-          <Text style={styles.heroSchedule}>Paid out weekly to your bank account</Text>
+          {/* The condition, not a schedule. "Paid out weekly" was a claim
+              about Stripe's payout timing that had never been checked; this
+              says the thing that is true and that a driver needs to know
+              before they are owed anything. */}
+          <Text style={styles.heroSchedule}>{t('payout.conditionShort')}</Text>
           <CO2Chip onDark label={`${co2Saved.toFixed(1)} kg CO₂ saved`} style={styles.heroChip} />
         </GradientSurface>
       </View>

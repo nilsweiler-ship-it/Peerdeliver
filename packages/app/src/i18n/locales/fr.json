@@ -325,7 +325,7 @@
   "earnings": {
     "title": "Revenus",
     "pendingPayout": "Versement en attente",
-    "paidWeekly": "Versé chaque semaine sur votre compte bancaire",
+    "paidWeekly": "Payé seulement après une remise confirmée",
     "thisWeek": "Cette semaine",
     "recentPayouts": "Versements récents",
     "noEarnings": "Aucun revenu pour l'instant"
@@ -430,5 +430,10 @@
     "onbStep3Sub": "Votre part arrive après chaque dépôt.",
     "earningsEmpty": "Les livraisons terminées apparaîtront ici."
   },
-  "tagline": "Votre colis est déjà en route."
+  "tagline": "Votre colis est déjà en route.",
+  "payout": {
+    "condition": "Le paiement a lieu une fois la livraison entièrement remise. La personne destinataire le confirme avec un code.",
+    "conditionShort": "Payé seulement après une remise confirmée",
+    "partialNone": "Un trajet interrompu en route n'est pas payé partiellement."
+  }
 }

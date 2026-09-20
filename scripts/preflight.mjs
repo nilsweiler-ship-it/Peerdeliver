@@ -11,7 +11,7 @@
  * Each check below corresponds to one of those, so they cannot recur silently.
  * Run: npm run preflight
  */
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -148,6 +148,62 @@ try {
   }
 } catch (e) {
   warn('waitlist role check skipped', e.message.includes('dist') ? 'run npm run shared:build' : e.message);
+}
+
+// ── A driver is paid only on a code-confirmed delivery ─────────────────────
+//
+// The promise: no money reaches a driver until the recipient has given them a
+// code proving the parcel arrived. That promise is currently true by
+// construction — there is exactly one call to captureAndPayoutOnDelivered, it
+// sits inside verifyDelivery, and verifyDelivery refuses to proceed without
+// the code. But "true by construction" is only as durable as the next person
+// who adds a second call site, and the failure would be silent: money leaves,
+// nothing errors.
+//
+// So the structure itself is asserted here. If this check fails, either the
+// promise changed (update the copy in the app, the terms, and the driver
+// outreach at the same time) or something paid out early.
+try {
+  const deliverySrc = readFileSync('packages/server/src/services/delivery.ts', 'utf8');
+  const paymentSrc = readFileSync('packages/server/src/services/payment.ts', 'utf8');
+
+  // Every call, ignoring the import and the definition itself.
+  const callSites = [...deliverySrc.matchAll(/captureAndPayoutOnDelivered\s*\(/g)];
+  const otherFiles = ['controllers', 'routes', 'services']
+    .flatMap((dir) => {
+      try {
+        return readdirSync(`packages/server/src/${dir}`)
+          .filter((f) => f.endsWith('.ts') && f !== 'delivery.ts' && f !== 'payment.ts')
+          .map((f) => [`${dir}/${f}`, readFileSync(`packages/server/src/${dir}/${f}`, 'utf8')]);
+      } catch {
+        return [];
+      }
+    })
+    .filter(([, src]) => /captureAndPayoutOnDelivered\s*\(/.test(src))
+    .map(([name]) => name);
+
+  // Is the one call inside verifyDelivery? Take the body from `export async
+  // function verifyDelivery` to the next top-level `export`.
+  const vdStart = deliverySrc.indexOf('export async function verifyDelivery');
+  const vdEnd = vdStart === -1 ? -1 : deliverySrc.indexOf('\nexport ', vdStart + 1);
+  const verifyBody = vdStart === -1 ? '' : deliverySrc.slice(vdStart, vdEnd === -1 ? undefined : vdEnd);
+
+  const insideVerify = /captureAndPayoutOnDelivered\s*\(/.test(verifyBody);
+  const gatedOnCode = /deliveryCode\s*!==\s*code/.test(verifyBody);
+  const transferCalls = (paymentSrc.match(/stripe\.transfers\.create\s*\(/g) ?? []).length;
+
+  const problems = [];
+  if (callSites.length !== 1) problems.push(`${callSites.length} call sites in delivery.ts`);
+  if (otherFiles.length) problems.push(`also called from ${otherFiles.join(', ')}`);
+  if (!insideVerify) problems.push('the call is not inside verifyDelivery');
+  if (!gatedOnCode) problems.push('verifyDelivery no longer checks the delivery code');
+  if (transferCalls !== 1) problems.push(`${transferCalls} transfer calls in payment.ts`);
+
+  problems.length
+    ? fail('payout only on a code-confirmed delivery', problems.join('; '))
+    : ok('payout only on a code-confirmed delivery', 'one call site, gated on the recipient code');
+} catch (e) {
+  warn('payout gate check skipped', e.message);
 }
 
 // ── Report ─────────────────────────────────────────────────────────────────

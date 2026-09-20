@@ -160,6 +160,13 @@ export function AvailableDeliveriesScreen({ navigation }: any) {
               {senderRating && <DetailRow label={t('driver.senderRating')} value={senderRating} mono />}
             </View>
 
+            {/* Said before the commitment, not discovered after it. A driver
+                who learns at the door that a broken-off trip pays nothing has
+                been misled by omission. */}
+            <Text style={styles.payoutTerms}>
+              {t('payout.condition')} {t('payout.partialNone')}
+            </Text>
+
             <Button
               title={`${t('driver.requestDelivery')}  →`}
               onPress={() => handleAccept(selectedDelivery)}
@@ -296,7 +303,13 @@ const styles = StyleSheet.create({
   detailValueMono: {
     fontFamily: typography.figure.fontFamily,
   },
-  cta: {
+  payoutTerms: {
     marginTop: spacing.lg,
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.textSecondary,
+  },
+  cta: {
+    marginTop: spacing.md,
   },
 });

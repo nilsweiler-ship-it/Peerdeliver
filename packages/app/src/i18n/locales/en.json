@@ -325,7 +325,7 @@
   "earnings": {
     "title": "Earnings",
     "pendingPayout": "Pending payout",
-    "paidWeekly": "Paid out weekly to your bank account",
+    "paidWeekly": "Paid only after a confirmed handover",
     "thisWeek": "This week",
     "recentPayouts": "Recent payouts",
     "noEarnings": "No earnings yet"
@@ -430,5 +430,10 @@
     "onbStep3Sub": "Your share arrives after each drop.",
     "earningsEmpty": "Completed deliveries will appear here."
   },
-  "tagline": "Your package is already on its way."
+  "tagline": "Your package is already on its way.",
+  "payout": {
+    "condition": "You are paid once the delivery has been handed over in full. The recipient confirms it with a code.",
+    "conditionShort": "Paid only after a confirmed handover",
+    "partialNone": "A trip broken off along the way is not paid in part."
+  }
 }
