@@ -381,10 +381,17 @@ export async function handleStripeEvent(event: Stripe.Event) {
       const intent = event.data.object as Stripe.PaymentIntent;
       const deliveryId = intent.metadata?.deliveryRequestId;
       if (!deliveryId) return;
-      await prisma.deliveryRequest.updateMany({
+      const { count } = await prisma.deliveryRequest.updateMany({
         where: { id: deliveryId, paymentStatus: { in: ['unpaid', 'failed'] } },
         data: { paymentStatus: 'authorised' },
       });
+      // Only on the transition, never on a webhook replay — Stripe redelivers,
+      // and a recipient does not want the same parcel announced twice.
+      //
+      // This was missing entirely: the simulated path and the Payrexx path both
+      // announced, but the real Stripe path did not. A sender paying by TWINT
+      // in production would have had their recipient told nothing at all.
+      if (count > 0) void deliveryService.announceToRecipient(deliveryId);
       return;
     }
     case 'payment_intent.payment_failed': {

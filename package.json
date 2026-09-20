@@ -18,7 +18,8 @@
     "price:check": "npm run shared:build && node scripts/price-sanity.mjs",
     "stripe:test": "node scripts/stripe-e2e.mjs",
     "waitlist": "cd packages/server && npx tsx scripts/waitlist.ts",
-    "payment:battle": "npm run shared:build --silent && node scripts/payment-battle.mjs"
+    "payment:battle": "npm run shared:build --silent && node scripts/payment-battle.mjs",
+    "payment:trace": "cd packages/server && npx tsx scripts/payment-trace.ts"
   },
   "prisma": {
     "schema": "packages/server/prisma/schema.prisma"

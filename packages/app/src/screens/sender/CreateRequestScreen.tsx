@@ -190,6 +190,12 @@ export function CreateRequestScreen({ navigation }: any) {
           paymentIntentClientSecret: clientSecret,
           merchantDisplayName: 'Shlep',
           allowsDelayedPaymentMethods: false,
+          // TWINT leaves the app entirely — the payment is approved in the
+          // TWINT app and control has to come back here. Without a returnURL
+          // the sheet hands off and never resolves: the money moves and the
+          // app sits waiting, which reads to the sender as a failed payment
+          // they are inclined to make again.
+          returnURL: 'shlep://stripe-redirect',
         });
         if (init.error) {
           Alert.alert(t('common.error'), init.error.message);
