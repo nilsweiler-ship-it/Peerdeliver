@@ -541,11 +541,16 @@ function suiteStripe(mode) {
       const bal = stripeCall(mode, 'GET', `/balance?stripe_account=${accountId}`);
       const available = bal.ok ? (bal.data.available?.[0]?.amount ?? 0) : 0;
       let drained = false;
+      let drainNote = '';
       if (available > 0) {
-        drained = stripeCall(mode, 'POST', `/payouts?stripe_account=${accountId}`, {
+        const payout = stripeCall(mode, 'POST', `/payouts?stripe_account=${accountId}`, {
           amount: available,
           currency: 'chf',
-        }).ok;
+        });
+        drained = payout.ok;
+        if (!payout.ok) drainNote = payout.error.message.slice(0, 70);
+      } else {
+        drainNote = bal.ok ? 'balance already empty' : 'could not read the balance';
       }
 
       // Step 1 — reverse before refunding.
@@ -593,6 +598,26 @@ function suiteStripe(mode) {
           ? `platform net ${chf(netCents / 100)}${reversal.ok ? '' : ' (fee retained, payout is a debt to chase)'}`
           : `platform out ${chf(Math.abs(netCents) / 100)} — the sender was refunded money that is with the driver`,
       );
+
+      // The check above has two branches and only one of them is the dangerous
+      // one. If the reversal succeeded, the money came back and a full refund
+      // was obviously safe — that proves the easy path, not the bug.
+      //
+      // Draining the connected account is what forces the hard branch, and it
+      // does not always work: a test Express account on an automatic payout
+      // schedule will not accept a manual payout, so the funds stay put and
+      // the reversal succeeds.
+      //
+      // Counting that as a pass would be the same error as printing "the money
+      // path works end to end" with an undefined transfer id. So it is a skip,
+      // and it says why.
+      if (reversal.ok) {
+        skip(
+          'the reversal-FAILURE branch of a cancellation',
+          `could not empty the connected account first${drainNote ? ` (${drainNote})` : ''} — ` +
+            'the reversal succeeded, so only the full-refund path was exercised',
+        );
+      }
 
       // The old code refunded the full budget here. Show what that would have
       // cost, so the assertion above is not an abstraction.
