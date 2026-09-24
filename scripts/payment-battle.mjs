@@ -31,8 +31,22 @@
  */
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 const require = createRequire(import.meta.url);
+
+// Shared with stripe-e2e.mjs on purpose: onboarding a test driver is the one
+// manual step in this whole toolchain, and doing it twice would be silly.
+const ACCOUNT_CACHE = new URL('../.stripe-e2e-account', import.meta.url).pathname;
+
+function cachedAccountId() {
+  try {
+    const id = readFileSync(ACCOUNT_CACHE, 'utf8').trim();
+    return id.startsWith('acct_') ? id : null;
+  } catch {
+    return null;
+  }
+}
 
 // The real implementation, not a copy of it. A battle test that reimplements
 // the thing it tests only proves the copy agrees with itself.
@@ -330,22 +344,59 @@ function suiteStripe(mode) {
   // Two verify calls land at once, or a webhook retries. Both read the delivery
   // as 'authorised' and both try to transfer. The only thing standing between
   // that and paying the driver twice is the idempotency key.
+  // Reuse the account stripe-e2e.mjs caches, rather than creating a fresh one
+  // per run. A newly created Express account has never been onboarded, so its
+  // transfers capability is inactive and EVERY scenario that moves money
+  // skips — which is what the first version of this script did, reporting
+  // "4 skipped" forever and never once exercising the path it exists for.
+  //
+  // One onboarding therefore unblocks both scripts.
   scenarioNo += 1;
-  const acct = stripeCall(mode, 'POST', '/accounts', {
-    type: 'express',
-    country: 'CH',
-    email: `battle-${run}@shlep.ch`,
-    capabilities: { transfers: { requested: 'true' } },
-    business_type: 'individual',
-    metadata: { shlepBattle: run },
-  });
-  if (!acct.ok) {
-    check('create a connected test account', false, acct.error.message);
-    console.log(dim('\n  Cannot continue suite 2 without a connected account.'));
-    return;
+  let accountId = cachedAccountId();
+  if (accountId) {
+    console.log(dim(`  reusing connected account ${accountId} ${dim('(from .stripe-e2e-account)')}`));
+  } else {
+    const acct = stripeCall(mode, 'POST', '/accounts', {
+      type: 'express',
+      country: 'CH',
+      email: `battle-${run}@shlep.ch`,
+      capabilities: { transfers: { requested: 'true' } },
+      business_type: 'individual',
+      metadata: { shlepBattle: run },
+    });
+    if (!acct.ok) {
+      check('create a connected test account', false, acct.error.message);
+      console.log(dim('\n  Cannot continue suite 2 without a connected account.'));
+      return;
+    }
+    accountId = acct.data.id;
+    try {
+      writeFileSync(ACCOUNT_CACHE, accountId);
+    } catch {
+      /* the cache is a convenience, not a requirement */
+    }
+    console.log(dim(`  created connected account ${accountId}`));
   }
-  const accountId = acct.data.id;
-  console.log(dim(`  using connected account ${accountId}`));
+
+  // Say up front whether the money scenarios can run at all, rather than
+  // letting each one fail with the same opaque capability error.
+  const acctState = stripeCall(mode, 'GET', `/accounts/${accountId}`);
+  const transfersActive = acctState.ok && acctState.data?.capabilities?.transfers === 'active';
+  if (!transfersActive) {
+    console.log(
+      y('\n  This account cannot receive transfers yet') +
+        dim(
+          ` (capability: ${acctState.ok ? (acctState.data?.capabilities?.transfers ?? 'not requested') : 'unknown'}).\n` +
+            '  Every scenario below that moves money will skip. To fix it once, for both\n' +
+            '  this script and npm run stripe:test:\n\n' +
+            '      npm run stripe:test        # prints a fresh onboarding link\n\n' +
+            "  Open the link and complete Stripe's hosted form with test data:\n" +
+            '      IBAN     CH9300762011623852957\n' +
+            '      address  any Swiss address; use line 1 "address_full_match"\n' +
+            '      DOB      01 / 01 / 1901\n',
+        ),
+    );
+  }
 
   const c1 = fundedCharge(mode, 69, 'double-capture');
   if (!c1.ok || c1.data.status !== 'succeeded') {
