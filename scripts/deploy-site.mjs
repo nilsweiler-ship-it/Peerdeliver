@@ -77,16 +77,19 @@ if (!site) {
   console.error(
     r('\nNo Netlify site configured.') +
       dim(
-        '\n\n  Link it once — from the website directory, so the CLI never sees the\n' +
-          '  workspace root and never offers to build packages/app:\n\n' +
-          '      cd website && npx netlify-cli@latest link\n\n' +
-          '  Pick the existing shlep.ch site. That writes website/.netlify/state.json\n' +
-          '  and every later deploy is just: npm run deploy:site\n\n' +
-          '  Or, if you would rather not link, set the id explicitly. Netlify\n' +
-          '  dashboard → Site configuration → Site information → Site ID:\n\n' +
-          '      NETLIFY_SITE_ID=<uuid> npm run deploy:site\n\n' +
-          '  Note it is the Site ID (a uuid), not "shlepch" from the dashboard URL —\n' +
-          '  that slug is what the previous attempt sent, and the API rejected it.\n',
+        '\n\n  Link it once, BY NAME. Run this from the website directory:\n\n' +
+          '      cd website && npx netlify-cli@latest link --name shlepch\n\n' +
+          '  The --name matters. Plain `netlify link` offers "Use current git remote\n' +
+          '  origin" first, which cannot work here: the site was never connected to\n' +
+          '  the repo — that is the entire problem this script exists for — so the\n' +
+          '  search returns "No matching project found".\n\n' +
+          "  If shlepch is not the name either, list what the account actually has:\n\n" +
+          '      npx netlify-cli@latest sites:list\n\n' +
+          '  Linking writes website/.netlify/state.json, and every later deploy is\n' +
+          '  just: npm run deploy:site\n\n' +
+          '  Or skip linking and pass the id. Netlify dashboard → Site configuration\n' +
+          '  → Site information → Site ID (a uuid, not the slug in the URL):\n\n' +
+          '      NETLIFY_SITE_ID=<uuid> npm run deploy:site\n',
       ),
   );
   process.exit(1);
