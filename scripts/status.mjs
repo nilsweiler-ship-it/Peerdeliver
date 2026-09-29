@@ -138,7 +138,24 @@ if (!health.ok) {
       'twilio',
       String(tw.liveCheck ?? 'unknown') + (tw.accountType === 'Trial' ? dim('  (trial: whitelisted numbers only)') : ''),
     );
-    line(j.resend?.apiKeyPresent ? g('✓') : y('!'), 'resend', j.resend?.apiKeyPresent ? 'configured' : 'no key — no email is sent');
+    const re = j.resend ?? {};
+    if (!re.apiKeyPresent) {
+      line(y('!'), 'resend', 'no key — no email is sent');
+      todo.push('Set RESEND_API_KEY on Render — signup and delivery emails are not being sent');
+    } else if (re.apiKeyLooksRight === false) {
+      line(r('✗'), 'resend', r('key is set but is not a Resend key (re_…) — every email is failing'));
+      todo.push('RESEND_API_KEY on Render is not a real key. Get one at resend.com/api-keys; it starts re_');
+    } else {
+      line(g('✓'), 'resend', 'configured');
+    }
+
+    const sender = j.twilioSender;
+    if (sender && sender.present && !sender.looksRight) {
+      line(r('✗'), 'twilio sender', r(`${sender.kind} — ${sender.note}`));
+      todo.push('TWILIO_FROM_NUMBER is not a sender. Use the +41… number or a Messaging Service SID (MG…)');
+    } else if (sender && sender.looksRight) {
+      line(g('✓'), 'twilio sender', sender.kind);
+    }
   }
 }
 

@@ -167,7 +167,31 @@ app.get('/health/integrations', async (_req, res) => {
     env: env.NODE_ENV,
     twilio,
     stripe,
-    resend: { apiKeyPresent: Boolean(process.env.RESEND_API_KEY) },
+    // Presence is not configuration. This reported "configured" for a value of
+    // the literal string ".env" — a paste accident that left every email
+    // silently failing while the health check said everything was fine. A
+    // check that only asks "is the variable set?" is the same class of mistake
+    // as a test that passes because it never ran.
+    resend: {
+      apiKeyPresent: Boolean(process.env.RESEND_API_KEY),
+      apiKeyLooksRight: /^re_[A-Za-z0-9_-]{10,}$/.test(process.env.RESEND_API_KEY ?? ''),
+    },
+    // Twilio's SID prefixes are meaningful: PN is a phone number, MG a
+    // Messaging Service, AD an Address. An Address SID here is not a sender,
+    // and direct sends fail. Verify has its own sender, so phone verification
+    // keeps working and hides it.
+    twilioSender: (() => {
+      const from = process.env.TWILIO_FROM_NUMBER ?? '';
+      if (!from) return { present: false, looksRight: false, note: 'no sender configured' };
+      if (/^\+[1-9]\d{6,14}$/.test(from)) return { present: true, looksRight: true, kind: 'phone number' };
+      if (from.startsWith('MG')) return { present: true, looksRight: true, kind: 'messaging service' };
+      return {
+        present: true,
+        looksRight: false,
+        kind: `${from.slice(0, 2)}… SID`,
+        note: 'not a phone number (+41…) or Messaging Service (MG…) — direct SMS will fail',
+      };
+    })(),
     payrexx: {
       instancePresent: Boolean(process.env.PAYREXX_INSTANCE),
       // Payrexx calls this the "API Secret" in its dashboard, and so does the
