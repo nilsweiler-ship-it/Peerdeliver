@@ -21,7 +21,7 @@
     "payment:battle": "npm run shared:build --silent && node scripts/payment-battle.mjs",
     "payment:trace": "cd packages/server && npx tsx scripts/payment-trace.ts",
     "status": "node scripts/status.mjs",
-    "deploy:site": "node scripts/preflight.mjs && npx netlify-cli@latest deploy --prod --dir=website --site=shlepch"
+    "deploy:site": "node scripts/deploy-site.mjs"
   },
   "prisma": {
     "schema": "packages/server/prisma/schema.prisma"

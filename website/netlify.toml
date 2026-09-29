@@ -1,0 +1,15 @@
+# The website is plain HTML, CSS and JS. There is nothing to build.
+#
+# This file exists to say so. Without it the Netlify CLI looks at the repo
+# root, finds npm workspaces, asks which package to build, and then tries to
+# build packages/app — an Expo React Native app that has no business being
+# compiled by a static host. That is the "We've detected multiple projects
+# inside your repository" prompt, and answering it any way at all is wrong.
+[build]
+  publish = "."
+  command = ""
+
+# Belt and braces: even if a future git-link points Netlify at the repo root,
+# it should treat this directory as the site and run nothing.
+[build.environment]
+  NETLIFY_USE_YARN = "false"
