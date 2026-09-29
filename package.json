@@ -19,7 +19,8 @@
     "stripe:test": "node scripts/stripe-e2e.mjs",
     "waitlist": "cd packages/server && npx tsx scripts/waitlist.ts",
     "payment:battle": "npm run shared:build --silent && node scripts/payment-battle.mjs",
-    "payment:trace": "cd packages/server && npx tsx scripts/payment-trace.ts"
+    "payment:trace": "cd packages/server && npx tsx scripts/payment-trace.ts",
+    "status": "node scripts/status.mjs"
   },
   "prisma": {
     "schema": "packages/server/prisma/schema.prisma"

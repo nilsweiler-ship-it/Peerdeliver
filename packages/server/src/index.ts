@@ -107,9 +107,66 @@ app.get('/health/integrations', async (_req, res) => {
     twilio.liveCheck = 'not_configured — codes are simulated, no SMS is sent';
   }
 
+  // Stripe, reported the same way: what is configured, and does it work.
+  //
+  // Two questions decide whether a real TWINT payment can complete, and
+  // neither is visible from the app:
+  //   · is a secret key set at all (else every payment is simulated), and
+  //   · is the webhook secret set (else Stripe takes the money and the
+  //     delivery stays 'unpaid' forever, which is the failure most likely to
+  //     be mistaken for a broken app).
+  // Never the key itself — only its mode and whether it authenticates.
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const stripe: Record<string, unknown> = {
+    secretKeyPresent: Boolean(stripeKey),
+    mode: stripeKey ? (stripeKey.startsWith('sk_live_') || stripeKey.startsWith('rk_live_') ? 'live' : 'test') : null,
+    webhookSecretPresent: Boolean(process.env.STRIPE_WEBHOOK_SECRET),
+    publishableKeyPresent: Boolean(process.env.STRIPE_PUBLISHABLE_KEY),
+    platformCountry: env.STRIPE_PLATFORM_COUNTRY,
+  };
+  if (stripeKey) {
+    try {
+      const r = await fetch('https://api.stripe.com/v1/balance', {
+        headers: { Authorization: `Bearer ${stripeKey}` },
+      });
+      if (r.ok) {
+        stripe.liveCheck = 'ok';
+        // TWINT has to be enabled on the account AND approved by TWINT before
+        // a sender ever sees it. The capability sits 'pending' until TWINT has
+        // verified the site's legal notice, which is not something the app can
+        // report and is easy to assume is done.
+        try {
+          const acct = await fetch('https://api.stripe.com/v1/account', {
+            headers: { Authorization: `Bearer ${stripeKey}` },
+          });
+          if (acct.ok) {
+            const a = (await acct.json()) as { capabilities?: Record<string, string> };
+            stripe.twintCapability = a.capabilities?.twint_payments ?? 'not_requested';
+            stripe.transfersCapability = a.capabilities?.transfers ?? 'not_requested';
+          }
+        } catch {
+          /* capability lookup is a nice-to-have */
+        }
+      } else if (r.status === 401) {
+        stripe.liveCheck = 'auth_failed — STRIPE_SECRET_KEY is wrong or revoked';
+      } else {
+        stripe.liveCheck = `unexpected_${r.status}`;
+      }
+    } catch (err) {
+      stripe.liveCheck = `unreachable — ${err instanceof Error ? err.message : 'error'}`;
+    }
+  } else {
+    stripe.liveCheck = 'not_configured — payments are simulated, no money moves';
+  }
+  if (stripeKey && !process.env.STRIPE_WEBHOOK_SECRET) {
+    stripe.warning =
+      'Secret key set but no webhook secret: Stripe will take the payment and the delivery will stay unpaid.';
+  }
+
   res.json({
     env: env.NODE_ENV,
     twilio,
+    stripe,
     resend: { apiKeyPresent: Boolean(process.env.RESEND_API_KEY) },
     payrexx: {
       instancePresent: Boolean(process.env.PAYREXX_INSTANCE),
