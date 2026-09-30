@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Auszahlung eingerichtet — Shlep</title>
+<meta name="robots" content="noindex" />
+<style>
+  :root{--accent:#E0A32E;--paper:#F3EFE6;--ink:#17160F;--ink2:#57534A;--line:rgba(23,22,15,.13)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'IBM Plex Sans',system-ui,-apple-system,sans-serif;background:var(--paper);color:var(--ink);
+       min-height:100svh;display:grid;place-items:center;padding:24px;line-height:1.5}
+  .card{max-width:420px;text-align:center;background:#FBFAF4;border:1px solid var(--line);
+        border-radius:22px;padding:40px 28px}
+  .mark{width:64px;height:64px;margin:0 auto 20px;border-radius:999px;background:var(--accent);
+        display:grid;place-items:center}
+  h1{font-size:26px;letter-spacing:-.02em;margin-bottom:10px}
+  p{color:var(--ink2);font-size:15.5px}
+  a.btn{display:inline-block;margin-top:26px;background:var(--ink);color:var(--paper);
+        padding:14px 26px;border-radius:999px;font-weight:600;font-size:15px;text-decoration:none}
+  small{display:block;margin-top:18px;color:#8a867c;font-size:13px}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="mark">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#17160F" stroke-width="2.8"
+           stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>
+    </div>
+    <h1>Auszahlung eingerichtet</h1>
+    <p>Deine Angaben sind bei Stripe hinterlegt. Sobald eine Lieferung per Code bestätigt ist, wird dein Anteil automatisch überwiesen.</p>
+    <a class="btn" href="shlep://payouts/return">Zurück zur App</a>
+    <small>Öffnet sich nichts, schliess dieses Fenster einfach.</small>
+  </div>
+  <script>
+    // Most drivers arrive here inside Stripe's in-app browser, where an
+    // immediate scheme jump is usually allowed. If it is blocked, the button
+    // above is the fallback — so never rely on this alone.
+    setTimeout(function () { try { location.href = 'shlep://payouts/return'; } catch (e) {} }, 400);
+  </script>
+</body>
+</html>

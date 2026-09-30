@@ -30,8 +30,16 @@ export function OnboardingScreen({ navigation }: any) {
     try {
       const { url } = await start.mutateAsync({});
       await WebBrowser.openBrowserAsync(url);
-    } catch {
-      Alert.alert('Something went wrong', 'Could not start payout setup. Please try again.');
+    } catch (err: any) {
+      // Show what the server actually said. "Please try again" hid a failure
+      // that no amount of trying could fix: the account link was being created
+      // with a custom-scheme return URL, which Stripe rejects outright.
+      const detail =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        'Unknown error';
+      Alert.alert('Payout setup failed', String(detail));
     }
   };
 
