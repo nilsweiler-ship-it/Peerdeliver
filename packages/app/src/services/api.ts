@@ -15,6 +15,12 @@ const storage = Platform.OS === 'web'
 // a release build would have failed DNS.
 const API_URL = __DEV__ ? resolveDevApiUrl() : 'https://api.shlep.ch';
 
+// Say which server this build is talking to, once, on startup. Getting this
+// wrong produces a timeout, and a timeout surfaces as the app's generic
+// "etwas ist schiefgelaufen" — indistinguishable from a wrong password. One
+// line in the Metro log turns twenty minutes of guessing into a glance.
+if (__DEV__) console.log(`[api] talking to ${API_URL}`);
+
 export const api = axios.create({
   baseURL: `${API_URL}/api`,
   headers: {
