@@ -435,5 +435,32 @@
     "condition": "Bezahlt wird erst, wenn die Lieferung vollständig übergeben ist. Die empfangende Person bestätigt das mit einem Code.",
     "conditionShort": "Auszahlung erst nach bestätigter Übergabe",
     "partialNone": "Bei Abbruch unterwegs gibt es keine Teilzahlung."
+  },
+  "payoutSetup": {
+    "title": "Auszahlung",
+    "heroOverline": "GELD ERHALTEN",
+    "heroHeadline": "Einmalig ein paar Angaben — danach kommt dein Anteil automatisch.",
+    "cardTitle": "Einmalig einrichten",
+    "cardSub": "Rund zwei Minuten. Die Angaben gehen direkt an Stripe, unseren Zahlungspartner — bei Shlep landen sie nie.",
+    "step1Title": "Identität bestätigen",
+    "step1Sub": "Name, Geburtsdatum, Adresse. Vorgeschrieben, sobald Geld an Privatpersonen fliesst.",
+    "step2Title": "Bankkonto angeben",
+    "step2Sub": "Deine IBAN — dorthin geht die Auszahlung.",
+    "step3Title": "Das war's",
+    "step3Sub": "Ab dann wird nach jeder bestätigten Lieferung automatisch überwiesen.",
+    "whyTitle": "Warum nicht einfach TWINT?",
+    "whyBody": "TWINT kann Geld entgegennehmen, aber nicht auszahlen — eine Schnittstelle dafür gibt es schlicht nicht. Deshalb geht deine Auszahlung aufs Bankkonto. Dein TWINT hängt ohnehin am selben Konto.",
+    "privacyTitle": "Was Shlep davon sieht",
+    "privacyBody": "Nichts. Weder IBAN noch Geburtsdatum werden bei uns gespeichert. Stripe ist als Zahlungsinstitut reguliert und übernimmt die Prüfung — genau deshalb vermitteln wir nur und halten dein Geld nicht.",
+    "cta": "Auszahlung einrichten",
+    "doneTitle": "Auszahlung aktiv",
+    "doneSub": "Alles bereit.",
+    "doneNote": "Nach jeder per Code bestätigten Lieferung geht dein Anteil automatisch auf dein Konto.",
+    "demoTitle": "Auszahlung bereit (Demo)",
+    "demoSub": "Du kannst Lieferungen annehmen.",
+    "demoNote": "In dieser Version werden Auszahlungen simuliert — es sind keine Bankdaten nötig.",
+    "failed": "Einrichtung fehlgeschlagen",
+    "bannerTitle": "Auszahlung noch nicht eingerichtet",
+    "bannerBody": "Einmalig einrichten, damit dein Verdienst bei dir ankommt."
   }
 }

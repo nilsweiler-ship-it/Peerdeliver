@@ -116,8 +116,8 @@ export function AvailableDeliveriesScreen({ navigation }: any) {
                   <Feather name="alert-circle" size={18} color={colors.signalText} />
                 </View>
                 <View style={styles.flex}>
-                  <Text style={styles.bannerTitle}>Complete payout setup</Text>
-                  <Text style={styles.bannerBody}>Add your bank details before accepting deliveries.</Text>
+                  <Text style={styles.bannerTitle}>{t('payoutSetup.bannerTitle')}</Text>
+                  <Text style={styles.bannerBody}>{t('payoutSetup.bannerBody')}</Text>
                 </View>
                 <Feather name="chevron-right" size={18} color={colors.signalText} />
               </TouchableOpacity>

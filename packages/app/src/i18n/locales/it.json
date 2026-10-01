@@ -435,5 +435,32 @@
     "condition": "Il pagamento avviene quando la consegna è stata completata. Chi riceve lo conferma con un codice.",
     "conditionShort": "Pagato solo dopo una consegna confermata",
     "partialNone": "Un viaggio interrotto lungo il percorso non viene pagato in parte."
+  },
+  "payoutSetup": {
+    "title": "Pagamenti",
+    "heroOverline": "FARSI PAGARE",
+    "heroHeadline": "Pochi dati, una volta sola — poi la tua parte arriva da sé.",
+    "cardTitle": "Da configurare una volta",
+    "cardSub": "Circa due minuti. I dati vanno direttamente a Stripe, il nostro partner di pagamento — da Shlep non passano mai.",
+    "step1Title": "Conferma la tua identità",
+    "step1Sub": "Nome, data di nascita, indirizzo. Obbligatorio quando il denaro va a privati.",
+    "step2Title": "Indica il conto bancario",
+    "step2Sub": "Il tuo IBAN — lì arriva il pagamento.",
+    "step3Title": "Fatto",
+    "step3Sub": "Da quel momento vieni pagato automaticamente dopo ogni consegna confermata.",
+    "whyTitle": "Perché non semplicemente TWINT?",
+    "whyBody": "TWINT può incassare ma non pagare — un'interfaccia per farlo non esiste. Il pagamento passa quindi dal tuo conto bancario. Il tuo TWINT è comunque collegato allo stesso conto.",
+    "privacyTitle": "Cosa ne vede Shlep",
+    "privacyBody": "Nulla. Né il tuo IBAN né la tua data di nascita vengono conservati da noi. Stripe è un istituto di pagamento regolamentato ed esegue la verifica — proprio per questo noi ci limitiamo a mettere in contatto e non deteniamo mai il tuo denaro.",
+    "cta": "Configura i pagamenti",
+    "doneTitle": "Pagamenti attivi",
+    "doneSub": "Tutto pronto.",
+    "doneNote": "Dopo ogni consegna confermata con il codice la tua parte arriva automaticamente sul tuo conto.",
+    "demoTitle": "Pagamenti pronti (demo)",
+    "demoSub": "Puoi accettare consegne.",
+    "demoNote": "Questa versione simula i pagamenti — non servono dati bancari.",
+    "failed": "Configurazione non riuscita",
+    "bannerTitle": "Pagamenti non ancora configurati",
+    "bannerBody": "Configuralo una volta, così i tuoi guadagni ti raggiungono."
   }
 }

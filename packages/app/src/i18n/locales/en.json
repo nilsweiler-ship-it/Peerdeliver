@@ -435,5 +435,32 @@
     "condition": "You are paid once the delivery has been handed over in full. The recipient confirms it with a code.",
     "conditionShort": "Paid only after a confirmed handover",
     "partialNone": "A trip broken off along the way is not paid in part."
+  },
+  "payoutSetup": {
+    "title": "Payouts",
+    "heroOverline": "GET PAID",
+    "heroHeadline": "A few details, once — after that your share arrives on its own.",
+    "cardTitle": "Set up once",
+    "cardSub": "About two minutes. The details go straight to Stripe, our payment partner — they never reach Shlep.",
+    "step1Title": "Confirm your identity",
+    "step1Sub": "Name, date of birth, address. Required by law once money goes to private individuals.",
+    "step2Title": "Add your bank account",
+    "step2Sub": "Your IBAN — where the payout lands.",
+    "step3Title": "That's it",
+    "step3Sub": "From then on you're paid automatically after each confirmed delivery.",
+    "whyTitle": "Why not just TWINT?",
+    "whyBody": "TWINT can take money in but cannot pay it out — no interface for that exists. So payouts go to your bank account. Your TWINT is linked to that same account anyway.",
+    "privacyTitle": "What Shlep sees of this",
+    "privacyBody": "Nothing. Neither your IBAN nor your date of birth is stored with us. Stripe is a regulated payment institution and performs the check — which is exactly why we only connect people and never hold your money.",
+    "cta": "Set up payouts",
+    "doneTitle": "Payouts active",
+    "doneSub": "All set.",
+    "doneNote": "After every code-confirmed delivery your share goes to your account automatically.",
+    "demoTitle": "Payouts ready (demo)",
+    "demoSub": "You can accept deliveries.",
+    "demoNote": "This build simulates payouts — no bank details are needed.",
+    "failed": "Setup failed",
+    "bannerTitle": "Payouts not set up yet",
+    "bannerBody": "Set this up once so your earnings can reach you."
   }
 }

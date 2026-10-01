@@ -435,5 +435,32 @@
     "condition": "Le paiement a lieu une fois la livraison entièrement remise. La personne destinataire le confirme avec un code.",
     "conditionShort": "Payé seulement après une remise confirmée",
     "partialNone": "Un trajet interrompu en route n'est pas payé partiellement."
+  },
+  "payoutSetup": {
+    "title": "Versements",
+    "heroOverline": "ÊTRE PAYÉ",
+    "heroHeadline": "Quelques informations, une seule fois — ensuite votre part arrive toute seule.",
+    "cardTitle": "À configurer une fois",
+    "cardSub": "Environ deux minutes. Les informations vont directement à Stripe, notre partenaire de paiement — elles n'arrivent jamais chez Shlep.",
+    "step1Title": "Confirmer votre identité",
+    "step1Sub": "Nom, date de naissance, adresse. Obligatoire dès que de l'argent est versé à des particuliers.",
+    "step2Title": "Indiquer votre compte bancaire",
+    "step2Sub": "Votre IBAN — là où arrive le versement.",
+    "step3Title": "C'est tout",
+    "step3Sub": "Ensuite, vous êtes payé automatiquement après chaque livraison confirmée.",
+    "whyTitle": "Pourquoi pas simplement TWINT ?",
+    "whyBody": "TWINT peut encaisser mais pas verser — aucune interface n'existe pour cela. Le versement passe donc par votre compte bancaire. Votre TWINT est de toute façon lié à ce même compte.",
+    "privacyTitle": "Ce que Shlep en voit",
+    "privacyBody": "Rien. Ni votre IBAN ni votre date de naissance ne sont conservés chez nous. Stripe est un établissement de paiement réglementé et effectue la vérification — c'est précisément pour cela que nous ne faisons que mettre en relation, sans jamais détenir votre argent.",
+    "cta": "Configurer les versements",
+    "doneTitle": "Versements actifs",
+    "doneSub": "Tout est prêt.",
+    "doneNote": "Après chaque livraison confirmée par code, votre part arrive automatiquement sur votre compte.",
+    "demoTitle": "Versements prêts (démo)",
+    "demoSub": "Vous pouvez accepter des livraisons.",
+    "demoNote": "Cette version simule les versements — aucune coordonnée bancaire n'est nécessaire.",
+    "failed": "Échec de la configuration",
+    "bannerTitle": "Versements pas encore configurés",
+    "bannerBody": "À configurer une fois pour que vos gains vous parviennent."
   }
 }
