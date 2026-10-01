@@ -42,9 +42,22 @@ function dbHost(): string {
  * worth a look — and during a test protocol it is the thing you are looking
  * for.
  */
-function assess(status: string, paymentStatus: string, transferId: string | null): { level: 'ok' | 'warn' | 'bad'; note: string } {
+function assess(
+  status: string,
+  paymentStatus: string,
+  transferId: string | null,
+  intentId: string | null,
+): { level: 'ok' | 'warn' | 'bad'; note: string } {
+  // A delivery with no PaymentIntent was created while the server was in
+  // simulated mode — no Stripe call was ever made, so there is no transfer to
+  // look for and a missing one is not a fault. Flagging these red was a false
+  // alarm that made a correct history look broken.
+  const simulated = !intentId;
+
   if (status === 'delivered' && paymentStatus === 'captured' && !transferId) {
-    return { level: 'bad', note: 'captured with NO transfer id — the driver has not been paid' };
+    return simulated
+      ? { level: 'ok', note: 'simulated — split recorded, no real money moved' }
+      : { level: 'bad', note: 'captured with NO transfer id — the driver has not been paid' };
   }
   if (status === 'delivered' && paymentStatus === 'authorised') {
     return { level: 'warn', note: 'delivered but not captured — the payout failed or never ran' };
@@ -105,12 +118,13 @@ async function main() {
   }
 
   for (const d of rows) {
-    const { level, note } = assess(d.status, d.paymentStatus, d.stripeTransferId);
+    const { level, note } = assess(d.status, d.paymentStatus, d.stripeTransferId, d.stripePaymentIntentId);
     const mark = level === 'ok' ? g('✓') : level === 'warn' ? y('!') : r('✗');
     const expected = splitBudget(d.budgetCHF);
 
     console.log(
-      `\n${mark} ${bold(d.packageDescription?.slice(0, 40) || '(no description)')}  ${dim(d.id)}`,
+      `\n${mark} ${bold(d.packageDescription?.slice(0, 40) || '(no description)')}  ${dim(d.id)}` +
+        (d.stripePaymentIntentId ? g('  [stripe]') : dim('  [simulated]')),
     );
     console.log(`  status ${bold(d.status)}  ·  payment ${bold(d.paymentStatus)}  ${dim(note)}`);
     console.log(
