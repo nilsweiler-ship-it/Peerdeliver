@@ -36,4 +36,38 @@ const envSchema = z.object({
   PAYREXX_RETURN_BASE: z.string().default('https://shlep.ch'),
 });
 
-export const env = envSchema.parse(process.env);
+/**
+ * Parse, and when it fails say which variable and what is wrong with it.
+ *
+ * A raw ZodError prints a fifty-line stack trace in which the useful content
+ * is one word. Worse, the most common cause by far is a placeholder pasted
+ * verbatim out of documentation or a chat message — `<external url>`,
+ * `sk_test_…`, `postgresql://…` — which has cost this project hours more than
+ * once, including an ellipsis that failed as a *network* error because U+2026
+ * is not valid in an HTTP header.
+ *
+ * So placeholders are detected by shape and named as such.
+ */
+function parseEnv() {
+  const result = envSchema.safeParse(process.env);
+  if (result.success) return result.data;
+
+  const lines = result.error.issues.map((i) => {
+    const key = String(i.path[0]);
+    const raw = process.env[key] ?? '';
+    const looksLikePlaceholder =
+      /[<>]/.test(raw) || /[…]/.test(raw) || /\.\.\.$/.test(raw) || raw === '.env';
+    const detail = looksLikePlaceholder
+      ? `looks like a placeholder, not a real value: "${raw.slice(0, 40)}"`
+      : i.message;
+    return `  ${key}: ${detail}`;
+  });
+
+  console.error(
+    `\n\x1b[31mEnvironment is not usable.\x1b[0m\n\n${lines.join('\n')}\n\n` +
+      '  Values come from packages/server/.env, or from the shell for a one-off run.\n',
+  );
+  process.exit(1);
+}
+
+export const env = parseEnv();
