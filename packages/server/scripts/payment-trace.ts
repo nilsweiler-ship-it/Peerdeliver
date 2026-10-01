@@ -159,7 +159,29 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error(r(`\n  ${e.message}\n`));
+    const msg = String(e?.message ?? e);
+    // The usual failure is not a broken script but the wrong database. This
+    // runs from a laptop, where DATABASE_URL comes from packages/server/.env —
+    // typically a local dev database that isn't running, or Render's INTERNAL
+    // url, which only resolves from inside Render's own network.
+    if (/localhost|127\.0\.0\.1|ENOTFOUND|Can't reach database server/i.test(msg)) {
+      console.error(r('\n  Cannot reach the database.\n'));
+      console.error(
+        dim(
+          `  Connecting to: ${dbHost()}\n\n` +
+            '  To read the LIVE data, pass Render\'s EXTERNAL database url —\n' +
+            '  the internal one (dpg-…-a with no domain) only works inside Render:\n\n' +
+            '      Render dashboard → shlep_db → Connect → External Database URL\n\n' +
+            '      cd packages/server\n' +
+            '      DATABASE_URL="postgresql://…frankfurt-postgres.render.com/shlep_db" \\\n' +
+            '        npx tsx scripts/payment-trace.ts\n\n' +
+            '  If it times out instead, the database\'s inbound IP rules no longer\n' +
+            '  include this machine. Re-check with: curl -4 ifconfig.me\n',
+        ),
+      );
+    } else {
+      console.error(r(`\n  ${msg}\n`));
+    }
     process.exitCode = 1;
   })
   .finally(() => prisma.$disconnect());
