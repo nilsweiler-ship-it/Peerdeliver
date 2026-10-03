@@ -183,6 +183,19 @@ export function CreateRequestScreen({ navigation }: any) {
       const delivery = await createDelivery.mutateAsync(input);
       const clientSecret = (delivery as any)?.clientSecret as string | null | undefined;
 
+      // Which of the two payment paths a delivery takes is decided here, and
+      // until now it was decided silently. A sender who is never asked to pay
+      // cannot tell whether the server is in simulated mode, the key is
+      // missing, or the sheet failed to open — and neither could anyone
+      // debugging it. Say which branch was taken, once, in the dev log.
+      if (__DEV__) {
+        console.log(
+          `[payment] delivery ${delivery?.id} → ${
+            clientSecret ? 'REAL (Stripe sheet)' : 'SIMULATED (no clientSecret from server)'
+          }`,
+        );
+      }
+
       if (clientSecret) {
         // REAL mode: confirm the Stripe TWINT PaymentIntent via the Payment Sheet
         // (TWINT app-switch). The webhook marks the delivery authorised.
@@ -198,12 +211,14 @@ export function CreateRequestScreen({ navigation }: any) {
           returnURL: 'shlep://stripe-redirect',
         });
         if (init.error) {
-          Alert.alert(t('common.error'), init.error.message);
+          if (__DEV__) console.log('[payment] initPaymentSheet failed:', JSON.stringify(init.error));
+          Alert.alert('Zahlung konnte nicht geöffnet werden', String(init.error.message));
           navigation.navigate('MyShipments');
           return;
         }
         const sheet = await presentPaymentSheet();
         if (sheet.error) {
+          if (__DEV__) console.log('[payment] presentPaymentSheet:', JSON.stringify(sheet.error));
           // Cancelled/failed — delivery exists but unpaid; they can retry later.
           Alert.alert(t('common.error'), sheet.error.message);
           navigation.navigate('MyShipments');
