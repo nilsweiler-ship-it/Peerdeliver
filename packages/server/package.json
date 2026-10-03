@@ -10,7 +10,9 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "preflight": "cd ../.. && npm run preflight",
-    "verify": "cd ../.. && npm run verify"
+    "verify": "cd ../.. && npm run verify",
+    "payment:trace": "tsx scripts/payment-trace.ts",
+    "waitlist": "tsx scripts/waitlist.ts"
   },
   "dependencies": {
     "@peerdeliver/shared": "*",
