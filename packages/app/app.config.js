@@ -24,11 +24,32 @@ const base = require('./app.json');
 
 const stripePublishableKey = process.env.EXPO_PUBLIC_STRIPE_PK || '';
 
-if (stripePublishableKey && !/^pk_(test|live)_/.test(stripePublishableKey)) {
-  throw new Error(
-    `EXPO_PUBLIC_STRIPE_PK is set but does not look like a publishable key: "${stripePublishableKey.slice(0, 12)}…".\n` +
-      'Expected pk_test_… or pk_live_…. A secret key (sk_…) must never be in the app bundle.',
-  );
+if (stripePublishableKey) {
+  const k = stripePublishableKey;
+  // A placeholder copied out of documentation or a chat message passes a naive
+  // prefix check: "pk_test_..." starts with pk_test_. It then travels all the
+  // way into the bundle and fails at the payment sheet as "Invalid API key",
+  // several steps and twenty minutes away from the paste that caused it.
+  const placeholder = /[<>…]/.test(k) || /\.{3}$/.test(k) || /_(\.{3}|…)/.test(k);
+  if (placeholder) {
+    throw new Error(
+      `EXPO_PUBLIC_STRIPE_PK is a placeholder, not a key: "${k}".\n` +
+        'Copy the real value from https://dashboard.stripe.com/test/apikeys (Publishable key).',
+    );
+  }
+  if (!/^pk_(test|live)_/.test(k)) {
+    throw new Error(
+      `EXPO_PUBLIC_STRIPE_PK does not look like a publishable key: "${k.slice(0, 12)}…".\n` +
+        'Expected pk_test_… or pk_live_…. A secret key (sk_…) must never enter the app bundle.',
+    );
+  }
+  // Real publishable keys are long. Anything this short is a truncation.
+  if (k.length < 30) {
+    throw new Error(
+      `EXPO_PUBLIC_STRIPE_PK is too short to be a real key (${k.length} characters).\n` +
+        'It was probably truncated when copied — reveal and copy the whole value.',
+    );
+  }
 }
 
 module.exports = ({ config }) => ({
