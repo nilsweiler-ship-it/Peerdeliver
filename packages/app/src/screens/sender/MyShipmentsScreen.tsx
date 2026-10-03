@@ -791,6 +791,8 @@ const styles = StyleSheet.create({
     fontSize: 30,
     color: colors.signalText,
     letterSpacing: 8,
+    // Same trailing-gap correction as the recipient's code.
+    marginRight: -8,
     marginBottom: spacing.xs,
   },
   codeReminderHint: {

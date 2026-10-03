@@ -84,7 +84,9 @@ export function IncomingDeliveriesScreen() {
                   </Text>
 
                   <TicketStub title={t('recipient.deliveryCodeTitle')} locked style={styles.stub}>
-                    <Text style={styles.code}>{sel.deliveryCode}</Text>
+                    <Text style={styles.code} numberOfLines={1} adjustsFontSizeToFit>
+                      {sel.deliveryCode}
+                    </Text>
                     {validUntil && (
                       <View style={styles.validPill}>
                         <Feather name="clock" size={12} color={colors.impact} />
@@ -230,11 +232,14 @@ const styles = StyleSheet.create({
   },
   code: {
     ...typography.code,
-    fontSize: 46,
-    lineHeight: 52,
-    letterSpacing: 9,
+    fontSize: 42,
+    lineHeight: 50,
+    letterSpacing: 8,
+    // Cancels the trailing letter-space RN adds after the final digit.
+    marginRight: -8,
     color: colors.text,
     textAlign: 'center',
+    alignSelf: 'stretch',
   },
   validPill: {
     flexDirection: 'row',
