@@ -118,6 +118,15 @@ if (!health.ok) {
     } else {
       const modeMark = s.mode === 'live' ? y('!') : g('✓');
       line(modeMark, 'stripe', `${s.mode} mode · ${s.liveCheck}`);
+      if (!s.publishableKeyPresent) {
+        line(r('✗'), 'stripe publishable key', r('not set — the app cannot open a payment sheet'));
+        todo.push(
+          'Set STRIPE_PUBLISHABLE_KEY on Render, copied from the SAME Stripe account as the ' +
+            'secret key. The app now takes its key from the API, so this is what guarantees they match.',
+        );
+      } else {
+        line(g('✓'), 'stripe publishable key', `set${s.accountId ? ` · ${s.accountId}` : ''}`);
+      }
       if (!s.webhookSecretPresent) {
         line(r('✗'), 'stripe webhook secret', r('missing — payments will succeed and stay unpaid'));
         todo.push('Set STRIPE_WEBHOOK_SECRET on Render, or every payment silently fails to register');

@@ -119,9 +119,21 @@ app.get('/health/integrations', async (_req, res) => {
   const stripeKey = process.env.STRIPE_SECRET_KEY;
   const stripe: Record<string, unknown> = {
     secretKeyPresent: Boolean(stripeKey),
+    // The account this server's secret key belongs to. A PaymentIntent is
+    // bound to one account, so an app holding a publishable key from a
+    // DIFFERENT account fails with "client_secret does not match any
+    // associated PaymentIntent" — a message that names neither account and
+    // sends you looking at the delivery instead of at the keys. Printing the
+    // id here makes the comparison possible.
+    accountId: null as string | null,
     mode: stripeKey ? (stripeKey.startsWith('sk_live_') || stripeKey.startsWith('rk_live_') ? 'live' : 'test') : null,
     webhookSecretPresent: Boolean(process.env.STRIPE_WEBHOOK_SECRET),
     publishableKeyPresent: Boolean(process.env.STRIPE_PUBLISHABLE_KEY),
+    // Publishable keys are public by design: they identify the account and can
+    // only create payments, never read data or move money. Returning it lets
+    // the app take its key from the same place as the secret, which is the
+    // only reliable way to guarantee the two belong to one account.
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || null,
     platformCountry: env.STRIPE_PLATFORM_COUNTRY,
   };
   if (stripeKey) {
@@ -140,7 +152,8 @@ app.get('/health/integrations', async (_req, res) => {
             headers: { Authorization: `Bearer ${stripeKey}` },
           });
           if (acct.ok) {
-            const a = (await acct.json()) as { capabilities?: Record<string, string> };
+            const a = (await acct.json()) as { id?: string; capabilities?: Record<string, string> };
+            stripe.accountId = a.id ?? null;
             stripe.twintCapability = a.capabilities?.twint_payments ?? 'not_requested';
             stripe.transfersCapability = a.capabilities?.transfers ?? 'not_requested';
           }
