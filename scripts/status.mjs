@@ -124,6 +124,12 @@ if (!health.ok) {
           'Set STRIPE_PUBLISHABLE_KEY on Render, copied from the SAME Stripe account as the ' +
             'secret key. The app now takes its key from the API, so this is what guarantees they match.',
         );
+      } else if (s.publishableKeyValid === false) {
+        line(r('✗'), 'stripe publishable key', r(String(s.publishableKeyProblem)));
+        todo.push(
+          `STRIPE_PUBLISHABLE_KEY is wrong: ${s.publishableKeyProblem}. Take it from ` +
+            `https://dashboard.stripe.com/test/apikeys while signed in to ${s.accountId}.`,
+        );
       } else {
         line(g('✓'), 'stripe publishable key', `set${s.accountId ? ` · ${s.accountId}` : ''}`);
       }

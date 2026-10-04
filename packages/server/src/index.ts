@@ -156,6 +156,38 @@ app.get('/health/integrations', async (_req, res) => {
             stripe.accountId = a.id ?? null;
             stripe.twintCapability = a.capabilities?.twint_payments ?? 'not_requested';
             stripe.transfersCapability = a.capabilities?.transfers ?? 'not_requested';
+
+            // Does the publishable key belong to this account, in this mode?
+            //
+            // Reporting only that it is "set" is how a pk_live_ key from a
+            // different account sat here looking green while every payment
+            // sheet failed with "client_secret does not match any associated
+            // PaymentIntent". Presence is not correctness — the same mistake
+            // this file already fixed for RESEND_API_KEY.
+            //
+            // Stripe embeds the account in the key: acct_1TL4Ba9s4LgD9mOs
+            // appears inside pk_test_51TL4Ba9s4LgD9mOs… . Comparing that
+            // fragment catches a key from the wrong account; comparing the
+            // test/live prefix catches the wrong mode.
+            const pk = process.env.STRIPE_PUBLISHABLE_KEY;
+            if (pk) {
+              const problems: string[] = [];
+              const secretIsLive = Boolean(
+                stripeKey && (stripeKey.startsWith('sk_live_') || stripeKey.startsWith('rk_live_')),
+              );
+              const pubIsLive = pk.startsWith('pk_live_');
+              if (secretIsLive !== pubIsLive) {
+                problems.push(
+                  `mode mismatch: secret key is ${secretIsLive ? 'live' : 'test'}, publishable key is ${pubIsLive ? 'live' : 'test'}`,
+                );
+              }
+              const fragment = (a.id ?? '').replace(/^acct_1/, '');
+              if (fragment && !pk.includes(fragment)) {
+                problems.push(`belongs to a different Stripe account than ${a.id}`);
+              }
+              stripe.publishableKeyValid = problems.length === 0;
+              if (problems.length) stripe.publishableKeyProblem = problems.join('; ');
+            }
           }
         } catch {
           /* capability lookup is a nice-to-have */
