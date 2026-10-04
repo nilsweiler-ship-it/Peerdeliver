@@ -1,7 +1,12 @@
 node_modules/
 dist/
+# Every env file, however it is named. A backup copy made during a one-off
+# edit — .env.backup — was not matched by the two explicit entries that used
+# to be here, got committed with real keys in it, and was only caught by
+# GitHub's push protection. The example file is the one deliberate exception.
 .env
-.env.local
+.env.*
+!.env.example
 *.log
 .DS_Store
 .expo/
