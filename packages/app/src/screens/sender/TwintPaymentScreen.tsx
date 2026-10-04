@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import Svg, { Rect } from 'react-native-svg';
 import { useTwintPay } from '../../queries/payment';
-import { colors, spacing, typography, borderRadius } from '../../theme';
+import { spacing, typography, borderRadius } from '../../theme';
 
 // TWINT brand: near-black surface with the signature magenta accent.
 const TWINT_BG = '#0B0B0F';
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   qrFrame: {
-    padding: 8,
+    padding: spacing.sm,
     backgroundColor: '#FFFFFF',
     borderRadius: borderRadius.md,
   },
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.5)',
     letterSpacing: 1.2,
     marginTop: spacing.lg,
-    marginBottom: 6,
+    marginBottom: spacing.sm,
   },
   input: {
     ...typography.body,
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
     borderColor: TWINT_BORDER,
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing.md,
-    paddingVertical: 14,
+    paddingVertical: spacing.md,
     fontFamily: typography.figure.fontFamily,
   },
   payButton: {
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: spacing.sm,
     marginTop: spacing.md,
   },
   secureText: {

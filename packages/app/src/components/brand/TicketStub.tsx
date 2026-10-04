@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import Svg, { Line } from 'react-native-svg';
 import { Feather } from '@expo/vector-icons';
-import { colors, typography, borderRadius, spacing, shadow } from '../../theme';
+import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 
 interface TicketStubProps {
   title: string;
@@ -53,9 +53,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: spacing.sm,
     backgroundColor: colors.signalSoft,
-    paddingVertical: 10,
+    paddingVertical: spacing.sm,
   },
   headerText: {
     ...typography.overline,

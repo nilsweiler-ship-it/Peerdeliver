@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, spacing, typography, borderRadius, shadow, statusColors } from '../../theme';
+import { colors, statusColors, spacing, typography, borderRadius, shadow } from '../../theme';
 import { Button, Badge, Card } from '../../components/ui';
 import { Avatar } from '../../components/ui/Avatar';
 import { Input } from '../../components/ui/Input';
@@ -263,17 +263,17 @@ export function ShowcaseScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg },
-  kicker: { ...typography.overline, color: colors.textLight, letterSpacing: 1.4, marginTop: 4, marginBottom: spacing.lg },
+  kicker: { ...typography.overline, color: colors.textLight, letterSpacing: 1.4, marginTop: spacing.xs, marginBottom: spacing.lg },
   section: { marginBottom: spacing.xl, gap: spacing.sm },
   sectionTitle: { ...typography.h3, color: colors.text, marginBottom: spacing.xs },
   row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
   hr: { height: 1, backgroundColor: colors.borderLight, marginVertical: spacing.md },
   swatchGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  swatch: { width: 96, gap: 4 },
-  swatchChip: { height: 48, borderRadius: borderRadius.md, borderWidth: 1, justifyContent: 'flex-end', padding: 4 },
+  swatch: { width: 96, gap: spacing.xs },
+  swatchChip: { height: 48, borderRadius: borderRadius.md, borderWidth: 1, justifyContent: 'flex-end', padding: spacing.xs },
   swatchHex: { fontFamily: typography.overline.fontFamily, fontSize: 9 },
   swatchName: { ...typography.caption, color: colors.textSecondary },
-  codeField: { marginTop: spacing.md, alignSelf: 'stretch', textAlign: 'center', ...typography.bodySmall, color: colors.textSecondary, backgroundColor: colors.surfaceAlt, borderRadius: borderRadius.md, paddingVertical: 8, borderWidth: 1, borderColor: colors.border },
+  codeField: { marginTop: spacing.md, alignSelf: 'stretch', textAlign: 'center', ...typography.bodySmall, color: colors.textSecondary, backgroundColor: colors.surfaceAlt, borderRadius: borderRadius.md, paddingVertical: spacing.sm, borderWidth: 1, borderColor: colors.border },
   darkPanel: { borderRadius: borderRadius.xl, overflow: 'hidden', padding: spacing.xl, minHeight: 240, justifyContent: 'center', ...shadow.card },
   darkTitle: { fontFamily: typography.display.fontFamily, fontSize: 30, color: colors.textInverse },
   darkSub: { ...typography.bodySmall, color: 'rgba(255,255,255,0.66)' },

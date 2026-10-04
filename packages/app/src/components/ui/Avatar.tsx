@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
-import { colors, typography } from '../../theme';
+import { colors } from '../../theme';
 
 interface AvatarProps {
   uri?: string | null;

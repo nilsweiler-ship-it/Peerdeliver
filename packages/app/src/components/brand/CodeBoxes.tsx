@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, typography, borderRadius } from '../../theme';
+import { colors, spacing, typography, borderRadius } from '../../theme';
 
 interface CodeBoxesProps {
   /** Current entered value (0–length chars). */
@@ -32,7 +32,7 @@ export function CodeBoxes({ value, length = 6, showActive = true }: CodeBoxesPro
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.sm,
     justifyContent: 'center',
   },
   box: {

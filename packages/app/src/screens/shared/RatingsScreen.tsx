@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   impactCaption: {
     ...typography.bodyStrong,
     color: colors.impactOnDark,
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   impactSub: {
     ...typography.bodySmall,
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   star: {
-    padding: 2,
+    padding: spacing.xxs,
   },
   starFilled: {
     textShadowColor: 'rgba(233,162,59,0.5)',

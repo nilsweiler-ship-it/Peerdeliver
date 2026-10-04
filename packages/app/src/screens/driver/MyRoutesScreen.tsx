@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     ...typography.overline,
     color: colors.textLight,
     letterSpacing: 1.2,
-    marginBottom: 2,
+    marginBottom: spacing.xxs,
   },
   headerRow: {
     flexDirection: 'row',

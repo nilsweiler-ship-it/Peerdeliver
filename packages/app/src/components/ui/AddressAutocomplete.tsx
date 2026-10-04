@@ -8,7 +8,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { colors, spacing, borderRadius, typography, shadow } from '../../theme';
+import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 
 interface GeoAdminResult {
   id: number;
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   label: {
     ...typography.bodyStrong,
     color: colors.text,
-    marginBottom: 6,
+    marginBottom: spacing.sm,
   },
   input: {
     ...typography.body,
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing.md,
-    paddingVertical: 14,
+    paddingVertical: spacing.md,
     color: colors.text,
   },
   inputFocused: {
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.lg,
-    marginTop: 6,
+    marginTop: spacing.sm,
     maxHeight: 240,
     overflow: 'hidden',
     ...shadow.sheet,
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   },
   suggestion: {
     paddingHorizontal: spacing.md,
-    paddingVertical: 12,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
   },

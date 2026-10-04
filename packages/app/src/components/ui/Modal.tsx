@@ -9,7 +9,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { colors, spacing, typography, borderRadius } from '../../theme';
 
 interface ModalProps {
   visible: boolean;

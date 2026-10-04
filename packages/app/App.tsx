@@ -6,15 +6,11 @@ import Constants from 'expo-constants';
 import { useFonts } from 'expo-font';
 import { StripeProvider } from './src/lib/stripe';
 import {
+  BricolageGrotesque_400Regular,
+  BricolageGrotesque_500Medium,
   BricolageGrotesque_600SemiBold,
   BricolageGrotesque_700Bold,
 } from '@expo-google-fonts/bricolage-grotesque';
-import {
-  IBMPlexSans_400Regular,
-  IBMPlexSans_500Medium,
-  IBMPlexSans_600SemiBold,
-  IBMPlexSans_700Bold,
-} from '@expo-google-fonts/ibm-plex-sans';
 import {
   IBMPlexMono_500Medium,
   IBMPlexMono_700Bold,
@@ -76,13 +72,14 @@ function useStripeKey(): { key: string; ready: boolean } {
 
 export default function App() {
   const stripeKeyState = useStripeKey();
+  // Two families, six faces. IBM Plex Sans is gone: Bricolage now carries
+  // body text as well as display, which is four fewer font files to download
+  // before the first screen can paint.
   const [fontsLoaded, fontError] = useFonts({
+    BricolageGrotesque_400Regular,
+    BricolageGrotesque_500Medium,
     BricolageGrotesque_600SemiBold,
     BricolageGrotesque_700Bold,
-    IBMPlexSans_400Regular,
-    IBMPlexSans_500Medium,
-    IBMPlexSans_600SemiBold,
-    IBMPlexSans_700Bold,
     IBMPlexMono_500Medium,
     IBMPlexMono_700Bold,
   });

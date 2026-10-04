@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import Svg, { Line } from 'react-native-svg';
-import { colors, typography, spacing } from '../../theme';
+import { colors, spacing, typography } from '../../theme';
 
 type Endpoint = string | { label: string; sub?: string };
 
@@ -111,10 +111,10 @@ const styles = StyleSheet.create({
   },
   vRail: {
     alignItems: 'center',
-    paddingTop: 4,
+    paddingTop: spacing.xs,
   },
   vDash: {
-    marginVertical: 2,
+    marginVertical: spacing.xxs,
   },
   vText: {
     flex: 1,

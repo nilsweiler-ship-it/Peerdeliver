@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, typography } from '../../theme';
+import { colors, spacing, typography } from '../../theme';
 
 interface StepperProps {
   steps: string[];
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   label: {
     ...typography.caption,
     color: colors.textSecondary,
-    marginTop: 6,
+    marginTop: spacing.sm,
   },
   labelActive: {
     color: colors.text,

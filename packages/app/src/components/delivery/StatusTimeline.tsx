@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, spacing, typography } from '../../theme';
+import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { DeliveryStatus } from '@peerdeliver/shared';
 
 const STATUSES: { key: DeliveryStatus; label: string }[] = [
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   dot: {
     width: 12,
     height: 12,
-    borderRadius: 6,
+    borderRadius: borderRadius.sm,
     backgroundColor: colors.border,
     zIndex: 1,
   },
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.signal,
     width: 14,
     height: 14,
-    borderRadius: 7,
+    borderRadius: borderRadius.sm,
   },
   halo: {
     width: 26,
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textLight,
     paddingBottom: spacing.md,
-    paddingTop: 2,
+    paddingTop: spacing.xxs,
   },
   terminalContainer: {
     flexDirection: 'row',
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   terminalDot: {
     width: 12,
     height: 12,
-    borderRadius: 6,
+    borderRadius: borderRadius.sm,
   },
   cancelledDot: {
     backgroundColor: colors.error,

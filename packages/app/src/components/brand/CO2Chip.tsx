@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { LeafMark } from './LeafMark';
-import { colors, typography, borderRadius } from '../../theme';
+import { colors, spacing, typography, borderRadius } from '../../theme';
 
 interface CO2ChipProps {
   /** e.g. "23.4 kg CO₂ saved" */
@@ -30,9 +30,9 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
     alignSelf: 'flex-start',
   },

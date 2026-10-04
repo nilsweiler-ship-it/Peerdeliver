@@ -643,7 +643,7 @@ const styles = StyleSheet.create({
   packagingHint: {
     ...typography.caption,
     color: colors.impact,
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   sizeRow: {
     flexDirection: 'row',
@@ -719,7 +719,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     backgroundColor: colors.surfaceSunken,
     borderRadius: borderRadius.lg,
-    gap: 4,
+    gap: spacing.xs,
   },
   compareLead: {
     ...typography.bodySmall,

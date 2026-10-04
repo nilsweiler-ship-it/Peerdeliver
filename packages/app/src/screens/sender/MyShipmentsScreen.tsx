@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
   // ── Driver card overlapping the map ──
   driverCardOverlap: {
     backgroundColor: colors.surface,
-    borderRadius: 20,
+    borderRadius: borderRadius.xl,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.md,
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
     fontFamily: typography.figure.fontFamily,
     fontSize: 12,
     color: colors.textSecondary,
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   contactRow: {
     flexDirection: 'row',
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
   callBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: borderRadius.xl,
     backgroundColor: '#E7EDE7',
     alignItems: 'center',
     justifyContent: 'center',
@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
   chatBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: borderRadius.xl,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
@@ -538,9 +538,9 @@ const styles = StyleSheet.create({
   progressDot: {
     width: 12,
     height: 12,
-    borderRadius: 6,
+    borderRadius: borderRadius.sm,
     backgroundColor: colors.border,
-    marginBottom: 6,
+    marginBottom: spacing.sm,
   },
   progressDotDone: {
     backgroundColor: colors.primary,
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.signal,
     width: 14,
     height: 14,
-    borderRadius: 7,
+    borderRadius: borderRadius.sm,
   },
   progressLabel: {
     ...typography.caption,
@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 2,
     backgroundColor: colors.border,
-    marginTop: 5,
+    marginTop: spacing.xs,
     marginHorizontal: -28,
   },
   progressBarDone: {
@@ -651,7 +651,7 @@ const styles = StyleSheet.create({
   requestDriverMeta: {
     ...typography.caption,
     color: colors.textSecondary,
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   requestDriverSub: {
     ...typography.caption,
@@ -682,7 +682,7 @@ const styles = StyleSheet.create({
   findHead: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.sm,
     marginBottom: spacing.xs,
   },
   findTitle: {
@@ -737,7 +737,7 @@ const styles = StyleSheet.create({
   trackerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: spacing.xs,
     marginBottom: spacing.xs,
   },
   trackerTitle: {
@@ -757,7 +757,7 @@ const styles = StyleSheet.create({
     fontFamily: typography.figure.fontFamily,
     color: colors.textSecondary,
     textAlign: 'center',
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   trackerWaiting: {
     ...typography.caption,
@@ -777,7 +777,7 @@ const styles = StyleSheet.create({
   codeReminderHead: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: spacing.xs,
     marginBottom: spacing.sm,
   },
   codeReminderTitle: {

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-nativ
 import { Feather } from '@expo/vector-icons';
 import { LeafMark } from './LeafMark';
 import { RouteWatermark } from './RouteWatermark';
-import { colors, typography, spacing, borderRadius, shadow } from '../../theme';
+import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 
 interface ImpactCardProps {
   /** e.g. "23.4 kg" — rendered in mono. */
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   iconWrap: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: borderRadius.xl,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -109,6 +109,6 @@ const styles = StyleSheet.create({
   },
   sub: {
     ...typography.caption,
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
 });

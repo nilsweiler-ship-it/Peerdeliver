@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
     ...typography.overline,
     color: colors.textLight,
     letterSpacing: 1.2,
-    marginBottom: 2,
+    marginBottom: spacing.xxs,
   },
   greeting: {
     ...typography.h1,
@@ -389,14 +389,14 @@ const styles = StyleSheet.create({
     right: 0,
     width: 12,
     height: 12,
-    borderRadius: 6,
+    borderRadius: borderRadius.sm,
     backgroundColor: colors.signal,
     borderWidth: 2,
     borderColor: colors.background,
   },
   statsRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: spacing.sm,
     marginBottom: spacing.md,
   },
   statCard: {

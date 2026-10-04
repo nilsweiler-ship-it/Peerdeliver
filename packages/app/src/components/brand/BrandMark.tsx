@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle, Line } from 'react-native-svg';
-import { colors, typography } from '../../theme';
+import { colors, spacing, typography } from '../../theme';
 
 interface BrandMarkProps {
   /** Light mark for dark surfaces. */
@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
   word: {
     ...typography.h2,

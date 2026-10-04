@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
   },
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  eyebrow: { ...typography.overline, color: colors.textLight, letterSpacing: 1.2, marginBottom: 2 },
+  eyebrow: { ...typography.overline, color: colors.textLight, letterSpacing: 1.2, marginBottom: spacing.xxs },
   title: { ...typography.h1, color: colors.text, marginBottom: spacing.xl },
   sectionTitle: { ...typography.h3, color: colors.text, marginBottom: spacing.md },
   list: {

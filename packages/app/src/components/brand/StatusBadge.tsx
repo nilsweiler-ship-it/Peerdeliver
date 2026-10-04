@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
-import { colors, statusColors, borderRadius, typography, spacing } from '../../theme';
+import { statusColors, colors, spacing, typography, borderRadius } from '../../theme';
 
 type StatusKey = keyof typeof statusColors;
 
@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: spacing.xs,
     paddingHorizontal: spacing.sm,
     paddingVertical: 3,
     borderRadius: borderRadius.full,
@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
   dot: {
     width: 6,
     height: 6,
-    borderRadius: 3,
+    borderRadius: borderRadius.sm,
   },
   label: {
     ...typography.overline,

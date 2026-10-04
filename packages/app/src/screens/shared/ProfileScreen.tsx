@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     ...typography.caption,
     fontFamily: typography.figure.fontFamily,
     color: colors.textSecondary,
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   gear: {
     width: 40,
@@ -283,13 +283,13 @@ const styles = StyleSheet.create({
   stagePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: spacing.xs,
     alignSelf: 'flex-start',
     backgroundColor: colors.impactSurface,
     borderRadius: borderRadius.full,
-    paddingHorizontal: 8,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 3,
-    marginTop: 6,
+    marginTop: spacing.sm,
   },
   stageText: {
     ...typography.caption,
@@ -324,13 +324,13 @@ const styles = StyleSheet.create({
   },
   growthTrack: {
     height: 8,
-    borderRadius: 4,
+    borderRadius: borderRadius.sm,
     backgroundColor: colors.surfaceSunken,
     overflow: 'hidden',
   },
   growthFill: {
     height: 8,
-    borderRadius: 4,
+    borderRadius: borderRadius.sm,
     backgroundColor: colors.impact,
   },
   growthHint: {
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
   impactStatLabel: {
     ...typography.caption,
     color: 'rgba(255,255,255,0.6)',
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   impactDivider: {
     width: 1,
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
   locationHint: {
     ...typography.caption,
     color: colors.textSecondary,
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
 
   // Settings list

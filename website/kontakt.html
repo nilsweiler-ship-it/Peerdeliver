@@ -9,19 +9,19 @@
 <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="12 6 24 28"><path d="M30 12 C 17 12, 17 20, 24 20 C 31 20, 31 28, 18 28" stroke="%23E0A32E" stroke-width="3.7" stroke-linecap="round" fill="none"/><circle cx="30" cy="12" r="2.7" fill="%23E0A32E"/><circle cx="18" cy="28" r="3.6" fill="%23E0A32E"/></svg>' />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
     --accent:#E0A32E; --accent-deep:#B98114;
-    --green:#14532D; --green-light:#81A18E;
+    --green:#1C6B41; --green-deep:#14532D; --green-light:#81A18E;
     --paper:#F3EFE6; --paper2:#EFEADF; --card:#FBFAF4;
-    --ink:#17160F; --ink2:#57534A; --ink3:#8a867c;
+    --ink:#17160F; --ink2:#57534A; --ink3:#6E6A60; --muted-on-dark:#A8A49A;
     --dark:#17160F; --dark2:#201e17;
     --line:rgba(23,22,15,.13);
-    --display:'Bricolage Grotesque',sans-serif; --body:'IBM Plex Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',monospace;
+    --display:'Bricolage Grotesque',sans-serif; --body:'Bricolage Grotesque',system-ui,sans-serif; --mono:'IBM Plex Mono',monospace;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:var(--body);color:var(--ink);background:var(--paper);line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column;}
+  body{font-family:var(--body);color:var(--ink);background:var(--paper);line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh;display:flex;flex-direction:column;}
   ::selection{background:var(--accent);color:var(--ink);}
   a{color:inherit;text-decoration:none;}
   button,input,select,textarea{font-family:inherit;}
@@ -71,7 +71,7 @@
   .footlinks{display:flex;gap:22px;flex-wrap:wrap;font-size:14px;}
   .footlinks a{color:#c8c4ba;}
   .footlinks a:hover{color:var(--paper);}
-  .footrights{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:#8a867c;}
+  .footrights{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--muted-on-dark);}
 
   @media(max-width:760px){
     .grid{grid-template-columns:1fr;}

@@ -7,12 +7,18 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { colors, spacing, typography, borderRadius, controlHeight } from '../../theme';
 
 interface ButtonProps {
   title: string;
   onPress: () => void;
   variant?: 'primary' | 'secondary' | 'outline' | 'light';
+  /**
+   * Two sizes only. Screens were previously overriding padding and minHeight
+   * inline to get a smaller button, which is how six slightly different
+   * button heights ended up in the app.
+   */
+  size?: 'sm' | 'md';
   loading?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
@@ -22,12 +28,17 @@ export function Button({
   title,
   onPress,
   variant = 'primary',
+  size = 'md',
   loading = false,
   disabled = false,
   style,
 }: ButtonProps) {
-  const buttonStyles: ViewStyle[] = [styles.base, styles[variant]];
-  const textStyles: TextStyle[] = [styles.text, styles[`${variant}Text` as keyof typeof styles] as TextStyle];
+  const buttonStyles: ViewStyle[] = [styles.base, styles[size], styles[variant]];
+  const textStyles: TextStyle[] = [
+    styles.text,
+    size === 'sm' ? styles.textSm : null,
+    styles[`${variant}Text` as keyof typeof styles] as TextStyle,
+  ].filter(Boolean) as TextStyle[];
 
   if (disabled || loading) {
     buttonStyles.push(styles.disabled);
@@ -51,12 +62,20 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
     borderRadius: borderRadius.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 52,
+    flexDirection: 'row',
+  },
+  md: {
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    minHeight: controlHeight.md,
+  },
+  sm: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    minHeight: controlHeight.sm,
   },
   primary: {
     backgroundColor: colors.primary,
@@ -79,14 +98,20 @@ const styles = StyleSheet.create({
     ...typography.button,
     color: colors.textInverse,
   },
+  textSm: {
+    fontSize: 14,
+    lineHeight: 18,
+  },
   primaryText: {
     color: colors.textInverse,
   },
   secondaryText: {
-    color: colors.primaryDark,
+    // Ink, not forest: on amber, forest is 4.10 and ink is 8.16.
+    color: colors.text,
   },
   outlineText: {
-    color: colors.textSecondary,
+    // Was textSecondary, which made a real action look disabled.
+    color: colors.text,
   },
   lightText: {
     color: colors.primary,

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { colors, typography, borderRadius } from '../../theme';
+import { colors, spacing, typography, borderRadius } from '../../theme';
 
 interface PillProps {
   label: string;
@@ -38,9 +38,9 @@ const styles = StyleSheet.create({
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 11,
-    paddingVertical: 6,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     borderRadius: borderRadius.full,
     borderWidth: 1,
     alignSelf: 'flex-start',

@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   bannerIcon: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: borderRadius.lg,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     color: colors.signalText,
     fontFamily: typography.bodyStrong.fontFamily,
-    marginBottom: 2,
+    marginBottom: spacing.xxs,
   },
   bannerBody: {
     ...typography.caption,
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: 40,
     height: 5,
-    borderRadius: 3,
+    borderRadius: borderRadius.sm,
     backgroundColor: colors.border,
     marginBottom: spacing.md,
   },

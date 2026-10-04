@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
-import { colors, typography, borderRadius } from '../../theme';
+import { colors, spacing, typography, borderRadius } from '../../theme';
 
 const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
@@ -40,7 +40,7 @@ export function DayPicker({ value, onChange, style }: DayPickerProps) {
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    gap: 7,
+    gap: spacing.sm,
   },
   cell: {
     flex: 1,

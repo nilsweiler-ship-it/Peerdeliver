@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import MapView, { Marker, Polyline, UrlTile } from 'react-native-maps';
-import { colors } from '../../theme';
+import { colors, borderRadius } from '../../theme';
 
 interface LatLng {
   lat: number;
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   origin: {
     width: 16,
     height: 16,
-    borderRadius: 8,
+    borderRadius: borderRadius.sm,
     backgroundColor: colors.primaryLight,
     borderWidth: 3,
     borderColor: '#FFFFFF',
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   dest: {
     width: 16,
     height: 16,
-    borderRadius: 8,
+    borderRadius: borderRadius.sm,
     backgroundColor: '#FFFFFF',
     borderWidth: 4,
     borderColor: colors.destination,
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   driverDot: {
     width: 16,
     height: 16,
-    borderRadius: 8,
+    borderRadius: borderRadius.sm,
     backgroundColor: colors.signal,
     borderWidth: 3,
     borderColor: '#FFFFFF',

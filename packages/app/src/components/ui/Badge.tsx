@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { colors, spacing, typography, borderRadius } from '../../theme';
 
 type BadgeVariant = 'success' | 'warning' | 'error' | 'info' | 'neutral';
 
@@ -46,7 +46,7 @@ export function Badge({ label, variant = 'neutral', style }: BadgeProps) {
 const styles = StyleSheet.create({
   badge: {
     paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
+    paddingVertical: spacing.xxs,
     borderRadius: borderRadius.full,
     alignSelf: 'flex-start',
   },

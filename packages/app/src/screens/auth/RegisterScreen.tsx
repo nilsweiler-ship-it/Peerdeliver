@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, Input } from '../../components/ui';
 import { BackChip, Pill } from '../../components/brand';
 import { useRegister } from '../../queries/auth';
-import { colors, spacing, typography, borderRadius, shadow, fonts } from '../../theme';
+import { fonts, colors, spacing, typography, borderRadius, shadow } from '../../theme';
 
 type RegisterRole = 'sender' | 'driver' | 'both' | 'recipient';
 
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   radio: {
     width: 24,
     height: 24,
-    borderRadius: 12,
+    borderRadius: borderRadius.md,
     borderWidth: 1.5,
     borderColor: colors.border,
     alignItems: 'center',

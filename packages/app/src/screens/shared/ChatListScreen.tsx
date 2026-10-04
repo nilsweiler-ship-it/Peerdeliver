@@ -173,12 +173,12 @@ const styles = StyleSheet.create({
   },
   unreadBadge: {
     backgroundColor: colors.primary,
-    borderRadius: 11,
+    borderRadius: borderRadius.md,
     minWidth: 22,
     height: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 6,
+    paddingHorizontal: spacing.sm,
   },
   unreadText: {
     ...typography.overline,

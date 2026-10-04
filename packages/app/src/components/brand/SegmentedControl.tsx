@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
-import { colors, typography, borderRadius, shadow } from '../../theme';
+import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 
 export interface Segment {
   key: string;
@@ -45,14 +45,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: colors.surfaceSunken,
     borderRadius: borderRadius.lg,
-    padding: 4,
-    gap: 4,
+    padding: spacing.xs,
+    gap: spacing.xs,
   },
   seg: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 9,
+    paddingVertical: spacing.sm,
     borderRadius: borderRadius.md,
   },
   segActive: {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { colors, spacing, typography, borderRadius } from '../../theme';
 import { useTranslation } from 'react-i18next';
 
 interface ChatInputProps {
@@ -72,14 +72,14 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: borderRadius.full,
     paddingHorizontal: spacing.md,
-    paddingTop: 11,
-    paddingBottom: 11,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
     maxHeight: 110,
   },
   sendButton: {
     width: 46,
     height: 46,
-    borderRadius: 23,
+    borderRadius: borderRadius.xxl,
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',

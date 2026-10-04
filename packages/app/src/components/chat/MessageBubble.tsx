@@ -44,8 +44,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   bubble: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   ownBubble: {
     backgroundColor: colors.primary,
@@ -75,9 +75,9 @@ const styles = StyleSheet.create({
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.sm,
     marginTop: 3,
-    paddingHorizontal: 4,
+    paddingHorizontal: spacing.xs,
   },
   ownMetaRow: {
     justifyContent: 'flex-end',

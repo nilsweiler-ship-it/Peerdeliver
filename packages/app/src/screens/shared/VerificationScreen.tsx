@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   heroScore: {
     ...typography.figureLg,
     color: colors.text,
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   heroScoreUnit: {
     ...typography.body,
@@ -358,11 +358,11 @@ const styles = StyleSheet.create({
   getVerified: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: spacing.xs,
     backgroundColor: colors.impactSurface,
     borderRadius: borderRadius.full,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   getVerifiedText: {
     ...typography.caption,
@@ -371,11 +371,11 @@ const styles = StyleSheet.create({
   },
   heroTrack: {
     height: 8,
-    borderRadius: 4,
+    borderRadius: borderRadius.sm,
     backgroundColor: colors.surfaceSunken,
     overflow: 'hidden',
   },
-  heroFill: { height: 8, borderRadius: 4, backgroundColor: colors.impact },
+  heroFill: { height: 8, borderRadius: borderRadius.sm, backgroundColor: colors.impact },
   heroHint: { ...typography.bodySmall, color: colors.textSecondary },
 
   // Section
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
     ...typography.caption,
     fontFamily: typography.figure.fontFamily,
     color: colors.textSecondary,
-    marginTop: 2,
+    marginTop: spacing.xxs,
   },
   itemValue: {
     ...typography.bodySmall,
@@ -416,13 +416,13 @@ const styles = StyleSheet.create({
   verifiedPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
     backgroundColor: colors.impactSurface,
     borderWidth: 1,
     borderColor: colors.impactSurfaceBorder,
     borderRadius: borderRadius.full,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   verifiedText: {
     ...typography.caption,

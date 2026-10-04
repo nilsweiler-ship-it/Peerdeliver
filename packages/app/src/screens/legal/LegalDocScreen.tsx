@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { getLegalDoc, LEGAL_LAST_UPDATED, type LegalKey } from '../../legal/content';
-import { colors, spacing, typography, borderRadius, fonts } from '../../theme';
+import { fonts, colors, spacing, typography, borderRadius } from '../../theme';
 
 export function LegalDocScreen({ navigation, route }: any) {
   const { t, i18n } = useTranslation();
@@ -50,13 +50,13 @@ const styles = StyleSheet.create({
   backChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    gap: spacing.xxs,
     alignSelf: 'flex-start',
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.full,
-    paddingVertical: 6,
+    paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
   },
   backText: { ...typography.bodyStrong, color: colors.text },
@@ -65,6 +65,6 @@ const styles = StyleSheet.create({
   updated: { fontFamily: fonts.mono, fontSize: 12, color: colors.textLight, marginBottom: spacing.md },
   intro: { ...typography.body, color: colors.textSecondary, marginBottom: spacing.md },
   section: { marginBottom: spacing.md },
-  h: { ...typography.h3, color: colors.text, marginBottom: 4 },
+  h: { ...typography.h3, color: colors.text, marginBottom: spacing.xs },
   p: { ...typography.body, color: colors.textSecondary, lineHeight: 22 },
 });

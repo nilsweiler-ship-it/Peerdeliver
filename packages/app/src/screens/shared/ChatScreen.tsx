@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   callButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: borderRadius.xl,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceSunken,
     borderRadius: borderRadius.full,
     paddingHorizontal: spacing.md,
-    paddingVertical: 5,
+    paddingVertical: spacing.xs,
   },
   dayDividerText: {
     ...typography.overline,
@@ -305,10 +305,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 16,
+    borderRadius: borderRadius.lg,
     borderBottomLeftRadius: 5,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   typingText: {
     ...typography.caption,
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: borderRadius.full,
     paddingHorizontal: spacing.md,
-    paddingVertical: 7,
+    paddingVertical: spacing.sm,
   },
   quickChipText: {
     ...typography.bodySmall,
