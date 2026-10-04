@@ -130,8 +130,13 @@ if (!health.ok) {
           `STRIPE_PUBLISHABLE_KEY is wrong: ${s.publishableKeyProblem}. Take it from ` +
             `https://dashboard.stripe.com/test/apikeys while signed in to ${s.accountId}.`,
         );
+      } else if (s.publishableKeyValid === true) {
+        line(g('✓'), 'stripe publishable key', `matches ${s.accountId}`);
       } else {
-        line(g('✓'), 'stripe publishable key', `set${s.accountId ? ` · ${s.accountId}` : ''}`);
+        // Not validated, which is not the same as valid. An older deploy has
+        // no publishableKeyValid field, and treating its absence as success
+        // is how a pk_live_ key from the wrong account showed a green tick.
+        line(y('!'), 'stripe publishable key', 'set, but this API build cannot verify it — redeploy');
       }
       if (!s.webhookSecretPresent) {
         line(r('✗'), 'stripe webhook secret', r('missing — payments will succeed and stay unpaid'));
