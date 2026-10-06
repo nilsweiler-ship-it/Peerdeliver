@@ -144,11 +144,19 @@ if (!health.ok) {
       } else {
         line(g('✓'), 'stripe webhook secret', 'set');
       }
-      if (s.twintCapability && s.twintCapability !== 'active') {
-        line(y('!'), 'twint capability', `${s.twintCapability} — senders cannot choose TWINT yet`);
-        todo.push(`TWINT capability is "${s.twintCapability}" — it needs the Impressum live and TWINT's review`);
+      // Capabilities are reported for the mode the configured key belongs to.
+      // Saying "not_requested" off a test key sounds like the live request has
+      // not been made, when the live request is a different thing entirely and
+      // invisible from here. Name the mode, and don't raise a to-do about a
+      // state this check cannot see.
+      if (s.twintCapability === 'active') {
+        line(g('✓'), 'twint capability', `active (${s.mode} mode)`);
       } else if (s.twintCapability) {
-        line(g('✓'), 'twint capability', 'active');
+        line(
+          dim('–'),
+          'twint capability',
+          dim(`${s.twintCapability} in ${s.mode} mode · live status: dashboard.stripe.com/settings/payment_methods`),
+        );
       }
     }
 
