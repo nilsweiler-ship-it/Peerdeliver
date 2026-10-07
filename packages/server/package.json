@@ -12,7 +12,8 @@
     "preflight": "cd ../.. && npm run preflight",
     "verify": "cd ../.. && npm run verify",
     "payment:trace": "tsx scripts/payment-trace.ts",
-    "waitlist": "tsx scripts/waitlist.ts"
+    "waitlist": "tsx scripts/waitlist.ts",
+    "payment:stripe": "tsx scripts/payment-trace.ts --stripe"
   },
   "dependencies": {
     "@peerdeliver/shared": "*",

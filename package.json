@@ -22,7 +22,8 @@
     "payment:trace": "cd packages/server && npx tsx scripts/payment-trace.ts",
     "status": "node scripts/status.mjs",
     "deploy:site": "node scripts/deploy-site.mjs",
-    "contrast": "node scripts/contrast-check.mjs"
+    "contrast": "node scripts/contrast-check.mjs",
+    "payment:stripe": "cd packages/server && npx tsx scripts/payment-trace.ts --stripe"
   },
   "prisma": {
     "schema": "packages/server/prisma/schema.prisma"

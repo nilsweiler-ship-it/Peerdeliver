@@ -81,12 +81,16 @@ function assess(
 }
 
 async function main() {
-  const id = process.argv[2];
+  // --stripe hides the simulated-mode history, which is noise during a test
+  // run: those rows can never change and scanning past them is how a real
+  // result gets missed.
+  const onlyStripe = process.argv.includes('--stripe');
+  const id = process.argv.slice(2).find((a) => !a.startsWith('--'));
   console.log(bold('\nPayment trace') + dim(`  ·  ${dbHost()}`));
   console.log(dim('─'.repeat(78)));
 
   const rows = await prisma.deliveryRequest.findMany({
-    where: id ? { id } : {},
+    where: id ? { id } : onlyStripe ? { stripePaymentIntentId: { not: null } } : {},
     orderBy: { createdAt: 'desc' },
     take: id ? 1 : 10,
     select: {
@@ -113,7 +117,11 @@ async function main() {
   });
 
   if (!rows.length) {
-    console.log(id ? r(`  No delivery with id ${id}`) : dim('  No deliveries yet.'));
+    console.log(
+      id
+        ? r(`  No delivery with id ${id}`)
+        : dim(onlyStripe ? '  No Stripe deliveries yet — only simulated ones.' : '  No deliveries yet.'),
+    );
     return;
   }
 
