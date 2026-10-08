@@ -128,6 +128,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: spacing.sm,
   },
   title: { ...typography.h1, color: colors.text },
   // lineHeight must follow fontSize — typography.figure fixes it at 22 for its

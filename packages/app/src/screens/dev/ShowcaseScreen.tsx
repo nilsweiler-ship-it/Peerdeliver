@@ -206,7 +206,7 @@ export function ShowcaseScreen() {
       <Section title="Stylized map header">
         <View style={{ borderRadius: borderRadius.xl, overflow: 'hidden', borderWidth: 1, borderColor: colors.border }}>
           <MapHeader height={180}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: spacing.md }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm, padding: spacing.md }}>
               <BackChip onDark onPress={() => {}} />
               <Pill label="ETA 14:25" mono onDark />
             </View>

@@ -372,6 +372,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: spacing.lg,
+    gap: spacing.sm,
   },
   date: {
     ...typography.overline,
@@ -443,6 +444,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: spacing.sm,
   },
   viewAll: {
     ...typography.bodySmall,
@@ -481,6 +483,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.md,
+    gap: spacing.sm,
   },
   actionBadge: {
     backgroundColor: colors.signalSoft,

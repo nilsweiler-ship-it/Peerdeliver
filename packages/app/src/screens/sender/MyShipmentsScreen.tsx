@@ -589,6 +589,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     borderTopWidth: 1,
     borderTopColor: colors.borderLight,
+    gap: spacing.sm,
   },
   budgetLabel: {
     ...typography.bodySmall,

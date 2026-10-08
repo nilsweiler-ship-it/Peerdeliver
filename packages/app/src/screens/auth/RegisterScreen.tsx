@@ -378,6 +378,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: spacing.lg,
+    gap: spacing.sm,
   },
   title: {
     ...typography.h1,
@@ -410,6 +411,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: spacing.md,
+    gap: spacing.sm,
   },
   roleIcon: {
     width: 44,
@@ -509,7 +511,7 @@ const styles = StyleSheet.create({
   },
   capacityCardSelected: {
     borderColor: colors.primary,
-    backgroundColor: '#ECF1EC',
+    backgroundColor: colors.surfaceSelected,
   },
   capacitySize: {
     ...typography.h3,
@@ -545,6 +547,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
+    gap: spacing.sm,
   },
   suggestionText: {
     ...typography.bodySmall,

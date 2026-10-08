@@ -66,6 +66,16 @@ export const colors = {
   surface: '#FBFAF4',       // Card — warmer than pure white, as on the site
   surfaceAlt: '#EFEADF',    // Inset rows, sub-panels
   surfaceSunken: '#EBE4D6', // Segmented controls, chips track
+  /**
+   * The selected state for any choosable tile, chip or option.
+   *
+   * One treatment everywhere: this tint, a primary border, primary text.
+   * CreateRequestScreen had two — a soft tint for the size tiles and a solid
+   * moss fill for the packaging chips, the second of which put primary text at
+   * 1.33 contrast and rendered the chosen option unreadable. Primary on this
+   * tint is 5.69.
+   */
+  surfaceSelected: '#ECF1EC',
 
   // ── Text · ink ────────────────────────────────────────
   text: '#17160F',          // Ink

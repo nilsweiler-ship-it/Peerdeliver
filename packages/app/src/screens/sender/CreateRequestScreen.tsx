@@ -44,7 +44,6 @@ const SIZES: { key: PackageSize; labelKey: string }[] = [
   { key: 'XL', labelKey: 'sender.sizeXL' },
 ];
 
-const SELECTED_FILL = '#ECF1EC';
 
 const PACKAGING_OPTIONS: {
   key: Packaging;
@@ -332,7 +331,11 @@ export function CreateRequestScreen({ navigation }: any) {
                     >
                       {t(o.labelKey, o.fallback)}
                     </Text>
-                    {!!o.hint && <Text style={styles.packagingHint}>{o.hint}</Text>}
+                    {!!o.hint && (
+                      <Text style={[styles.packagingHint, selected && styles.packagingHintSelected]}>
+                        {o.hint}
+                      </Text>
+                    )}
                   </TouchableOpacity>
                 );
               })}
@@ -584,6 +587,7 @@ const styles = StyleSheet.create({
   fieldRow: {
     flexDirection: 'row',
     gap: spacing.md,
+    alignItems: 'flex-end',
   },
   fieldHalf: {
     flex: 1,
@@ -606,7 +610,7 @@ const styles = StyleSheet.create({
   },
   contactTabOn: {
     borderColor: colors.primary,
-    backgroundColor: SELECTED_FILL,
+    backgroundColor: colors.surfaceSelected,
   },
   contactTabText: {
     ...typography.bodyStrong,
@@ -622,6 +626,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   packagingOption: {
+    // Two per row, whatever the labels say. Content-sized chips gave four
+    // different widths and a ragged grid; this holds in DE, FR and IT alike.
+    width: '48%',
+    minHeight: 56,
+    justifyContent: 'center',
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     borderRadius: borderRadius.lg,
@@ -631,7 +640,9 @@ const styles = StyleSheet.create({
   },
   packagingSelected: {
     borderColor: colors.primary,
-    backgroundColor: colors.primaryLight ?? colors.surface,
+    // Was primaryLight with primary text: 1.33 contrast, effectively invisible.
+    // Now the same selected treatment as the size tiles above — 5.69.
+    backgroundColor: colors.surfaceSelected,
   },
   packagingLabel: {
     ...typography.bodyStrong,
@@ -642,8 +653,11 @@ const styles = StyleSheet.create({
   },
   packagingHint: {
     ...typography.caption,
-    color: colors.impact,
+    color: colors.impactText,
     marginTop: spacing.xxs,
+  },
+  packagingHintSelected: {
+    color: colors.impactText,
   },
   sizeRow: {
     flexDirection: 'row',
@@ -661,7 +675,7 @@ const styles = StyleSheet.create({
   },
   sizeSelected: {
     borderColor: colors.primary,
-    backgroundColor: SELECTED_FILL,
+    backgroundColor: colors.surfaceSelected,
   },
   sizeLabel: {
     ...typography.h3,
@@ -703,6 +717,7 @@ const styles = StyleSheet.create({
   sliderRange: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: spacing.sm,
   },
   sliderRangeText: {
     ...typography.caption,
@@ -743,16 +758,20 @@ const styles = StyleSheet.create({
   breakdownRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'baseline',
+    gap: spacing.md,
   },
   breakdownLabel: {
     ...typography.bodySmall,
     color: colors.textSecondary,
+    // Take the slack, so the amount is never pushed into the label.
+    flex: 1,
   },
   breakdownValue: {
     ...typography.figure,
     fontSize: 15,
     color: colors.text,
+    flexShrink: 0,
   },
   breakdownValueHighlight: {
     color: colors.primary,

@@ -159,6 +159,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.xl,
+    gap: spacing.sm,
   },
   wordmark: {
     fontFamily: typography.display.fontFamily,

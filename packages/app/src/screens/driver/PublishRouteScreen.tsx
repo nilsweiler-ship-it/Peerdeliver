@@ -38,7 +38,6 @@ const HOURS = Array.from({ length: 24 }, (_, i) => {
   return { value: i, label: `${h}:00` };
 });
 
-const SELECTED_FILL = '#ECF1EC';
 
 export function PublishRouteScreen({ navigation }: any) {
   const { t } = useTranslation();
@@ -275,7 +274,7 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.xs,
   },
   timeChipSelected: {
-    backgroundColor: SELECTED_FILL,
+    backgroundColor: colors.surfaceSelected,
     borderColor: colors.primary,
   },
   timeChipText: {
@@ -299,7 +298,7 @@ const styles = StyleSheet.create({
   },
   sizeSelected: {
     borderColor: colors.primary,
-    backgroundColor: SELECTED_FILL,
+    backgroundColor: colors.surfaceSelected,
   },
   sizeLabel: { ...typography.h3, color: colors.textSecondary },
   sizeLabelSelected: { color: colors.primary },

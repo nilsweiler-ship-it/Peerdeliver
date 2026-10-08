@@ -234,6 +234,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: spacing.xs,
+    gap: spacing.sm,
   },
   detailLabel: {
     ...typography.bodySmall,
