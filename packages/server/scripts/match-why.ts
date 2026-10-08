@@ -154,6 +154,7 @@ async function main() {
 
     // And per route — the capacity filters that hide it from one driver and
     // not another, which is the part no screen explains.
+    let senderWouldSee = 0;
     for (const rt of routes) {
       const allowed = rt.vehicleSize ? sizesUpTo(rt.vehicleSize) : SIZE_ORDER;
       const sizeOk = allowed.includes(d.size);
@@ -173,7 +174,24 @@ async function main() {
           ? dim(`      ${y('–')} ${rt.driver}: `) + y(faults.join(', '))
           : dim(`      ${g('✓')} ${rt.driver}: matches`),
       );
+      if (rt.isActive && near) senderWouldSee += 1;
     }
+
+    // What the SENDER's "fahrende Personen suchen" would return for this
+    // delivery's corridor. searchRoutes applies no capacity filter at all —
+    // only isActive and 30 km at each end — so this number can be higher than
+    // the per-route verdicts above, and that is correct.
+    //
+    // It separates the two failures that look identical in the app: the server
+    // returning nothing, and the app never having asked. An empty list with a
+    // non-zero number here means the search was never run — usually because an
+    // address was typed but no suggestion tapped, which leaves the button
+    // disabled and the corridor unset.
+    console.log(
+      senderWouldSee > 0
+        ? `    ${g('✓')} sender's driver search would return ${senderWouldSee} route(s) for this corridor`
+        : `    ${r('✗')} sender's driver search would return nothing for this corridor`,
+    );
   }
 
   console.log(dim('\n' + '─'.repeat(78)));
