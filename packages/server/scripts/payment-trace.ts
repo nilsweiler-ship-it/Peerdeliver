@@ -107,6 +107,7 @@ async function main() {
       twintRef: true,
       payrexxTransactionId: true,
       deliveryCode: true,
+      pickupCode: true,
       co2SavedKg: true,
       createdAt: true,
       updatedAt: true,
@@ -169,7 +170,13 @@ async function main() {
     if (id) {
       // Only when a single delivery was asked for: the code is what releases
       // the money, so it is not something to print across a listing.
-      console.log(`  ${dim('delivery code')} ${d.deliveryCode ?? '—'}  ${dim('co2')} ${d.co2SavedKg ?? '—'} kg`);
+      // Both codes, side by side. The driver enters the PICKUP code at
+      // collection and the DELIVERY code at the door — two six-digit numbers
+      // that look alike, shown on different screens to different people.
+      console.log(
+        `  ${dim('pickup code')} ${bold(d.pickupCode ?? '—')}   ${dim('delivery code')} ${bold(d.deliveryCode ?? '—')}` +
+          `  ${dim('co2')} ${d.co2SavedKg ?? '—'} kg`,
+      );
       console.log(`  ${dim('created')} ${d.createdAt.toISOString()}  ${dim('updated')} ${d.updatedAt.toISOString()}`);
     }
   }
