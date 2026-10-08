@@ -45,7 +45,7 @@ export function SearchDriversScreen({ navigation, route: navRoute }: any) {
   );
   const [selectedRoute, setSelectedRoute] = useState<DriverRoute | null>(null);
 
-  const { data: routes, isLoading, isFetched } = useSearchRoutes(searchParams);
+  const { data: routes, isLoading, isFetched, error } = useSearchRoutes(searchParams);
   const offerRoute = useOfferRoute();
 
   const handleSearch = () => {
@@ -124,7 +124,19 @@ export function SearchDriversScreen({ navigation, route: navRoute }: any) {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
-            hasSearched ? (
+            // A failed request used to render as "no drivers found" — the one
+            // message guaranteed to send someone looking in the wrong place.
+            error ? (
+              <EmptyState
+                icon="⚠️"
+                title={t('sender.searchFailed', 'Suche fehlgeschlagen')}
+                message={
+                  (error as any)?.response?.data?.error ||
+                  (error as any)?.message ||
+                  t('common.error')
+                }
+              />
+            ) : hasSearched ? (
               <EmptyState
                 icon="🔍"
                 title={t('sender.noDrivers')}

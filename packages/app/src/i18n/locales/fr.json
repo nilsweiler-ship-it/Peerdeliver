@@ -129,7 +129,8 @@
     "suggestedPrice": "Indicatif pour ce trajet : CHF {{price}}",
     "cheaperThan": "Moins cher que {{label}} (CHF {{price}})",
     "cheaperElsewhere": "{{label}} coûterait CHF {{price}} — mais nous venons chez vous.",
-    "onlyOption": "La poste refuse cet objet — nous non."
+    "onlyOption": "La poste refuse cet objet — nous non.",
+    "searchFailed": "Échec de la recherche"
   },
   "driver": {
     "publishRoute": "Publier un trajet",

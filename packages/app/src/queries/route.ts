@@ -47,6 +47,16 @@ export function useSearchRoutes(params: {
     queryKey: ['routes', 'search', params],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<DriverRoute[]>>('/routes/search', { params });
+      // Say what came back, and for which corridor. A search that returns
+      // nothing and a search that failed look identical on screen, and the
+      // server-side check says this corridor has three routes — so knowing
+      // which of the two happened is the whole question.
+      if (__DEV__) {
+        console.log(
+          `[search] routes for ${params.fromLat?.toFixed(4)},${params.fromLng?.toFixed(4)} → ` +
+            `${params.toLat?.toFixed(4)},${params.toLng?.toFixed(4)}: ${data.data?.length ?? 0} result(s)`,
+        );
+      }
       return data.data!;
     },
     enabled: !!params.fromLat && !!params.fromLng && !!params.toLat && !!params.toLng,

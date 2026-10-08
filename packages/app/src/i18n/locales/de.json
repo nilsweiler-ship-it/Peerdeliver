@@ -129,7 +129,8 @@
     "suggestedPrice": "Richtwert für diese Strecke: CHF {{price}}",
     "cheaperThan": "Günstiger als {{label}} (CHF {{price}})",
     "cheaperElsewhere": "{{label}} wäre mit CHF {{price}} günstiger — dafür holen wir bei dir ab.",
-    "onlyOption": "Die Post nimmt dieses Stück nicht an — wir schon."
+    "onlyOption": "Die Post nimmt dieses Stück nicht an — wir schon.",
+    "searchFailed": "Suche fehlgeschlagen"
   },
   "driver": {
     "publishRoute": "Route veröffentlichen",

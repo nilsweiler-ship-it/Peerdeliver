@@ -129,7 +129,8 @@
     "suggestedPrice": "Indicativo per questo tragitto: CHF {{price}}",
     "cheaperThan": "Più conveniente di {{label}} (CHF {{price}})",
     "cheaperElsewhere": "{{label}} costerebbe CHF {{price}} — ma noi ritiriamo da te.",
-    "onlyOption": "La posta non accetta questo pezzo — noi sì."
+    "onlyOption": "La posta non accetta questo pezzo — noi sì.",
+    "searchFailed": "Ricerca non riuscita"
   },
   "driver": {
     "publishRoute": "Pubblica un tragitto",
