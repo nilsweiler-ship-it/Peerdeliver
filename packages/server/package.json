@@ -13,7 +13,8 @@
     "verify": "cd ../.. && npm run verify",
     "payment:trace": "tsx scripts/payment-trace.ts",
     "waitlist": "tsx scripts/waitlist.ts",
-    "payment:stripe": "tsx scripts/payment-trace.ts --stripe"
+    "payment:stripe": "tsx scripts/payment-trace.ts --stripe",
+    "match:why": "tsx scripts/match-why.ts"
   },
   "dependencies": {
     "@peerdeliver/shared": "*",
