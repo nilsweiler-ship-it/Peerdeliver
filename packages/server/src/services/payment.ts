@@ -227,6 +227,42 @@ export async function captureAndPayoutOnDelivered(deliveryId: string) {
     }
 
     const stripe = getStripe();
+
+    /**
+     * Tie the transfer to the charge that funded it.
+     *
+     * Without this, Stripe moves money from the platform's AVAILABLE balance —
+     * and a card payment does not land there immediately. It sits pending for
+     * days, in live mode as much as in test. So the balance is zero at the
+     * moment a delivery completes and the transfer fails with insufficient
+     * funds. Every payout would have failed this way until some unrelated
+     * money happened to be sitting in the account.
+     *
+     * With `source_transaction`, Stripe accepts the transfer regardless of the
+     * available balance and releases it to the driver when the charge settles.
+     * The driver is paid from the sender's own money rather than from a float
+     * we would otherwise have to keep — which also sits better with being an
+     * intermediary than fronting the cash would.
+     *
+     * Stripe derives the transfer_group from the charge, so we no longer set
+     * one; the delivery id travels in metadata, which is where we read it back.
+     */
+    let sourceCharge: string | undefined;
+    try {
+      const intent = await stripe.paymentIntents.retrieve(delivery.stripePaymentIntentId);
+      sourceCharge = typeof intent.latest_charge === 'string'
+        ? intent.latest_charge
+        : (intent.latest_charge?.id ?? undefined);
+    } catch (err) {
+      // Not fatal: without it the transfer still works whenever the balance
+      // happens to cover it. Worth a line in the log, because the failure it
+      // leads to looks like a Stripe problem rather than a missing parameter.
+      console.warn(
+        `[payments] Could not read the charge for ${deliveryId}; transferring against the available balance instead:`,
+        (err as Error).message,
+      );
+    }
+
     let transferId: string | null = null;
     try {
       const transfer = await stripe.transfers.create(
@@ -234,7 +270,7 @@ export async function captureAndPayoutOnDelivered(deliveryId: string) {
           amount: payoutCents,
           currency: 'chf',
           destination: driver.stripeAccountId,
-          transfer_group: deliveryId,
+          ...(sourceCharge ? { source_transaction: sourceCharge } : { transfer_group: deliveryId }),
           metadata: { deliveryRequestId: deliveryId },
         },
         // Two concurrent captures of the same delivery — a retried webhook, a
