@@ -11,7 +11,7 @@
     "db:generate": "prisma generate --schema packages/server/prisma/schema.prisma",
     "db:migrate": "prisma migrate dev --schema packages/server/prisma/schema.prisma",
     "db:studio": "prisma studio --schema packages/server/prisma/schema.prisma",
-    "typecheck": "tsc -p packages/server/tsconfig.json --noEmit && tsc -p packages/app/tsconfig.json --noEmit",
+    "typecheck": "tsc -p packages/server/tsconfig.json --noEmit && tsc -p packages/server/tsconfig.scripts.json --noEmit && tsc -p packages/app/tsconfig.json --noEmit",
     "verify": "npm run db:generate && npm run typecheck && echo \"\\n\u2705 GREEN \u2014 types clean across server and app\"",
     "preflight": "node scripts/preflight.mjs",
     "seed:testusers": "node scripts/seed-test-users.mjs",

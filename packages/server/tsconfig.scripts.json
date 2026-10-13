@@ -1,0 +1,19 @@
+{
+  "//": [
+    "The operational scripts — payment-trace, match-why, waitlist — are run by",
+    "hand against production data, and until now nothing typechecked them:",
+    "tsconfig.json includes only \"src\", so `tsc --noEmit` reported a clean",
+    "server while a script carried a syntax error that failed at runtime.",
+    "",
+    "They are the tools used to investigate problems. A tool that breaks when",
+    "you reach for it is worse than no tool, because it breaks at the moment",
+    "something else is already wrong."
+  ],
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "types": ["node"]
+  },
+  "include": ["scripts", "src"]
+}

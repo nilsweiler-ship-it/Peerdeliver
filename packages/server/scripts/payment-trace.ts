@@ -187,7 +187,7 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch(async (e) => {
     const msg = String(e?.message ?? e);
     // The usual failure is not a broken script but the wrong database. This
     // runs from a laptop, where DATABASE_URL comes from packages/server/.env —
