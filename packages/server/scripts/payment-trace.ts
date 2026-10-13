@@ -193,7 +193,29 @@ main()
     // runs from a laptop, where DATABASE_URL comes from packages/server/.env —
     // typically a local dev database that isn't running, or Render's INTERNAL
     // url, which only resolves from inside Render's own network.
-    if (/localhost|127\.0\.0\.1|ENOTFOUND|Can't reach database server/i.test(msg)) {
+    // "Server has closed the connection" is what Render Postgres returns when
+    // the caller's IP is not on the allow list — it looks like a dropped
+    // connection rather than a refusal, which is why it reads as transient.
+    if (/Server has closed the connection/i.test(msg)) {
+      console.error(r('\n  The database refused this machine.\n'));
+      let ip = 'unknown';
+      try {
+        ip = (await fetch('https://api.ipify.org').then((x) => x.text())).trim();
+      } catch {
+        /* offline, or the lookup is blocked */
+      }
+      console.error(
+        dim(
+          `  This machine's public IP is now: ${ip}\n\n` +
+            '  Render dashboard → shlep_db → Info → Networking → set the source to:\n\n' +
+            `      ${ip}/32\n\n` +
+            '  Home and mobile IPs change; this is the third time. If you would rather\n' +
+            '  not keep updating it, remove the rule entirely — the API connects over\n' +
+            '  Render\'s internal network and is unaffected. You would lose these local\n' +
+            '  scripts until you add an address back.\n',
+        ),
+      );
+    } else if (/localhost|127\.0\.0\.1|ENOTFOUND|Can't reach database server/i.test(msg)) {
       console.error(r('\n  Cannot reach the database.\n'));
       console.error(
         dim(
