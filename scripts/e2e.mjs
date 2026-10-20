@@ -39,6 +39,30 @@
  * allow list a CI runner will never be on.
  */
 import { execFileSync } from 'node:child_process';
+import { readFileSync, existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+/**
+ * Read packages/server/.env, if it is there.
+ *
+ * The two secrets this needs already live in that file for the seed script
+ * and the server, and asking for them inline on every run is how a
+ * placeholder ends up pasted into a command. Values already set in the
+ * environment win, so CI — which has no .env — is unaffected.
+ */
+(() => {
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const envPath = join(root, 'packages/server/.env');
+  if (!existsSync(envPath)) return;
+  for (const line of readFileSync(envPath, 'utf8').split('\n')) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)$/);
+    if (!m) continue;
+    const key = m[1];
+    if (process.env[key] !== undefined) continue;
+    process.env[key] = m[2].trim().replace(/^["']|["']$/g, '');
+  }
+})();
 
 const API = (process.env.API_URL || 'https://api.shlep.ch').replace(/\/$/, '');
 const KEY = process.env.STRIPE_SECRET_KEY;
