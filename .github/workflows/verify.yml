@@ -1,0 +1,82 @@
+name: verify
+
+# Every push to main, and every pull request.
+#
+# The point is not ceremony. Every expensive failure on this project was a
+# single wrong value that stayed invisible until something several steps away
+# broke — a webhook endpoint in the wrong mode, a publishable key from the
+# wrong account, a transfer drawing on a balance that is always empty. Each is
+# one assertion, and each cost hours to find by hand.
+#
+# Two jobs, deliberately separate:
+#
+#   checks  — pure and fast, needs no secrets, runs on every PR including from
+#             a fork. Types, config drift, i18n parity, contrast, pricing, and
+#             the payment arithmetic.
+#   e2e     — talks to the live test-mode API and to Stripe, so it needs
+#             secrets and only runs on main. A fork's PR cannot reach them.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  # A newer push makes an in-flight run irrelevant. Cancelling also stops two
+  # e2e runs racing on the same test accounts.
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: types, config and arithmetic
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run shared:build
+
+      - name: Types — server, server scripts, app
+        run: npm run typecheck
+
+      - name: Preflight — config drift, i18n parity, the payout gate
+        run: node scripts/preflight.mjs
+
+      - name: Contrast — every text/background pair
+        run: npm run contrast
+
+      - name: Pricing — no class claims an advantage it does not have
+        run: node scripts/price-sanity.mjs
+
+      - name: Payment arithmetic — fee + payout === budget, under hostile input
+        # Suite 1 only; the Stripe half needs a key and runs in the e2e job.
+        run: node scripts/payment-battle.mjs
+
+  e2e:
+    name: end to end — money
+    needs: checks
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run shared:build
+
+      - name: A delivery, paid, carried, refused, released, paid out
+        env:
+          # Both are repository secrets. STRIPE_SECRET_KEY must be a TEST key
+          # for the same Stripe account the API uses — the suite refuses a live
+          # one rather than trusting the person who set it.
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+          API_URL: https://api.shlep.ch
+        run: npm run e2e

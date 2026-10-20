@@ -1,0 +1,62 @@
+# The three-step create flow, as far as the payment sheet.
+#
+# The API suite covers what happens after payment. What it cannot see is
+# whether a person can get that far: whether the steps advance, whether the
+# size and packaging controls respond, and — the part that cost a week —
+# whether the Stripe sheet actually opens rather than failing silently and
+# bouncing to My Shipments.
+appId: ch.shlep.app
+name: Create a delivery
+---
+- runFlow: 01-login.yaml
+
+- tapOn:
+    text: ".*(Senden|Send|Envoyer|Invia).*"
+
+# Step 1 — package
+- assertVisible:
+    text: ".*(Paketgrösse|Package size|Taille|Dimensione).*"
+- tapOn:
+    text: "^L$"
+- tapOn:
+    text: ".*(Keine|None|Aucun|Nessun).*"
+- tapOn:
+    id: "create-description"
+- inputText: "maestro test"
+- tapOn:
+    text: ".*(Weiter|Next|Suivant|Avanti).*"
+
+# Step 2 — addresses
+- tapOn:
+    id: "create-pickup"
+- inputText: "Pfungen"
+- tapOn:
+    text: "Pfungen.*"
+- tapOn:
+    id: "create-dropoff"
+- inputText: "Schaffhausen"
+- tapOn:
+    text: "Schaffhausen.*"
+- tapOn:
+    id: "create-recipient-email"
+- inputText: "${E2E_RECIPIENT}"
+- tapOn:
+    text: ".*(Weiter|Next|Suivant|Avanti).*"
+
+# Step 3 — budget. The fee breakdown is the row that used to collide with its
+# own label, so assert it is readable as two separate pieces.
+- assertVisible:
+    text: ".*Plattformgebühr.*|.*Platform fee.*"
+- assertVisible:
+    text: "CHF 2.25"
+- assertVisible:
+    text: "CHF 22.75"
+
+- tapOn:
+    id: "create-submit"
+
+# The moment of truth: a real Stripe sheet, not the simulated screen and not
+# a silent bounce back to the list.
+- assertVisible:
+    text: ".*(Karte|Card|Carte|Carta|TWINT).*"
+    timeout: 25000

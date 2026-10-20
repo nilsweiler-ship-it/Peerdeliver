@@ -25,7 +25,11 @@ export function Input({ label, error, style, tone = 'default', monoLabel, ...pro
         placeholderTextColor={glass ? 'rgba(255,255,255,0.45)' : colors.textLight}
         {...props}
       />
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && (
+        <Text style={styles.error} testID={props.testID ? `${props.testID}-error` : undefined}>
+          {error}
+        </Text>
+      )}
     </View>
   );
 }

@@ -348,6 +348,7 @@ export function CreateRequestScreen({ navigation }: any) {
               placeholder={t('sender.descriptionPlaceholder')}
               multiline
               error={errors.description}
+              testID="create-description"
             />
 
             <View style={styles.fieldRow}>
@@ -383,6 +384,7 @@ export function CreateRequestScreen({ navigation }: any) {
               onSelect={setPickupAddress}
               placeholder={t('sender.fromLocation')}
               error={errors.pickupAddress}
+              testID="create-pickup"
             />
 
             <AddressAutocomplete
@@ -390,6 +392,7 @@ export function CreateRequestScreen({ navigation }: any) {
               onSelect={setDeliveryAddress}
               placeholder={t('sender.toLocation')}
               error={errors.deliveryAddress}
+              testID="create-dropoff"
             />
 
             {/* E-Mail ist Pflicht: sie legt das Konto der empfangenden Person
@@ -408,6 +411,7 @@ export function CreateRequestScreen({ navigation }: any) {
               textContentType="emailAddress"
               placeholder={t('sender.recipientEmailPlaceholder')}
               error={errors.recipientEmail}
+              testID="create-recipient-email"
             />
             <Text style={styles.fieldHint}>
               {t('sender.recipientEmailRequiredHint', 'Pflicht — die empfangende Person erhält damit Zugang zur Sendungsverfolgung.')}
@@ -524,6 +528,7 @@ export function CreateRequestScreen({ navigation }: any) {
             onPress={handleNext}
             loading={createDelivery.isPending}
             style={styles.nextButton}
+            testID={step === 2 ? 'create-submit' : 'create-next'}
           />
         </View>
       </ScrollView>

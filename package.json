@@ -25,7 +25,11 @@
     "contrast": "node scripts/contrast-check.mjs",
     "payment:stripe": "cd packages/server && npx tsx scripts/payment-trace.ts --stripe",
     "match:why": "cd packages/server && npx tsx scripts/match-why.ts",
-    "payout:retry": "cd packages/server && npx tsx scripts/payout-retry.ts"
+    "payout:retry": "cd packages/server && npx tsx scripts/payout-retry.ts",
+    "e2e:seed": "cd packages/server && npx tsx scripts/seed-e2e-users.ts",
+    "e2e": "node scripts/e2e.mjs",
+    "verify:all": "npm run shared:build && npm run typecheck && node scripts/preflight.mjs && npm run contrast && node scripts/price-sanity.mjs && node scripts/payment-battle.mjs",
+    "e2e:ui": "maestro test .maestro"
   },
   "prisma": {
     "schema": "packages/server/prisma/schema.prisma"

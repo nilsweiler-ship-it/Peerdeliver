@@ -22,6 +22,11 @@ interface ButtonProps {
   loading?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
+  /**
+   * Stable handle for UI tests. Without one a flow has to match the visible
+   * label, which is translated into four languages and rewritten often.
+   */
+  testID?: string;
 }
 
 export function Button({
@@ -32,6 +37,7 @@ export function Button({
   loading = false,
   disabled = false,
   style,
+  testID,
 }: ButtonProps) {
   const buttonStyles: ViewStyle[] = [styles.base, styles[size], styles[variant]];
   const textStyles: TextStyle[] = [
@@ -50,6 +56,10 @@ export function Button({
       onPress={onPress}
       disabled={disabled || loading}
       activeOpacity={0.8}
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
     >
       {loading ? (
         <ActivityIndicator color={variant === 'outline' ? colors.primary : colors.textInverse} />

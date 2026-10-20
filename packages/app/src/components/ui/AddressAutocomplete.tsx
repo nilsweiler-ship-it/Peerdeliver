@@ -30,6 +30,8 @@ interface AddressAutocompleteProps {
   placeholder?: string;
   error?: string;
   onSelect: (address: AddressSelection | null) => void;
+  /** Handle for UI tests; the suggestion list gets `${testID}-suggestions`. */
+  testID?: string;
 }
 
 const DEBOUNCE_MS = 250;
@@ -44,6 +46,7 @@ export function AddressAutocomplete({
   placeholder,
   error,
   onSelect,
+  testID,
 }: AddressAutocompleteProps) {
   const [text, setText] = useState('');
   const [suggestions, setSuggestions] = useState<GeoAdminResult[]>([]);
@@ -133,6 +136,7 @@ export function AddressAutocomplete({
       {label && <Text style={styles.label}>{label}</Text>}
       <View>
         <TextInput
+          testID={testID}
           style={[styles.input, focused && styles.inputFocused, error && styles.inputError]}
           placeholder={placeholder}
           placeholderTextColor={colors.textLight}

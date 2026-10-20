@@ -67,6 +67,7 @@ export function LoginScreen({ navigation }: any) {
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
+              testID="login-email"
             />
             <Input
               label={t('auth.password')}
@@ -76,10 +77,11 @@ export function LoginScreen({ navigation }: any) {
               onChangeText={setPassword}
               secureTextEntry
               autoComplete="password"
+              testID="login-password"
             />
 
             {login.error && (
-              <Text style={styles.error}>
+              <Text style={styles.error} testID="login-error">
                 {(login.error as any)?.response?.data?.error || t('common.error')}
               </Text>
             )}
@@ -91,6 +93,7 @@ export function LoginScreen({ navigation }: any) {
               loading={login.isPending}
               disabled={!email || !password}
               style={styles.loginButton}
+              testID="login-submit"
             />
 
             <TouchableOpacity

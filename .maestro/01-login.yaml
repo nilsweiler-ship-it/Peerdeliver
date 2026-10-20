@@ -1,0 +1,39 @@
+# Does the app start, reach the right API, and let someone in?
+#
+# This is the flow that would have caught the morning spent on "login fails":
+# the cause was a dev build resolving the API to a LAN address with no server
+# behind it, and the app rendering that timeout as the same generic error a
+# wrong password produces. A flow that logs in with known-good credentials
+# fails immediately and unambiguously when that happens again.
+appId: ch.shlep.app
+name: Login
+---
+- launchApp:
+    clearState: true
+    # Point at the deployed test stack, not whatever a developer's machine
+    # happens to be serving.
+    arguments:
+      EXPO_PUBLIC_API_URL: "https://api.shlep.ch"
+
+- assertVisible:
+    id: "login-email"
+
+- tapOn:
+    id: "login-email"
+- inputText: "${E2E_EMAIL}"
+
+- tapOn:
+    id: "login-password"
+- inputText: "${E2E_PASSWORD}"
+
+- tapOn:
+    id: "login-submit"
+
+# The login screen must go away. Asserting its absence rather than the
+# presence of a home element keeps this flow working when home changes.
+- assertNotVisible:
+    id: "login-email"
+    timeout: 20000
+
+- assertNotVisible:
+    id: "login-error"

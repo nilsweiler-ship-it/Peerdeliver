@@ -15,7 +15,8 @@
     "waitlist": "tsx scripts/waitlist.ts",
     "payment:stripe": "tsx scripts/payment-trace.ts --stripe",
     "match:why": "tsx scripts/match-why.ts",
-    "payout:retry": "tsx scripts/payout-retry.ts"
+    "payout:retry": "tsx scripts/payout-retry.ts",
+    "e2e:seed": "tsx scripts/seed-e2e-users.ts"
   },
   "dependencies": {
     "@peerdeliver/shared": "*",
