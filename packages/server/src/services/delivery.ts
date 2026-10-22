@@ -754,8 +754,28 @@ export async function verifyDelivery(deliveryId: string, driverId: string, code:
     },
   });
 
-  // Split the budget and credit the driver. No-op if the sender never paid.
-  await paymentService.captureAndPayoutOnDelivered(deliveryId);
+  /**
+   * Split the budget and credit the driver. No-op if the sender never paid.
+   *
+   * A failed payout must not fail the handover. The parcel HAS been delivered
+   * and the recipient HAS confirmed it with their code; those facts are
+   * already written. Letting a Stripe error propagate turned all of that into
+   * "500 Internal server error" on the driver's phone — which reads as "the
+   * delivery didn't go through", and invites them to try again on a delivery
+   * that is already complete.
+   *
+   * So the two outcomes are separated: the delivery is delivered either way,
+   * and the payout is reported alongside it. An unpaid one stays `authorised`
+   * with the split recorded, and npm run payout:retry pays it.
+   */
+  let payout: { ok: boolean; reason?: string } = { ok: true };
+  try {
+    await paymentService.captureAndPayoutOnDelivered(deliveryId);
+  } catch (err) {
+    const reason = (err as Error).message;
+    console.error(`[delivery] ${deliveryId} delivered, payout failed: ${reason}`);
+    payout = { ok: false, reason };
+  }
 
   // Closing notifications: receipt to the sender, payout note to the driver.
   const ctx = await notifyContext(deliveryId);
@@ -780,13 +800,18 @@ export async function verifyDelivery(deliveryId: string, driverId: string, code:
       });
     }
     if (ctx.d.senderId) pushService.notifyDelivered(ctx.d.senderId, deliveryId);
-    if (ctx.d.driverId) {
+    // Only promise the driver money that actually moved.
+    if (ctx.d.driverId && payout.ok) {
       const split = paymentService.computeSplit(ctx.d.budgetCHF);
       pushService.notifyDriverPayout(ctx.d.driverId, split.driverPayoutCHF, deliveryId);
     }
   }
 
-  return getDeliveryById(deliveryId);
+  // The payout outcome travels with the delivery rather than only into the
+  // logs. The driver's app can tell them the money is on its way or that it
+  // is pending, and a test can say which failure occurred instead of "500".
+  const result = await getDeliveryById(deliveryId);
+  return { ...result, payout };
 }
 
 export async function rejectDriver(deliveryId: string, senderId: string) {

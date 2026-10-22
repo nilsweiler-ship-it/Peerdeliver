@@ -508,6 +508,14 @@ if (blockReason) {
     body: { code: deliveryCode },
   });
   check('the right delivery code is accepted', right.ok, right.ok ? '' : `${right.status} ${right.body?.error ?? ''}`);
+
+  // The handover and the payout are separate outcomes. When the payout fails
+  // the API now says why, instead of the whole request becoming a 500 that
+  // hides the reason in a log the caller cannot read.
+  const payout = right.body?.data?.payout;
+  if (payout && payout.ok === false) {
+    check('the payout succeeded', false, `Stripe refused the transfer: ${payout.reason}`);
+  }
 }
 
 // ── 6. The money actually moved ─────────────────────────────────────────────
