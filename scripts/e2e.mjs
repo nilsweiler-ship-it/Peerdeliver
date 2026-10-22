@@ -409,7 +409,44 @@ const assignedOk = check(
 );
 // Everything from here needs a driver on the delivery. Without one the API
 // answers 403 to each step in turn, which says nothing beyond the line above.
-const blockReason = assignedOk ? null : (assigned.body?.error ?? `HTTP ${assigned.status}`);
+let blockReason = assignedOk ? null : (assigned.body?.error ?? `HTTP ${assigned.status}`);
+
+/**
+ * Three states sit between a driver claiming a delivery and collecting it,
+ * and the first draft of this script jumped straight over them:
+ *
+ *   assign    (driver) → requested   — a claim, not yet a match
+ *   confirm   (sender) → matched     — the sender agrees to this driver
+ *   accepted  (driver) → accepted    — the driver commits to the job
+ *
+ * Only then does verify-pickup apply. The sender's confirmation is the step
+ * worth noticing: a driver cannot take a job unilaterally, which is the right
+ * design for strangers handling each other's belongings.
+ */
+if (!blockReason) {
+  const confirmed = await api(`/deliveries/${deliveryId}/confirm`, { method: 'PATCH', token: tokens.sender });
+  const confirmedOk = check(
+    'sender confirms the driver',
+    confirmed.ok,
+    confirmed.ok ? dim('matched') : `${confirmed.status} ${confirmed.body?.error ?? confirmed.raw}`,
+  );
+
+  if (confirmedOk) {
+    const accepted = await api(`/deliveries/${deliveryId}/status`, {
+      method: 'PATCH',
+      token: tokens.driver,
+      body: { status: 'accepted' },
+    });
+    const acceptedOk = check(
+      'driver accepts the job',
+      accepted.ok,
+      accepted.ok ? dim('accepted') : `${accepted.status} ${accepted.body?.error ?? accepted.raw}`,
+    );
+    if (!acceptedOk) blockReason = accepted.body?.error ?? `HTTP ${accepted.status}`;
+  } else {
+    blockReason = confirmed.body?.error ?? `HTTP ${confirmed.status}`;
+  }
+}
 
 const senderView = await api(`/deliveries/${deliveryId}`, { token: tokens.sender });
 const pickupCode = senderView.body?.data?.pickupCode;
@@ -447,6 +484,8 @@ const wrong = await api(`/deliveries/${deliveryId}/verify-delivery`, {
   token: tokens.driver,
   body: { code: deliveryCode === '000000' ? '111111' : '000000' },
 });
+// Only meaningful once the parcel is actually in transit; before that the
+// refusal is about the state, not the code.
 check('a wrong delivery code is refused', !wrong.ok, wrong.ok ? r('ACCEPTED') : dim(`${wrong.status}`));
 
 // And — the part that actually matters — no money moved because of it.
@@ -457,31 +496,43 @@ check(
   afterWrong.body?.data?.stripeTransferId ? r('a transfer exists after a WRONG code') : dim('still authorised, no transfer'),
 );
 
-const right = await api(`/deliveries/${deliveryId}/verify-delivery`, {
-  method: 'POST',
-  token: tokens.driver,
-  body: { code: deliveryCode },
-});
-check('the right delivery code is accepted', right.ok, right.ok ? '' : `${right.status} ${right.body?.error ?? ''}`);
+if (blockReason) {
+  blockedBy('the right delivery code is accepted', blockReason);
+  blockedBy('delivery is captured', blockReason);
+  blockedBy('the split is correct', blockReason);
+  blockedBy('a real transfer exists', blockReason);
+} else {
+  const right = await api(`/deliveries/${deliveryId}/verify-delivery`, {
+    method: 'POST',
+    token: tokens.driver,
+    body: { code: deliveryCode },
+  });
+  check('the right delivery code is accepted', right.ok, right.ok ? '' : `${right.status} ${right.body?.error ?? ''}`);
+}
 
 // ── 6. The money actually moved ─────────────────────────────────────────────
 
 console.log(bold('\n6 · Payout'));
-const final = await waitFor('capture', tokens.sender, deliveryId, (d) => d.paymentStatus === 'captured', 20000);
+if (blockReason) {
+  console.log(dim(`  skipped — ${blockReason}`));
+}
+const final = blockReason
+  ? null
+  : await waitFor('capture', tokens.sender, deliveryId, (d) => d.paymentStatus === 'captured', 20000);
 
-check(
+if (!blockReason) check(
   'delivery is captured',
   final?.paymentStatus === 'captured',
   final?.paymentStatus === 'captured' ? '' : `still "${final?.paymentStatus}" — the transfer failed; see npm run payout:retry`,
 );
-check(
+if (!blockReason) check(
   'the split is correct',
   final?.platformFeeCHF === EXPECTED_FEE && final?.driverPayoutCHF === EXPECTED_PAYOUT,
   `fee ${final?.platformFeeCHF} / driver ${final?.driverPayoutCHF} (expected ${EXPECTED_FEE} / ${EXPECTED_PAYOUT})`,
 );
 
 const transferId = final?.stripeTransferId;
-check(
+if (!blockReason) check(
   'a real transfer exists',
   !!transferId,
   transferId ? dim(transferId) : r('captured with NO transfer id — the driver has not been paid'),
