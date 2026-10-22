@@ -205,8 +205,14 @@ console.log(bold('\n0 · Accounts'));
 const tokens = {};
 for (const [role, email] of Object.entries(USERS)) {
   const res = await api('/auth/login', { method: 'POST', body: { email, password: PASSWORD } });
-  const token = res.body?.data?.accessToken ?? res.body?.data?.token;
-  if (!check(`sign in as ${role}`, res.ok && !!token, res.ok ? '' : `${res.status} ${res.body?.error ?? res.raw}`)) {
+  const d = res.body?.data;
+  const token = d?.tokens?.accessToken ?? d?.accessToken ?? d?.token;
+  const detail = !res.ok
+    ? `${res.status} ${res.body?.error ?? res.raw}`
+    : token
+      ? ''
+      : `signed in but no token in the response — keys: ${Object.keys(d ?? {}).join(', ') || 'none'}`;
+  if (!check(`sign in as ${role}`, res.ok && !!token, detail)) {
     fatal('Cannot continue without all three accounts.', 'Run: npm run e2e:seed');
   }
   tokens[role] = token;
