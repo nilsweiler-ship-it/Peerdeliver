@@ -59,8 +59,14 @@ import { dirname, join } from 'node:path';
     const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)$/);
     if (!m) continue;
     const key = m[1];
-    if (process.env[key] !== undefined) continue;
-    process.env[key] = m[2].trim().replace(/^["']|["']$/g, '');
+    const value = m[2].trim().replace(/^["']|["']$/g, '');
+    // An empty assignment is not a value. A leftover `STRIPE_SECRET_KEY=`
+    // from .env.example sat above the real one and shadowed it, because both
+    // this and dotenv keep the first occurrence — producing "not set" for a
+    // key that was right there two lines below.
+    if (!value) continue;
+    if (process.env[key]) continue;
+    process.env[key] = value;
   }
 })();
 
