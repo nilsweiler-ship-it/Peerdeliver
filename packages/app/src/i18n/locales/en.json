@@ -302,7 +302,10 @@
     "verifyIdentity": "Verify identity",
     "plate": "Driver's licence plate",
     "verifyPlate": "Verify plate",
-    "verified": "Verified"
+    "verified": "Verified",
+    "identityCaption": "Photo ID and a selfie, checked by Stripe. The document goes straight to Stripe — it is never sent to or stored by Shlep.",
+    "identityFailed": "Identity check failed",
+    "identityPending": "Being checked. This usually takes under a minute."
   },
   "delivered": {
     "title": "Delivered!",

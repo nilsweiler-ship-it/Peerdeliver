@@ -26,6 +26,7 @@ router.delete('/account', userController.deleteAccount);
 router.post('/verification', verificationController.verify);
 router.post('/verification/phone/start', smsLimiter, verificationController.startPhoneVerification);
 router.post('/verification/phone/check', smsLimiter, verificationController.checkPhoneVerification);
+router.post('/verification/identity/start', verificationController.startIdentity);
 router.post('/verification/dev-verify-all', verificationController.devVerifyAll);
 router.post('/push-token', userController.registerPushToken);
 router.delete('/push-token', userController.unregisterPushToken);

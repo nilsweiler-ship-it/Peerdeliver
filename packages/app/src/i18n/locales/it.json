@@ -302,7 +302,10 @@
     "verifyIdentity": "Verifica identità",
     "plate": "Targa del veicolo",
     "verifyPlate": "Verifica la targa",
-    "verified": "Verificato"
+    "verified": "Verificato",
+    "identityCaption": "Documento d'identità e selfie, verificati da Stripe. Il documento va direttamente a Stripe — non viene mai inviato né conservato da Shlep.",
+    "identityFailed": "Verifica dell'identità non riuscita",
+    "identityPending": "Verifica in corso. Di solito richiede meno di un minuto."
   },
   "delivered": {
     "title": "Consegnato!",

@@ -302,7 +302,10 @@
     "verifyIdentity": "Vérifier l'identité",
     "plate": "Plaque d'immatriculation",
     "verifyPlate": "Vérifier la plaque",
-    "verified": "Vérifié"
+    "verified": "Vérifié",
+    "identityCaption": "Pièce d'identité et selfie, vérifiés par Stripe. Le document va directement à Stripe — il n'est ni transmis ni conservé par Shlep.",
+    "identityFailed": "Échec de la vérification d'identité",
+    "identityPending": "Vérification en cours. Cela prend généralement moins d’une minute."
   },
   "delivered": {
     "title": "Livré !",

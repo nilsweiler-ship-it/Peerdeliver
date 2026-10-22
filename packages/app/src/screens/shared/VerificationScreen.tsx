@@ -4,11 +4,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../stores/authStore';
+import * as WebBrowser from 'expo-web-browser';
 import {
   useVerify,
   useDevVerifyAll,
   useStartPhoneVerification,
   useCheckPhoneVerification,
+  useStartIdentityVerification,
 } from '../../queries/verification';
 import { Button, Input, Badge } from '../../components/ui';
 import { BackChip } from '../../components/brand';
@@ -22,7 +24,9 @@ export function VerificationScreen({ navigation }: any) {
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((s) => s.user);
+  const refreshUser = useAuthStore((s) => s.refreshUser);
   const verify = useVerify();
+  const startIdentity = useStartIdentityVerification();
   const devVerify = useDevVerifyAll();
   const startPhone = useStartPhoneVerification();
   const checkPhone = useCheckPhoneVerification();
@@ -75,9 +79,19 @@ export function VerificationScreen({ navigation }: any) {
 
   const handleVerifyId = async () => {
     try {
-      await verify.mutateAsync({ type: 'id' });
+      // Stripe hosts the whole thing: the document goes from the camera to
+      // Stripe and never touches our server. We get back a boolean, by
+      // webhook — which is why nothing here sets a flag on success.
+      const { url } = await startIdentity.mutateAsync();
+      await WebBrowser.openBrowserAsync(url);
+      // The check usually completes while the browser is still open, but the
+      // result arrives by webhook, so re-read the profile rather than assume.
+      await refreshUser();
     } catch (err: any) {
-      Alert.alert('Verification failed', serverError(err) ?? 'Could not verify your identity.');
+      Alert.alert(
+        t('verification.identityFailed', 'Ausweisprüfung fehlgeschlagen'),
+        serverError(err) ?? t('common.error'),
+      );
     }
   };
 
@@ -218,11 +232,10 @@ export function VerificationScreen({ navigation }: any) {
             <Button
               title={t('verification.verifyIdentity')}
               onPress={handleVerifyId}
-              loading={verify.isPending}
+              loading={startIdentity.isPending}
+              testID="verify-identity"
             />
-            <Text style={styles.caption}>
-              Photo ID check — simulated in this build (production would use a KYC provider).
-            </Text>
+            <Text style={styles.caption}>{t('verification.identityCaption')}</Text>
           </View>
         )}
       </TrustItem>

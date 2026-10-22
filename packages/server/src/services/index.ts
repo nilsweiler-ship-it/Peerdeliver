@@ -10,3 +10,4 @@ export * as emailService from './email';
 export * as smsService from './sms';
 export * as payrexxService from './payrexx';
 export * as pushService from './push';
+export * as identityService from './identity';

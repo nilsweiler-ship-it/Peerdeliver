@@ -302,7 +302,10 @@
     "verifyIdentity": "Identität verifizieren",
     "plate": "Kfz-Kennzeichen",
     "verifyPlate": "Kennzeichen verifizieren",
-    "verified": "Verifiziert"
+    "verified": "Verifiziert",
+    "identityCaption": "Ausweis und ein Selfie, geprüft von Stripe. Das Dokument geht direkt an Stripe — bei Shlep wird es weder übertragen noch gespeichert.",
+    "identityFailed": "Ausweisprüfung fehlgeschlagen",
+    "identityPending": "Wird geprüft. Das dauert meist weniger als eine Minute."
   },
   "delivered": {
     "title": "Geliefert!",

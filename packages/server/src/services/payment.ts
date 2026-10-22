@@ -3,6 +3,7 @@ import { prisma, env } from '../config';
 import { AppError } from '../middleware';
 import { getStripe, stripeConfigured } from './stripe';
 import * as deliveryService from './delivery';
+import * as identityService from './identity';
 import { splitBudget } from '@peerdeliver/shared';
 
 /**
@@ -450,6 +451,29 @@ export async function handleStripeEvent(event: Stripe.Event) {
       });
       return;
     }
+    // ── Identity ──────────────────────────────────────────────────────
+    //
+    // The ONLY way idVerified becomes true. The old endpoint let a client set
+    // it by asking; a client cannot assert its own identity, which is the
+    // entire reason this moved to Stripe.
+    case 'identity.verification_session.verified': {
+      const session = event.data.object as Stripe.Identity.VerificationSession;
+      const userId = session.metadata?.userId;
+      if (!userId) {
+        console.warn('[identity] verified session carries no userId metadata; cannot attribute it');
+        return;
+      }
+      await identityService.markIdentityVerified(userId);
+      return;
+    }
+    case 'identity.verification_session.requires_input': {
+      const session = event.data.object as Stripe.Identity.VerificationSession;
+      const userId = session.metadata?.userId;
+      if (!userId) return;
+      await identityService.markIdentityRejected(userId, session.last_error?.reason ?? undefined);
+      return;
+    }
+
     case 'account.updated': {
       const account = event.data.object as Stripe.Account;
       const userId = account.metadata?.userId;

@@ -54,3 +54,20 @@ export function useDevVerifyAll() {
     onSuccess: (user) => setUser(user),
   });
 }
+
+/**
+ * Start a Stripe Identity check and get its hosted URL.
+ *
+ * The URL is single-use and expires in 48 hours, so it is opened immediately
+ * and never stored. The result does NOT come back from this call: Stripe
+ * tells the server by webhook, and the app learns by refetching the user.
+ * That asymmetry is the point — a client cannot assert its own identity.
+ */
+export function useStartIdentityVerification() {
+  return useMutation<{ url: string }, Error, void>({
+    mutationFn: async () => {
+      const { data } = await api.post('/users/verification/identity/start');
+      return data.data;
+    },
+  });
+}

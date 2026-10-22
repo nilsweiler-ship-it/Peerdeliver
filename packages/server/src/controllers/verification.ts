@@ -2,7 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import { prisma, env } from '../config';
 import { success, error } from '../utils';
 import { AppError } from '../middleware';
-import { smsService } from '../services';
+import { smsService, identityService } from '../services';
+import { stripeConfigured } from '../services/stripe';
 
 // Swiss number plates: 2-letter canton code + 1–6 digits (e.g. "ZH 123456").
 const SWISS_CANTONS = new Set([
@@ -148,6 +149,14 @@ export async function verify(req: Request, res: Response, next: NextFunction) {
       data.licensePlate = `${m[1]} ${m[2]}`;
       data.plateVerified = true;
     } else if (type === 'id') {
+      // Once Stripe Identity is configured, a client must not be able to mark
+      // its own document verified without ever showing one — exactly the rule
+      // the phone step above already enforces. This branch previously did
+      // `idVerified = true` and nothing else, while the website told senders
+      // every profile was verified.
+      if (stripeConfigured()) {
+        throw new AppError(400, 'Bitte bestätige deine Identität über die Ausweisprüfung');
+      }
       data.idVerified = true;
     } else {
       throw new AppError(400, 'Unknown verification type');
@@ -159,6 +168,21 @@ export async function verify(req: Request, res: Response, next: NextFunction) {
       user = await prisma.user.update({ where: { id: userId }, data: { verificationStatus: 'verified' } });
     }
     success(res, safe(user));
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Start a Stripe Identity session and hand back its hosted URL.
+ *
+ * The URL is single-use and expires in 48 hours, so it is returned and never
+ * stored or logged.
+ */
+export async function startIdentity(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await identityService.startIdentityVerification(req.user!.userId);
+    success(res, result);
   } catch (err) {
     next(err);
   }
