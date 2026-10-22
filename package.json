@@ -28,7 +28,7 @@
     "payout:retry": "cd packages/server && npx tsx scripts/payout-retry.ts",
     "e2e:seed": "npm run db:generate --silent && cd packages/server && npx tsx scripts/seed-e2e-users.ts",
     "e2e": "node scripts/e2e.mjs",
-    "verify:all": "npm run shared:build && npm run typecheck && node scripts/preflight.mjs && npm run contrast && node scripts/price-sanity.mjs && node scripts/payment-battle.mjs",
+    "verify:all": "node scripts/verify-all.mjs",
     "e2e:ui": "maestro test .maestro"
   },
   "prisma": {

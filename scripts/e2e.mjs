@@ -39,7 +39,7 @@
  * allow list a CI runner will never be on.
  */
 import { execFileSync } from 'node:child_process';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -51,8 +51,10 @@ import { dirname, join } from 'node:path';
  * placeholder ends up pasted into a command. Values already set in the
  * environment win, so CI — which has no .env — is unaffected.
  */
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+
 (() => {
-  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const root = ROOT;
   const envPath = join(root, 'packages/server/.env');
   if (!existsSync(envPath)) return;
   for (const line of readFileSync(envPath, 'utf8').split('\n')) {
@@ -97,8 +99,28 @@ const bold = (s) => `\x1b[1m${s}\x1b[0m`;
 
 let passed = 0;
 const failures = [];
+const blocked = [];
+
+/**
+ * A step that cannot run because an earlier one failed.
+ *
+ * Reported apart from a real failure: one missing driver onboarding produced
+ * six red lines, five of which were consequences. A list of failures is only
+ * useful if every entry is a separate thing to fix.
+ *
+ * Not counted as passed either — the point is that it is unknown.
+ */
+function blockedBy(name, reason) {
+  blocked.push(name);
+  log.push({ step: name, result: 'blocked', detail: reason });
+  console.log(`  ${y('–')} ${name}  ${dim(`blocked: ${reason}`)}`);
+}
+
+// Every line, in order, for the report written at the end.
+const log = [];
 
 function check(name, condition, detail = '') {
+  log.push({ step: name, result: condition ? 'pass' : 'fail', detail: detail || null });
   if (condition) {
     passed += 1;
     console.log(`  ${g('✓')} ${name}${detail ? dim('  ' + detail) : ''}`);
@@ -109,9 +131,47 @@ function check(name, condition, detail = '') {
   return condition;
 }
 
+/**
+ * Write the run to a file the next person can read without being handed it.
+ *
+ * Reports went back and forth by copy-paste, which is slow, lossy, and drops
+ * exactly the detail that matters when a line is long. A file in the repo is
+ * readable by anything with access to the folder — including whoever is
+ * helping debug it.
+ *
+ * Gitignored: it is a record of one run, not of the project.
+ */
+function writeReport(status) {
+  try {
+    mkdirSync(join(ROOT, '.reports'), { recursive: true });
+    writeFileSync(
+      join(ROOT, '.reports/e2e.json'),
+      JSON.stringify(
+        {
+          ranAt: new Date().toISOString(),
+          api: API,
+          status,
+          passed,
+          failed: failures.length,
+          blocked: blocked.length,
+          failures,
+          blockedSteps: blocked,
+          steps: log,
+        },
+        null,
+        2,
+      ),
+    );
+  } catch {
+    // A report is a convenience. Never fail a run because one could not be written.
+  }
+}
+
 function fatal(message, hint = '') {
   console.error(r(`\n  ${message}\n`));
   if (hint) console.error(dim(`  ${hint}\n`));
+  log.push({ step: message, result: 'fatal', detail: hint || null });
+  writeReport('fatal');
   process.exit(1);
 }
 
@@ -307,25 +367,37 @@ const visible = (nearby.body?.data ?? []).some((d) => d.id === deliveryId);
 check('delivery is visible to the driver', visible, visible ? '' : "filtered out — check the driver's profile vehicle size and max load");
 
 const assigned = await api(`/deliveries/${deliveryId}/assign`, { method: 'PATCH', token: tokens.driver });
-check('driver assigned', assigned.ok, assigned.ok ? '' : `${assigned.status} ${assigned.body?.error ?? assigned.raw}`);
+const assignedOk = check(
+  'driver assigned',
+  assigned.ok,
+  assigned.ok ? '' : `${assigned.status} ${assigned.body?.error ?? assigned.raw}`,
+);
+// Everything from here needs a driver on the delivery. Without one the API
+// answers 403 to each step in turn, which says nothing beyond the line above.
+const blockReason = assignedOk ? null : (assigned.body?.error ?? `HTTP ${assigned.status}`);
 
 const senderView = await api(`/deliveries/${deliveryId}`, { token: tokens.sender });
 const pickupCode = senderView.body?.data?.pickupCode;
 check('sender can read the pickup code', !!pickupCode);
 
-const badPickup = await api(`/deliveries/${deliveryId}/verify-pickup`, {
-  method: 'POST',
-  token: tokens.driver,
-  body: { code: pickupCode === '000000' ? '111111' : '000000' },
-});
-check('a wrong pickup code is refused', !badPickup.ok, badPickup.ok ? r('ACCEPTED') : dim(`${badPickup.status}`));
+if (blockReason) {
+  blockedBy('a wrong pickup code is refused', blockReason);
+  blockedBy('the right pickup code is accepted', blockReason);
+} else {
+  const badPickup = await api(`/deliveries/${deliveryId}/verify-pickup`, {
+    method: 'POST',
+    token: tokens.driver,
+    body: { code: pickupCode === '000000' ? '111111' : '000000' },
+  });
+  check('a wrong pickup code is refused', !badPickup.ok, badPickup.ok ? r('ACCEPTED') : dim(`${badPickup.status}`));
 
-const goodPickup = await api(`/deliveries/${deliveryId}/verify-pickup`, {
-  method: 'POST',
-  token: tokens.driver,
-  body: { code: pickupCode },
-});
-check('the right pickup code is accepted', goodPickup.ok, goodPickup.ok ? dim('in transit') : `${goodPickup.status} ${goodPickup.body?.error ?? ''}`);
+  const goodPickup = await api(`/deliveries/${deliveryId}/verify-pickup`, {
+    method: 'POST',
+    token: tokens.driver,
+    body: { code: pickupCode },
+  });
+  check('the right pickup code is accepted', goodPickup.ok, goodPickup.ok ? dim('in transit') : `${goodPickup.status} ${goodPickup.body?.error ?? ''}`);
+}
 
 // ── 5. The handover — the test the payout model rests on ────────────────────
 
@@ -445,7 +517,13 @@ if (refundId && refundSecret) {
 // ── Result ──────────────────────────────────────────────────────────────────
 
 console.log(dim('\n' + '─'.repeat(74)));
-console.log(`\n  ${g(`${passed} passed`)}   ${failures.length ? r(`${failures.length} failed`) : dim('0 failed')}`);
+console.log(
+  `\n  ${g(`${passed} passed`)}   ${failures.length ? r(`${failures.length} failed`) : dim('0 failed')}` +
+    `   ${blocked.length ? y(`${blocked.length} blocked`) : dim('0 blocked')}`,
+);
+
+writeReport(failures.length ? 'fail' : 'pass');
+console.log(dim(`\n  Full report: .reports/e2e.json`));
 
 if (failures.length) {
   console.log(r('\n  Failing:'));
