@@ -278,6 +278,41 @@ for (const [role, email] of Object.entries(USERS)) {
   tokens[role] = token;
 }
 
+/**
+ * Can the driver be paid at all?
+ *
+ * Everything after the assignment step depends on it, and without this the
+ * answer arrives five steps later as "400 Complete payout setup" followed by
+ * a cascade. Asked here, it is one line with the remedy attached.
+ *
+ * The call is not only a question. /payments/connect/status runs
+ * refreshConnectStatus, which re-reads the account from Stripe and writes
+ * payouts_enabled back to the database — so a driver who finished the hosted
+ * form while the webhook was missed is repaired by asking.
+ */
+console.log(bold('\n0b · Driver can receive payouts'));
+const connect = await api('/payments/connect/status', { token: tokens.driver });
+const payoutsReady = connect.body?.data?.payoutsEnabled === true || connect.body?.data?.simulated === true;
+check(
+  'driver is onboarded for payouts',
+  payoutsReady,
+  payoutsReady
+    ? dim(connect.body?.data?.simulated ? 'simulated mode' : 'Stripe payouts enabled')
+    : `onboarded=${connect.body?.data?.onboarded} payoutsEnabled=${connect.body?.data?.payoutsEnabled}`,
+);
+if (!payoutsReady) {
+  console.log(
+    dim(
+      '\n      Log into the app as e2e-driver@shlep.ch, open payout setup, and\n' +
+        "      complete Stripe's hosted form with its test values:\n" +
+        '          IBAN     CH9300762011623852957\n' +
+        '          address  line 1 "address_full_match", Winterthur, 8400\n' +
+        '          DOB      01 / 01 / 1901\n' +
+        '      Everything from "driver assigned" onwards depends on it.\n',
+    ),
+  );
+}
+
 // ── 1. The driver publishes a route ─────────────────────────────────────────
 
 console.log(bold('\n1 · Driver publishes a route'));
