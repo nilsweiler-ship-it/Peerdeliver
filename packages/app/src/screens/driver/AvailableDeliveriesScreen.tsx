@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useNearbyDeliveries, useAssignDelivery } from '../../queries/delivery';
 import { useConnectStatus } from '../../queries/payment';
+import { useMyRoutes } from '../../queries/route';
 import { DeliveryCard } from '../../components/delivery/DeliveryCard';
 import { EmptyState, LoadingSpinner, Button } from '../../components/ui';
 import { Pill, BackChip } from '../../components/brand';
@@ -22,7 +23,16 @@ import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 import type { DeliveryRequest } from '@peerdeliver/shared';
 import { PACKAGE_SIZES } from '@peerdeliver/shared';
 
-const SEARCH = { lat: 47.3769, lng: 8.5417, radius: 100 };
+/**
+ * Where to look, when the driver has published no route.
+ *
+ * Zürich, because it is the densest corridor in the country and a brand-new
+ * driver has told us nothing else. This used to be the ONLY search point —
+ * every driver in Switzerland was shown deliveries around Zürich regardless
+ * of where they live, and a driver in Lausanne saw an empty list with no
+ * explanation. It is a fallback now, not the rule.
+ */
+const FALLBACK = { lat: 47.3769, lng: 8.5417, radius: 100, label: 'Zürich' };
 
 export function AvailableDeliveriesScreen({ navigation }: any) {
   const { t } = useTranslation();
@@ -31,11 +41,31 @@ export function AvailableDeliveriesScreen({ navigation }: any) {
   // mode the status is always onboarded, so the banner stays hidden.
   const { data: connect } = useConnectStatus();
   const needsPayoutSetup = !!connect && !(connect.onboarded && connect.payoutsEnabled);
-  // Default to Zurich center for demo — in production, use driver's first route origin
+  /**
+   * Search from the driver's own route, not from a fixed point.
+   *
+   * The whole premise is a parcel riding along on a trip someone is already
+   * making — so the trips they have published are the only sensible centre.
+   * The most recent active route wins; a driver who has published none gets
+   * the fallback, and is told that is what happened.
+   */
+  const { data: myRoutes } = useMyRoutes();
+  const origin = useMemo(() => {
+    const active = (myRoutes ?? []).filter((r) => r.isActive);
+    const latest = active[0];
+    if (!latest?.originPoint) return null;
+    return {
+      lat: latest.originPoint.lat,
+      lng: latest.originPoint.lng,
+      label: latest.originAddress,
+    };
+  }, [myRoutes]);
+
+  const searchingFrom = origin ?? FALLBACK;
   const { data: deliveries, isLoading, refetch, isRefetching } = useNearbyDeliveries({
-    lat: SEARCH.lat,
-    lng: SEARCH.lng,
-    radius: SEARCH.radius,
+    lat: searchingFrom.lat,
+    lng: searchingFrom.lng,
+    radius: FALLBACK.radius,
   });
   const assignDelivery = useAssignDelivery();
   const [selectedDelivery, setSelectedDelivery] = useState<DeliveryRequest | null>(null);
@@ -100,12 +130,19 @@ export function AvailableDeliveriesScreen({ navigation }: any) {
               <BackChip onPress={() => navigation.goBack()} />
               <Text style={styles.title}>Available nearby</Text>
             </View>
+            {/* Say where this list is looking. An empty list is otherwise
+                indistinguishable from "nobody needs anything near me", which
+                is exactly the wrong conclusion for a driver outside the
+                fallback radius. */}
             <Pill
-              label="Zürich · 100 km radius"
+              label={`${searchingFrom.label} · ${FALLBACK.radius} km`}
               icon="map-pin"
               iconColor={colors.destination}
               style={styles.locationPill}
             />
+            {!origin && (
+              <Text style={styles.searchHint}>{t('driver.searchingFromFallback')}</Text>
+            )}
             {needsPayoutSetup && (
               <TouchableOpacity
                 activeOpacity={0.85}
@@ -205,6 +242,11 @@ const styles = StyleSheet.create({
     ...typography.h2,
     color: colors.text,
     marginLeft: spacing.sm,
+  },
+  searchHint: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
   },
   locationPill: {
     marginTop: spacing.sm,

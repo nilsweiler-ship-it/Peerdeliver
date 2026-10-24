@@ -183,7 +183,8 @@
     "acceptOffer": "Annehmen",
     "declineOffer": "Ablehnen",
     "offerAccepted": "Angenommen — ihr könnt jetzt die Übergabe absprechen.",
-    "offerDeclined": "Abgelehnt. Die Lieferung ist wieder offen."
+    "offerDeclined": "Abgelehnt. Die Lieferung ist wieder offen.",
+    "searchingFromFallback": "Du hast noch keine Route veröffentlicht — wir zeigen dir vorerst Lieferungen rund um Zürich. Veröffentliche deine Strecke, dann passt die Liste zu deinen Fahrten."
   },
   "recipient": {
     "incomingDeliveries": "Eingehende Lieferungen",
@@ -466,5 +467,14 @@
     "failed": "Einrichtung fehlgeschlagen",
     "bannerTitle": "Auszahlung noch nicht eingerichtet",
     "bannerBody": "Einmalig einrichten, damit dein Verdienst bei dir ankommt."
+  },
+  "timing": {
+    "title": "Wann brauchst du es?",
+    "today": "Heute",
+    "tomorrow": "Morgen",
+    "this_week": "Diese Woche",
+    "on_date": "Bestimmter Tag",
+    "todayClosed": "Für heute ist es zu spät — wähle einen anderen Tag.",
+    "hint": "Je mehr Spielraum, desto wahrscheinlicher fährt ohnehin jemand."
   }
 }

@@ -4,3 +4,4 @@ export * from './roles';
 export * from './capacity';
 export * from './pricing';
 export * from './co2';
+export * from './timing';

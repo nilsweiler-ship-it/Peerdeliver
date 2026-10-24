@@ -183,7 +183,8 @@
     "acceptOffer": "Accept",
     "declineOffer": "Decline",
     "offerAccepted": "Accepted — you can arrange the handover now.",
-    "offerDeclined": "Declined. The delivery is open again."
+    "offerDeclined": "Declined. The delivery is open again.",
+    "searchingFromFallback": "You haven't published a route yet — for now we're showing deliveries around Zürich. Publish your route and this list will match your trips."
   },
   "recipient": {
     "incomingDeliveries": "Incoming Deliveries",
@@ -466,5 +467,14 @@
     "failed": "Setup failed",
     "bannerTitle": "Payouts not set up yet",
     "bannerBody": "Set this up once so your earnings can reach you."
+  },
+  "timing": {
+    "title": "When do you need it?",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "this_week": "This week",
+    "on_date": "A specific day",
+    "todayClosed": "Too late for today — pick another day.",
+    "hint": "The more slack you allow, the likelier someone is already driving."
   }
 }

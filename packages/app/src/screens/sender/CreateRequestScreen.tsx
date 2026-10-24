@@ -19,8 +19,15 @@ import type { AddressSelection } from '../../components/ui';
 import { Stepper, BackChip, Pill, RouteLine } from '../../components/brand';
 import { useCreateDelivery } from '../../queries/delivery';
 import { colors, spacing, typography, borderRadius } from '../../theme';
-import type { PackageSize, Packaging, CreateDeliveryInput } from '@peerdeliver/shared';
-import { estimateSize, estimatePriceCHF, priceComparison } from '@peerdeliver/shared';
+import type { PackageSize, Packaging, CreateDeliveryInput, DeliverySpeedChoice } from '@peerdeliver/shared';
+import {
+  estimateSize,
+  estimatePriceCHF,
+  priceComparison,
+  windowFor,
+  sameDayStillPossible,
+  DELIVERY_SPEEDS,
+} from '@peerdeliver/shared';
 
 /** Straight-line km. Good enough to anchor a price; no routing call needed. */
 function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
@@ -79,6 +86,13 @@ export function CreateRequestScreen({ navigation }: any) {
   const [pickupAddress, setPickupAddress] = useState<AddressSelection | null>(null);
   const [deliveryAddress, setDeliveryAddress] = useState<AddressSelection | null>(null);
   const [recipientEmail, setRecipientEmail] = useState('');
+  // When the sender needs it. Previously not asked at all: every delivery was
+  // stamped tomorrow-to-the-day-after, so a driver could not tell an urgent
+  // parcel from a relaxed one and "same-day" was a claim with no field behind
+  // it. Defaults to this_week, which is both the likeliest answer and the one
+  // most likely to find a driver.
+  const [speed, setSpeed] = useState<DeliverySpeedChoice>('this_week');
+  const [onDate, setOnDate] = useState<Date>(new Date(Date.now() + 2 * 86400000));
   const [recipientPhone, setRecipientPhone] = useState('');
 
   // Step 2: Budget & Schedule
@@ -159,9 +173,7 @@ export function CreateRequestScreen({ navigation }: any) {
   const handleSubmit = async () => {
     if (!pickupAddress || !deliveryAddress) return;
 
-    const now = new Date();
-    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const dayAfter = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+    const windowRange = windowFor(speed, new Date(), onDate);
 
     const input: CreateDeliveryInput = {
       pickupAddress,
@@ -172,8 +184,8 @@ export function CreateRequestScreen({ navigation }: any) {
       packageWeight: weight ? parseFloat(weight) : undefined,
       declaredValue: declaredValue ? parseFloat(declaredValue) : undefined,
       budgetCHF: budget,
-      deliveryWindowStart: tomorrow.toISOString(),
-      deliveryWindowEnd: dayAfter.toISOString(),
+      deliveryWindowStart: windowRange.start.toISOString(),
+      deliveryWindowEnd: windowRange.end.toISOString(),
       recipientEmail: recipientEmail.trim(),
       ...(recipientPhone.trim() && { recipientPhone: recipientPhone.trim() }),
     };
@@ -442,6 +454,79 @@ export function CreateRequestScreen({ navigation }: any) {
         {/* Step 2: Budget & Schedule */}
         {step === 2 && (
           <Card style={styles.stepCard}>
+            {/* Timing sits above the budget deliberately: how soon it is
+                needed is what the price is really responding to. */}
+            <Text style={styles.sectionTitle}>{t('timing.title')}</Text>
+            <View style={styles.speedRow}>
+              {DELIVERY_SPEEDS.map((key) => {
+                const selected = speed === key;
+                // Offering same-day at 21:00 sets a driver up to fail and a
+                // sender up to be disappointed.
+                const disabled = key === 'today' && !sameDayStillPossible();
+                return (
+                  <TouchableOpacity
+                    key={key}
+                    activeOpacity={0.85}
+                    disabled={disabled}
+                    testID={`timing-${key}`}
+                    style={[
+                      styles.speedOption,
+                      selected && styles.speedSelected,
+                      disabled && styles.speedDisabled,
+                    ]}
+                    onPress={() => {
+                      setSpeed(key);
+                      // The day strip appears when 'on_date' is chosen; no
+                      // separate open/close state to keep in sync.
+                    }}
+                  >
+                    <Text style={[styles.speedLabel, selected && styles.speedLabelSelected]}>
+                      {key === 'on_date' && speed === 'on_date'
+                        ? onDate.toLocaleDateString()
+                        : t(`timing.${key}`)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            {!sameDayStillPossible() && (
+              <Text style={styles.fieldHint}>{t('timing.todayClosed')}</Text>
+            )}
+            {/* A strip of the next fortnight rather than a native date
+                picker. @react-native-community/datetimepicker is a native
+                module, so adding it would force a new build on everyone — a
+                high price for choosing a day. Nobody schedules a parcel
+                months out, and tapping a day is faster than operating a
+                picker anyway. */}
+            {speed === 'on_date' && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.dayStrip}
+              >
+                {Array.from({ length: 14 }, (_, i) => {
+                  const d = new Date(Date.now() + (i + 1) * 86400000);
+                  const chosen = d.toDateString() === onDate.toDateString();
+                  return (
+                    <TouchableOpacity
+                      key={d.toISOString()}
+                      activeOpacity={0.85}
+                      onPress={() => setOnDate(d)}
+                      style={[styles.day, chosen && styles.daySelected]}
+                      testID={`timing-day-${i}`}
+                    >
+                      <Text style={[styles.dayWeekday, chosen && styles.dayTextSelected]}>
+                        {d.toLocaleDateString(undefined, { weekday: 'short' })}
+                      </Text>
+                      <Text style={[styles.dayNumber, chosen && styles.dayTextSelected]}>
+                        {d.getDate()}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            )}
+
             <View>
               <Text style={styles.sliderLabel}>{t('sender.budget')}</Text>
               <Text style={styles.sliderValue}>CHF {budget.toFixed(0)}</Text>
@@ -660,6 +745,70 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.impactText,
     marginTop: spacing.xxs,
+  },
+  speedRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  speedOption: {
+    width: '48%',
+    minHeight: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  speedSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.surfaceSelected,
+  },
+  speedDisabled: {
+    opacity: 0.4,
+  },
+  dayStrip: {
+    gap: spacing.sm,
+    paddingBottom: spacing.md,
+  },
+  day: {
+    minWidth: 54,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+  },
+  daySelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.surfaceSelected,
+  },
+  dayWeekday: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+  },
+  dayNumber: {
+    ...typography.figure,
+    fontSize: 17,
+    color: colors.text,
+  },
+  dayTextSelected: {
+    color: colors.primary,
+  },
+  speedLabel: {
+    ...typography.bodyStrong,
+    color: colors.text,
+    textAlign: 'center',
+  },
+  speedLabelSelected: {
+    color: colors.primary,
   },
   packagingHintSelected: {
     color: colors.impactText,

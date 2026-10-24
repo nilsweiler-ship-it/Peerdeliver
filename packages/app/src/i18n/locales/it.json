@@ -183,7 +183,8 @@
     "acceptOffer": "Accetta",
     "declineOffer": "Rifiuta",
     "offerAccepted": "Accettato — potete concordare la consegna.",
-    "offerDeclined": "Rifiutato. La consegna è di nuovo aperta."
+    "offerDeclined": "Rifiutato. La consegna è di nuovo aperta.",
+    "searchingFromFallback": "Non hai ancora pubblicato un percorso — per ora mostriamo le consegne intorno a Zurigo. Pubblica il tuo percorso e questa lista corrisponderà ai tuoi viaggi."
   },
   "recipient": {
     "incomingDeliveries": "Consegne in arrivo",
@@ -466,5 +467,14 @@
     "failed": "Configurazione non riuscita",
     "bannerTitle": "Pagamenti non ancora configurati",
     "bannerBody": "Configuralo una volta, così i tuoi guadagni ti raggiungono."
+  },
+  "timing": {
+    "title": "Per quando?",
+    "today": "Oggi",
+    "tomorrow": "Domani",
+    "this_week": "Questa settimana",
+    "on_date": "Un giorno preciso",
+    "todayClosed": "Troppo tardi per oggi — scegli un altro giorno.",
+    "hint": "Più margine lasci, più è probabile che qualcuno ci vada comunque."
   }
 }

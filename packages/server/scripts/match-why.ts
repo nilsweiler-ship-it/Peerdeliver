@@ -30,8 +30,12 @@ const y = (s: string) => `\x1b[33m${s}\x1b[0m`;
 const dim = (s: string) => `\x1b[2m${s}\x1b[0m`;
 const bold = (s: string) => `\x1b[1m${s}\x1b[0m`;
 
-/** The hardcoded centre AvailableDeliveriesScreen searches from. */
-const SEARCH = { lat: 47.3769, lng: 8.5417, radius: 100, label: 'Zürich (hardcoded in the app)' };
+/**
+ * The fallback centre, used only for a driver who has published no route.
+ * Drivers with a route are searched from its origin, so this distance is
+ * informative rather than decisive.
+ */
+const SEARCH = { lat: 47.3769, lng: 8.5417, radius: 100, label: 'Zürich (fallback centre)' };
 
 const SIZE_ORDER = ['S', 'M', 'L', 'XL'] as const;
 type Size = (typeof SIZE_ORDER)[number];
@@ -197,8 +201,9 @@ async function main() {
   console.log(dim('\n' + '─'.repeat(78)));
   console.log(
     dim(
-      '  The driver list searches from a FIXED point, not the driver\'s own route.\n' +
-        '  A driver outside that radius sees an empty list and no explanation.\n',
+      "  The driver list searches from the origin of the driver's most recent\n" +
+        '  active route. The Zürich figures above apply only to a driver who has\n' +
+        '  published none.\n',
     ),
   );
 }

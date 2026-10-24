@@ -183,7 +183,8 @@
     "acceptOffer": "Accepter",
     "declineOffer": "Refuser",
     "offerAccepted": "Accepté — vous pouvez organiser la remise.",
-    "offerDeclined": "Refusé. La livraison est à nouveau ouverte."
+    "offerDeclined": "Refusé. La livraison est à nouveau ouverte.",
+    "searchingFromFallback": "Vous n'avez pas encore publié de trajet — nous montrons pour l'instant les livraisons autour de Zurich. Publiez votre trajet et cette liste correspondra à vos déplacements."
   },
   "recipient": {
     "incomingDeliveries": "Livraisons à recevoir",
@@ -466,5 +467,14 @@
     "failed": "Échec de la configuration",
     "bannerTitle": "Versements pas encore configurés",
     "bannerBody": "À configurer une fois pour que vos gains vous parviennent."
+  },
+  "timing": {
+    "title": "Pour quand ?",
+    "today": "Aujourd'hui",
+    "tomorrow": "Demain",
+    "this_week": "Cette semaine",
+    "on_date": "Un jour précis",
+    "todayClosed": "Trop tard pour aujourd'hui — choisissez un autre jour.",
+    "hint": "Plus vous laissez de marge, plus il est probable que quelqu’y aille déjà."
   }
 }

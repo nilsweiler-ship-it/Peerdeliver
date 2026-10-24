@@ -350,8 +350,11 @@ const createRes = await api('/deliveries', {
     packageDescription: `e2e ${new Date(now).toISOString()}`,
     packaging: 'none',
     budgetCHF: BUDGET,
-    deliveryWindowStart: new Date(now + 24 * 3600 * 1000).toISOString(),
-    deliveryWindowEnd: new Date(now + 48 * 3600 * 1000).toISOString(),
+    // "This week": the window a sender gets by choosing the default preset.
+    // Asserted below, because until now every delivery carried the same
+    // invented tomorrow-to-day-after window and nothing noticed.
+    deliveryWindowStart: new Date(now).toISOString(),
+    deliveryWindowEnd: new Date(now + 7 * 24 * 3600 * 1000).toISOString(),
   },
 });
 const delivery = createRes.body?.data;
@@ -359,6 +362,14 @@ const deliveryId = delivery?.id;
 if (!check('delivery created', createRes.ok && !!deliveryId, createRes.ok ? dim(deliveryId ?? '') : `${createRes.status} ${createRes.body?.error ?? createRes.raw}`)) {
   fatal('Nothing further can run without a delivery.');
 }
+
+check(
+  'the delivery window is stored as sent',
+  !!delivery?.deliveryWindowStart && !!delivery?.deliveryWindowEnd,
+  delivery?.deliveryWindowEnd
+    ? dim(`${String(delivery.deliveryWindowStart).slice(0, 10)} → ${String(delivery.deliveryWindowEnd).slice(0, 10)}`)
+    : 'no window came back',
+);
 
 const clientSecret = delivery?.clientSecret;
 check(
