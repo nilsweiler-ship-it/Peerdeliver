@@ -29,16 +29,15 @@ export const createDeliverySchema = z.object({
   deliveryWindowEnd: z.string().datetime(),
 });
 
+/**
+ * The generic status endpoint only accepts the two moves that need no proof.
+ * picked_up / in_transit / delivered go through verify-pickup and
+ * verify-delivery, which demand the handover codes; requested / matched go
+ * through assign and confirm. Accepting them here let a driver mark a parcel
+ * delivered with no code at all.
+ */
 export const updateDeliveryStatusSchema = z.object({
-  status: z.enum([
-    'requested',
-    'matched',
-    'accepted',
-    'picked_up',
-    'in_transit',
-    'delivered',
-    'cancelled',
-  ]),
+  status: z.enum(['accepted', 'cancelled']),
   cancelReason: z.string().max(500).optional(),
 });
 

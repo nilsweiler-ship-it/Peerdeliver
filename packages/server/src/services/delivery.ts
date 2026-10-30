@@ -48,6 +48,7 @@ interface RawDeliveryRow {
   status: string;
   pickupCode?: string;
   deliveryCode?: string;
+  paymentStatus?: string;
   co2SavedKg?: number;
   cancelledBy?: string;
   cancelReason?: string;
@@ -75,6 +76,63 @@ function transformDelivery(row: RawDeliveryRow) {
       point: { lat: deliveryCoords[1], lng: deliveryCoords[0] },
     },
   };
+}
+
+/**
+ * Who is looking at a delivery, for deciding what they may see.
+ *
+ * `email` matters because a recipient who registered after the delivery was
+ * created is linked by email only, never by recipientId.
+ */
+export interface DeliveryViewer {
+  userId: string;
+  email?: string | null;
+}
+
+/** Is this viewer the sender, the driver or the recipient of the delivery? */
+export function isParticipantView(
+  d: { senderId?: string | null; driverId?: string | null; recipientId?: string | null; recipientEmail?: string | null },
+  viewer: DeliveryViewer,
+): boolean {
+  if (d.senderId === viewer.userId || d.driverId === viewer.userId || d.recipientId === viewer.userId) return true;
+  return isRecipientByEmail(d, viewer);
+}
+
+function isRecipientByEmail(d: { recipientEmail?: string | null }, viewer: DeliveryViewer): boolean {
+  return !!viewer.email && !!d.recipientEmail && d.recipientEmail.toLowerCase() === viewer.email.toLowerCase();
+}
+
+/**
+ * Strip the handover codes down to what this viewer is entitled to.
+ *
+ * The two codes are the proof that a parcel changed hands: the driver must be
+ * *told* the pickup code by the sender and the delivery code by the recipient,
+ * in person. Every delivery read used to return both codes to everyone who
+ * could see the delivery — the driver included — so a driver could read the
+ * delivery code off the API, confirm a delivery that never happened, and be
+ * paid for it.
+ *
+ *   sender     → both codes (they show the pickup code, and may need to relay
+ *                the delivery code to a recipient reached only by phone)
+ *   recipient  → delivery code only
+ *   driver     → neither
+ *   anyone else→ neither (and should not be seeing the delivery at all)
+ *
+ * A user who is both sender and driver of the same delivery is not possible
+ * any more (assignDelivery refuses it), but if they were, the driver rule wins:
+ * whoever carries the parcel must never hold the codes.
+ */
+export function redactForViewer<T extends Record<string, unknown>>(d: T, viewer: DeliveryViewer): T {
+  const { pickupCode, deliveryCode, ...rest } = d as T & { pickupCode?: unknown; deliveryCode?: unknown };
+  const isDriver = d.driverId === viewer.userId;
+  if (isDriver) return rest as T;
+  const isSender = d.senderId === viewer.userId;
+  const isRecipient = d.recipientId === viewer.userId || isRecipientByEmail(d as { recipientEmail?: string | null }, viewer);
+  return {
+    ...rest,
+    ...(isSender ? { pickupCode } : {}),
+    ...(isSender || isRecipient ? { deliveryCode } : {}),
+  } as T;
 }
 
 export async function createDelivery(senderId: string, input: CreateDeliveryInput) {
@@ -170,39 +228,120 @@ export async function updateDeliveryStatus(
   cancelReason?: string,
   actorId?: string,
 ) {
+  if (!actorId) throw new AppError(403, 'Not authorized');
   const current = await getDeliveryById(id);
   if (!current) throw new AppError(404, 'Delivery not found');
 
   // Who may touch this delivery at all. Previously nobody checked, so any
   // signed-in account could drive a stranger's delivery through its whole
   // lifecycle by id alone.
-  if (actorId) {
-    const involved =
-      current.senderId === actorId ||
-      current.driverId === actorId ||
-      current.recipientId === actorId;
-    if (!involved) throw new AppError(403, 'Not authorized');
+  const isSender = current.senderId === actorId;
+  const isDriver = current.driverId === actorId;
+  if (!isSender && !isDriver && current.recipientId !== actorId) {
+    throw new AppError(403, 'Not authorized');
   }
 
-  // And which moves are legal from here. Without this the offered driver could
-  // PATCH straight to 'accepted', skipping the payout-eligibility gate in
-  // acceptOffer and leaving the chat thread that accept creates missing.
+  // The generic endpoint does exactly two things. Everything else in the
+  // lifecycle has its own endpoint, because everything else needs a proof the
+  // generic one cannot ask for: picked_up / in_transit need the sender's pickup
+  // code, delivered needs the recipient's delivery code. This endpoint used to
+  // accept those too, so a driver could PATCH straight to 'delivered' with no
+  // code at all.
+  if (status !== 'accepted' && status !== 'cancelled') {
+    throw new AppError(400, `Nicht möglich: ${current.status} → ${status}`);
+  }
   const allowed = DELIVERY_STATUS_TRANSITIONS[current.status] ?? [];
   if (!allowed.includes(status)) {
     throw new AppError(400, `Nicht möglich: ${current.status} → ${status}`);
   }
 
-  await prisma.$queryRawUnsafe(
-    `UPDATE delivery_requests SET status = $1::"DeliveryStatus", "cancelledBy" = $2, "cancelReason" = $3, "updatedAt" = NOW() WHERE id = $4 AND status = $5::"DeliveryStatus"`,
-    status,
-    cancelledBy ?? null,
+  if (status === 'accepted') {
+    // The driver's "I'm on my way to pick it up". Only theirs to say.
+    if (!isDriver) throw new AppError(403, 'Only the driver can accept');
+    const applied = await prisma.$executeRawUnsafe(
+      `UPDATE delivery_requests SET status = 'accepted'::"DeliveryStatus", "updatedAt" = NOW()
+        WHERE id = $1 AND status = 'matched'::"DeliveryStatus"`,
+      id,
+    );
+    if (applied === 0) throw new AppError(409, 'Diese Lieferung hat sich inzwischen geändert');
+    return getDeliveryById(id);
+  }
+
+  return cancelDelivery(current, actorId, isSender, isDriver, cancelReason);
+}
+
+/**
+ * States in which the parcel is still with the sender, so a cancellation can
+ * simply undo everything and refund. Once the pickup code has been used the
+ * parcel is in a stranger's car, and "cancel, full refund" is no longer an
+ * honest description of what is happening — that is a dispute.
+ */
+const CANCELLABLE_BEFORE_PICKUP = ['pending', 'requested', 'offered', 'matched', 'accepted'];
+
+async function cancelDelivery(
+  current: NonNullable<Awaited<ReturnType<typeof getDeliveryById>>>,
+  actorId: string,
+  isSender: boolean,
+  isDriver: boolean,
+  cancelReason?: string,
+) {
+  const id = current.id;
+
+  // The recipient did not book or pay for this and cannot call it off. They
+  // used to be able to cancel even mid-transit and trigger a full refund to
+  // the sender.
+  if (!isSender && !isDriver) {
+    throw new AppError(403, 'Nur die sendende oder die fahrende Person kann eine Lieferung stornieren');
+  }
+
+  if (!CANCELLABLE_BEFORE_PICKUP.includes(current.status)) {
+    throw new AppError(
+      409,
+      'Das Paket wurde bereits abgeholt und kann nicht mehr storniert werden. Bitte kontaktiere den Support.',
+    );
+  }
+
+  if (isDriver) {
+    // A driver backing out is a decline, not the end of the delivery: the
+    // sender still wants the parcel moved and has already paid. Return it to
+    // the open pool with the hold intact. A driver used to be able to cancel
+    // the sender's whole delivery this way.
+    const applied = await prisma.$executeRawUnsafe(
+      `UPDATE delivery_requests
+          SET "driverId" = NULL, "offeredRouteId" = NULL,
+              status = 'pending'::"DeliveryStatus", "updatedAt" = NOW()
+        WHERE id = $1 AND status = $2::"DeliveryStatus" AND "driverId" = $3`,
+      id,
+      current.status,
+      actorId,
+    );
+    if (applied === 0) throw new AppError(409, 'Diese Lieferung hat sich inzwischen geändert');
+    return getDeliveryById(id);
+  }
+
+  // The sender calls it off before pickup. The WHERE re-asserts the state we
+  // checked, and the row count decides whether money moves. Previously the
+  // count was ignored: a cancel that lost a race with verify-delivery still
+  // went on to refund, leaving a row that was 'delivered', paid out to the
+  // driver, AND refunded to the sender — and in Stripe mode the driver's
+  // transfer was reversed after they had done the job.
+  const applied = await prisma.$executeRawUnsafe(
+    `UPDATE delivery_requests
+        SET status = 'cancelled'::"DeliveryStatus", "cancelledBy" = $1, "cancelReason" = $2, "updatedAt" = NOW()
+      WHERE id = $3 AND status = $4::"DeliveryStatus"`,
+    actorId,
     cancelReason ?? null,
     id,
     current.status,
   );
-  // Refund/void any outstanding TWINT hold when the delivery is cancelled for good.
-  // Reject-and-reassign goes to 'pending' (not 'cancelled') so the hold stays live.
-  if (status === 'cancelled') {
+  if (applied === 0) throw new AppError(409, 'Diese Lieferung hat sich inzwischen geändert');
+
+  // Belt and braces: a captured payment means a completed delivery, and that
+  // is never undone by a cancel, whatever path led here.
+  const pay = await prisma.deliveryRequest.findUnique({ where: { id }, select: { paymentStatus: true } });
+  if (pay?.paymentStatus === 'captured') {
+    console.error(`[delivery] ${id} cancelled with a captured payment — refund skipped, needs manual review`);
+  } else {
     await paymentService.voidOnCancel(id);
   }
   return getDeliveryById(id);
@@ -231,6 +370,9 @@ export async function getNearbyDeliveries(
     FROM delivery_requests dr
     JOIN users u ON u.id = dr."senderId"
     WHERE dr.status = 'pending'
+      -- Only parcels the sender has actually paid for. Unpaid ones used to be
+      -- listed and claimable, so a driver could do the whole job for nothing.
+      AND dr."paymentStatus" = 'authorised'
       AND ST_DWithin(
         dr."pickupPoint"::geography,
         ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,
@@ -449,6 +591,11 @@ export async function acceptOffer(deliveryId: string, driverId: string) {
   if (!(await paymentService.driverCanReceivePayouts(driverId))) {
     throw new AppError(400, 'Complete payout setup before accepting deliveries');
   }
+  // A sender may offer before paying, but nobody may take the job until they
+  // have — otherwise there is nothing to pay the driver with.
+  if (delivery.paymentStatus !== 'authorised') {
+    throw new AppError(400, 'Diese Sendung ist noch nicht bezahlt');
+  }
 
   // Row count, not just the WHERE: on a double tap or a cancellation that
   // lands between the read and the write, the loser must not post a second
@@ -548,6 +695,35 @@ export async function assignDelivery(deliveryId: string, driverId: string) {
     throw new AppError(400, 'Complete payout setup before accepting deliveries');
   }
 
+  const delivery = await prisma.deliveryRequest.findUnique({
+    where: { id: deliveryId },
+    select: { senderId: true, packageSize: true, packageWeight: true, paymentStatus: true },
+  });
+  if (!delivery) throw new AppError(404, 'Delivery not found');
+
+  // Carrying your own parcel and paying yourself the driver's cut is not a
+  // delivery. It also inflated delivery counts and CO₂ figures.
+  if (delivery.senderId === driverId) {
+    throw new AppError(400, 'Du kannst deine eigene Sendung nicht übernehmen');
+  }
+  // Nothing may be claimed before the sender has paid; otherwise the driver
+  // does the job and there is no money to pay them with.
+  if (delivery.paymentStatus !== 'authorised') {
+    throw new AppError(400, 'Diese Sendung ist noch nicht bezahlt');
+  }
+  // The same capacity guards offerToRoute and the nearby list apply. Claiming
+  // by id used to skip them, so an S-sized car could take an XL parcel.
+  const driver = await prisma.user.findUnique({
+    where: { id: driverId },
+    select: { vehicleSize: true, maxLoadKg: true },
+  });
+  if (driver?.vehicleSize && !sizesUpTo(driver.vehicleSize as PackageSize).includes(delivery.packageSize as PackageSize)) {
+    throw new AppError(400, 'Dieses Paket passt nicht in dein Fahrzeug');
+  }
+  if (driver?.maxLoadKg != null && delivery.packageWeight != null && delivery.packageWeight > driver.maxLoadKg) {
+    throw new AppError(400, 'Dieses Paket ist schwerer, als du laden kannst');
+  }
+
   // Driver requests — sets status to 'requested', sender must confirm.
   //
   // The WHERE clause matters as much as the update. Without it this statement
@@ -578,10 +754,15 @@ export async function confirmDelivery(deliveryId: string, senderId: string) {
     throw new AppError(400, 'Delivery is not in requested state');
   }
 
-  await prisma.$queryRawUnsafe(
-    `UPDATE delivery_requests SET status = 'matched'::"DeliveryStatus", "updatedAt" = NOW() WHERE id = $1`,
+  // Compare-and-set, as on the claim paths: of two simultaneous confirms (or a
+  // confirm racing a cancel) exactly one wins, and only the winner posts the
+  // chat message and sends the pickup code.
+  const applied = await prisma.$executeRawUnsafe(
+    `UPDATE delivery_requests SET status = 'matched'::"DeliveryStatus", "updatedAt" = NOW()
+      WHERE id = $1 AND status = 'requested'::"DeliveryStatus"`,
     deliveryId,
   );
+  if (applied === 0) throw new AppError(409, 'Diese Lieferung hat sich inzwischen geändert');
 
   // Create initial chat message
   const driver = await prisma.user.findUnique({ where: { id: delivery.driverId! }, select: { firstName: true } });
@@ -622,12 +803,20 @@ export async function verifyPickup(deliveryId: string, driverId: string, code: s
   if (delivery.driverId !== driverId) throw new AppError(403, 'Not authorized');
   if (delivery.status !== 'accepted') throw new AppError(400, 'Delivery is not in accepted state');
   if (delivery.pickupCode !== code) throw new AppError(400, 'Invalid pickup code');
+  // Collecting a parcel nobody has paid for means a job with no money behind it.
+  if (delivery.paymentStatus !== 'authorised') {
+    throw new AppError(400, 'Diese Sendung ist noch nicht bezahlt');
+  }
 
-  // Move to in_transit (skipping picked_up since both parties confirmed via code)
-  await prisma.$queryRawUnsafe(
-    `UPDATE delivery_requests SET status = 'in_transit'::"DeliveryStatus", "updatedAt" = NOW() WHERE id = $1`,
+  // Move to in_transit (skipping picked_up since both parties confirmed via code).
+  // Compare-and-set so a double tap sends the recipient one SMS, not two.
+  const applied = await prisma.$executeRawUnsafe(
+    `UPDATE delivery_requests SET status = 'in_transit'::"DeliveryStatus", "updatedAt" = NOW()
+      WHERE id = $1 AND status = 'accepted'::"DeliveryStatus" AND "driverId" = $2`,
     deliveryId,
+    driverId,
   );
+  if (applied === 0) throw new AppError(409, 'Diese Lieferung hat sich inzwischen geändert');
 
   await prisma.message.create({
     data: {
@@ -675,12 +864,9 @@ export async function verifyDelivery(deliveryId: string, driverId: string, code:
   if (delivery.status !== 'in_transit') throw new AppError(400, 'Delivery is not in transit');
   if (delivery.deliveryCode !== code) throw new AppError(400, 'Invalid delivery code');
 
-  await prisma.$queryRawUnsafe(
-    `UPDATE delivery_requests SET status = 'delivered'::"DeliveryStatus", "updatedAt" = NOW() WHERE id = $1`,
-    deliveryId,
-  );
-
-  // ── Impact + stats ──────────────────────────────────────────────
+  // ── Impact ──────────────────────────────────────────────────────
+  // Computed before anything is written: it only reads, and the write below
+  // must be a single all-or-nothing step.
   //
   // The saving is measured against what would otherwise have happened,
   // marginally on both sides — see computeCo2Saved in @peerdeliver/shared for
@@ -733,18 +919,37 @@ export async function verifyDelivery(deliveryId: string, driverId: string, code:
   });
   const co2SavedKg = impact.savedKg;
 
-  await prisma.deliveryRequest.update({ where: { id: deliveryId }, data: { co2SavedKg } });
-  // Credit both parties' lifetime impact; the driver also gets a completed delivery.
-  await prisma.user.update({
-    where: { id: driverId },
-    data: { co2Saved: { increment: co2SavedKg }, totalDeliveries: { increment: 1 } },
-  });
-  if (delivery.senderId) {
-    await prisma.user.update({
-      where: { id: delivery.senderId },
-      data: { co2Saved: { increment: co2SavedKg } },
+  // ── Status + stats, once ────────────────────────────────────────
+  //
+  // One transaction, and a compare-and-set on the status inside it. The old
+  // code read the status, then wrote unconditionally in seven separate
+  // statements: ten simultaneous verify-delivery calls (a double tap, a client
+  // retry) credited the driver ten deliveries and ten times the CO₂, and
+  // re-ran the capture five times. Now exactly one call moves the delivery to
+  // 'delivered' and credits the stats; the others get 409 and do nothing. A
+  // crash part-way leaves nothing half-written.
+  await prisma.$transaction(async (tx) => {
+    const applied = await tx.$executeRawUnsafe(
+      `UPDATE delivery_requests
+          SET status = 'delivered'::"DeliveryStatus", "co2SavedKg" = $3, "updatedAt" = NOW()
+        WHERE id = $1 AND status = 'in_transit'::"DeliveryStatus" AND "driverId" = $2`,
+      deliveryId,
+      driverId,
+      co2SavedKg,
+    );
+    if (applied === 0) throw new AppError(409, 'Diese Lieferung wurde bereits abgeschlossen');
+    // Credit both parties' lifetime impact; the driver also gets a completed delivery.
+    await tx.user.update({
+      where: { id: driverId },
+      data: { co2Saved: { increment: co2SavedKg }, totalDeliveries: { increment: 1 } },
     });
-  }
+    if (delivery.senderId) {
+      await tx.user.update({
+        where: { id: delivery.senderId },
+        data: { co2Saved: { increment: co2SavedKg } },
+      });
+    }
+  });
 
   await prisma.message.create({
     data: {
@@ -771,6 +976,16 @@ export async function verifyDelivery(deliveryId: string, driverId: string, code:
   let payout: { ok: boolean; reason?: string } = { ok: true };
   try {
     await paymentService.captureAndPayoutOnDelivered(deliveryId);
+    // captureAndPayoutOnDelivered returns quietly when there was nothing to
+    // capture. "ok" must mean money moved, not merely that nothing threw —
+    // the driver of an unpaid delivery used to be told their payout worked.
+    const after = await prisma.deliveryRequest.findUnique({
+      where: { id: deliveryId },
+      select: { paymentStatus: true },
+    });
+    if (after?.paymentStatus !== 'captured') {
+      payout = { ok: false, reason: 'unpaid' };
+    }
   } catch (err) {
     const reason = (err as Error).message;
     console.error(`[delivery] ${deliveryId} delivered, payout failed: ${reason}`);
@@ -820,11 +1035,22 @@ export async function rejectDriver(deliveryId: string, senderId: string) {
     throw new AppError(403, 'Not authorized');
   }
 
+  // Rejecting is turning down a driver's *request*, nothing more. It used to
+  // work in any state: a sender could "reject" the driver of a delivered
+  // parcel, which unassigned them and reopened the delivery, then cancel it
+  // for a full refund — keeping the parcel and the money, while in Stripe mode
+  // the driver's transfer was reversed.
+  if (delivery.status !== 'requested') {
+    throw new AppError(400, 'Nur eine offene Anfrage kann abgelehnt werden');
+  }
+
   // Reset to pending so other drivers can request
-  await prisma.$queryRawUnsafe(
-    `UPDATE delivery_requests SET "driverId" = NULL, status = 'pending'::"DeliveryStatus", "updatedAt" = NOW() WHERE id = $1`,
+  const applied = await prisma.$executeRawUnsafe(
+    `UPDATE delivery_requests SET "driverId" = NULL, status = 'pending'::"DeliveryStatus", "updatedAt" = NOW()
+      WHERE id = $1 AND status = 'requested'::"DeliveryStatus"`,
     deliveryId,
   );
+  if (applied === 0) throw new AppError(409, 'Diese Lieferung hat sich inzwischen geändert');
 
   return getDeliveryById(deliveryId);
 }

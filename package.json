@@ -29,7 +29,8 @@
     "e2e:seed": "npm run db:generate --silent && cd packages/server && npx tsx scripts/seed-e2e-users.ts",
     "e2e": "node scripts/e2e.mjs",
     "verify:all": "node scripts/verify-all.mjs",
-    "e2e:ui": "maestro test .maestro"
+    "e2e:ui": "maestro test .maestro",
+    "test:p0": "node scripts/p0-regression.mjs"
   },
   "prisma": {
     "schema": "packages/server/prisma/schema.prisma"
