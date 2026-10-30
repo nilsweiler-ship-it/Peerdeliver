@@ -8,6 +8,8 @@ import routes from './routes';
 import { setupSocket } from './socket';
 import { stripeWebhook } from './controllers/webhook';
 import { webhook as payrexxWebhook } from './controllers/payrexx';
+import { payrexxService } from './services';
+import { stripeConfigured } from './services/stripe';
 
 const app = express();
 const httpServer = createServer(app);
@@ -255,6 +257,21 @@ app.use('/api', routes);
 app.use(errorHandler);
 
 setupSocket(httpServer);
+
+// Stripe-only MVP (payrexxService.isEnabled). Payrexx keys without Stripe would
+// mean no sender could pay: the simulated payment is off once a real provider
+// is configured, and the Payrexx flow is not wired into the app. Fail at boot,
+// where it is obvious, rather than at the first checkout.
+if (payrexxService.isConfigured() && !stripeConfigured()) {
+  console.error(
+    'Refusing to start: PAYREXX_* is set but STRIPE_SECRET_KEY is not. Payrexx is disabled for the MVP; ' +
+      'configure Stripe, or unset the Payrexx keys to run with simulated payments.',
+  );
+  process.exit(1);
+}
+if (payrexxService.isConfigured()) {
+  console.warn('[payrexx] PAYREXX_* is set but Payrexx is disabled for the MVP; its endpoints are off.');
+}
 
 httpServer.listen(env.PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${env.PORT}`);
