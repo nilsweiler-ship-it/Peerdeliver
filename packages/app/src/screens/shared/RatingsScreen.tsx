@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui';
 import { GradientSurface, RouteWatermark, Confetti, SuccessMedallion, LeafMark } from '../../components/brand';
 import { colors, spacing, typography, borderRadius } from '../../theme';
+import { useRateDelivery } from '../../queries/delivery';
+import { apiErrorMessage } from '../../utils/apiError';
 
 export function RatingsScreen({ navigation, route }: any) {
   const { t } = useTranslation();
@@ -18,11 +20,24 @@ export function RatingsScreen({ navigation, route }: any) {
   const co2SavedKg =
     typeof params.co2SavedKg === 'number' ? params.co2SavedKg : 0;
 
-  const [rating, setRating] = useState<number>(4.5);
+  const deliveryId: string | undefined = params.deliveryId;
+  // Whole stars: the server stores 1–5. This started at 4.5 and the submit
+  // button only went back — the rating was never sent anywhere, so every
+  // driver's average stayed empty however many deliveries they did.
+  const [rating, setRating] = useState<number>(5);
+  const rate = useRateDelivery();
 
-  const handleSubmit = () => {
-    if (navigation?.goBack) {
-      navigation.goBack();
+  const handleSubmit = async () => {
+    if (!deliveryId) {
+      navigation?.goBack?.();
+      return;
+    }
+    try {
+      await rate.mutateAsync({ id: deliveryId, score: rating });
+      Alert.alert(t('rating.thanks'));
+      navigation?.goBack?.();
+    } catch (err: any) {
+      Alert.alert(t('common.error'), apiErrorMessage(err));
     }
   };
 
@@ -82,12 +97,13 @@ export function RatingsScreen({ navigation, route }: any) {
               );
             })}
           </View>
-          <Text style={styles.ratingValue}>{rating.toFixed(1)}</Text>
+          <Text style={styles.ratingValue}>{rating}</Text>
         </View>
 
         <Button
           title={t('delivered.submit')}
           onPress={handleSubmit}
+          loading={rate.isPending}
           variant="light"
           style={styles.submit}
         />

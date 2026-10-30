@@ -9,6 +9,7 @@ import {
   useRejectDriver,
   useDriverInfo,
   useWithdrawOffer,
+  useMyRating,
 } from '../../queries/delivery';
 import { DeliveryCard } from '../../components/delivery/DeliveryCard';
 import { EmptyState, LoadingSpinner, Modal, Button } from '../../components/ui';
@@ -21,15 +22,52 @@ import { SOCKET_EVENTS } from '@peerdeliver/shared';
 
 type FilterTab = 'active' | 'completed' | 'all';
 
-const ACTIVE_STATUSES: DeliveryStatus[] = ['pending', 'requested', 'offered', 'matched', 'accepted', 'picked_up', 'in_transit'];
+const ACTIVE_STATUSES: DeliveryStatus[] = ['pending', 'requested', 'offered', 'matched', 'accepted', 'picked_up', 'in_transit', 'disputed'];
 const COMPLETED_STATUSES: DeliveryStatus[] = ['delivered', 'cancelled', 'expired'];
 
 // 3-step mini progress nodes shown in the Track view.
 const PROGRESS_STEPS: { label: string; reaches: DeliveryStatus[] }[] = [
-  { label: 'Picked up', reaches: ['picked_up', 'in_transit', 'delivered'] },
-  { label: 'In transit', reaches: ['in_transit', 'delivered'] },
+  { label: 'Picked up', reaches: ['picked_up', 'in_transit', 'delivered', 'disputed'] },
+  { label: 'In transit', reaches: ['in_transit', 'delivered', 'disputed'] },
   { label: 'Delivered', reaches: ['delivered'] },
 ];
+
+/**
+ * What the sender can do once the parcel has left their hands: report a
+ * problem while it's on the way or shortly after, see that a report is being
+ * handled, and rate the driver once it has arrived. None of this existed —
+ * the detail sheet simply ran out of buttons after pickup.
+ */
+function AfterHandover({ delivery, onReport, onRate }: {
+  delivery: DeliveryRequest;
+  onReport: () => void;
+  onRate: () => void;
+}) {
+  const { t } = useTranslation();
+  const disputeOpen = delivery.status === 'disputed' || (!!delivery.disputeOpenedAt && !delivery.disputeResolvedAt);
+  const canReport = !disputeOpen && ['picked_up', 'in_transit', 'delivered'].includes(delivery.status);
+  const { data: myRating, isLoading: ratingLoading } = useMyRating(delivery.id, delivery.status === 'delivered');
+  const canRate = delivery.status === 'delivered' && !ratingLoading && !myRating;
+
+  if (!disputeOpen && !canReport && !canRate) return null;
+  return (
+    <View style={styles.afterCard}>
+      {disputeOpen && (
+        <View style={styles.afterReview}>
+          <View style={styles.findHead}>
+            <Feather name="life-buoy" size={14} color={colors.signalText} />
+            <Text style={styles.waitTitle}>{t('dispute.underReviewTitle')}</Text>
+          </View>
+          <Text style={styles.waitHint}>{t('dispute.underReviewBody')}</Text>
+        </View>
+      )}
+      {canRate && <Button title={t('rating.rateDriver')} onPress={onRate} style={styles.afterButton} />}
+      {canReport && (
+        <Button title={t('dispute.report')} variant="outline" onPress={onReport} style={styles.afterButton} />
+      )}
+    </View>
+  );
+}
 
 function DriverRatingCard({ deliveryId, onConfirm, onReject, confirming, rejecting }: {
   deliveryId: string;
@@ -426,6 +464,23 @@ export function MyShipmentsScreen({ navigation }: any) {
                 <Text style={styles.codeReminderHint}>{t('sender.pickupCodeHint')}</Text>
               </View>
             )}
+
+            <AfterHandover
+              delivery={sel}
+              onReport={() => {
+                setSelectedId(null);
+                navigation.navigate('ReportProblem', { deliveryId: sel.id });
+              }}
+              onRate={() => {
+                setSelectedId(null);
+                navigation.navigate('Ratings', {
+                  deliveryId: sel.id,
+                  contents: sel.packageDescription || undefined,
+                  city: sel.deliveryAddress.label,
+                  co2SavedKg: sel.co2SavedKg,
+                });
+              }}
+            />
           </View>
         )}
       </Modal>
@@ -434,6 +489,13 @@ export function MyShipmentsScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
+  afterCard: { marginTop: spacing.md, gap: spacing.sm },
+  afterReview: {
+    backgroundColor: colors.signalSoft,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+  },
+  afterButton: { alignSelf: 'stretch' },
   flex: { flex: 1 },
   mono: { fontFamily: typography.figure.fontFamily },
   container: { flex: 1, backgroundColor: colors.background },

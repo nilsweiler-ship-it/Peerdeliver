@@ -7,6 +7,7 @@ import * as paymentService from './payment';
 import * as emailService from './email';
 import * as pushService from './push';
 import * as smsService from './sms';
+import { assertDriverVerified } from './driverEligibility';
 
 // All scalar columns (excluding raw geometry) with ST_AsGeoJSON for coordinates
 const DELIVERY_COLS = `
@@ -19,6 +20,7 @@ const DELIVERY_COLS = `
   dr."deliveryWindowStart", dr."deliveryWindowEnd",
   dr.status, dr."offeredRouteId", dr."pickupCode", dr."deliveryCode",
   dr."co2SavedKg", dr."cancelledBy", dr."cancelReason",
+  dr."disputeOpenedAt", dr."disputeReason", dr."disputeResolvedAt", dr."disputeResolution",
   dr."twintRef", dr."twintPhone", dr."paymentStatus", dr."driverPayoutCHF",
   dr."stripePaymentIntentId", dr."stripeTransferId", dr."refundedCHF", dr."refundedAt",
   dr."createdAt", dr."updatedAt"
@@ -291,6 +293,10 @@ export async function updateDeliveryStatus(
   if (status !== 'accepted' && status !== 'cancelled') {
     throw new AppError(400, `Nicht möglich: ${current.status} → ${status}`);
   }
+  // Cancelling has its own per-role, per-state rules (cancelDelivery), with
+  // clearer answers than the generic table can give.
+  if (status === 'cancelled') return cancelDelivery(current, actorId, isSender, isDriver, cancelReason);
+
   const allowed = DELIVERY_STATUS_TRANSITIONS[current.status] ?? [];
   if (!allowed.includes(status)) {
     throw new AppError(400, `Nicht möglich: ${current.status} → ${status}`);
@@ -308,7 +314,7 @@ export async function updateDeliveryStatus(
     return getDeliveryById(id);
   }
 
-  return cancelDelivery(current, actorId, isSender, isDriver, cancelReason);
+  throw new AppError(400, `Nicht möglich: ${current.status} → ${status}`);
 }
 
 /**
@@ -434,6 +440,9 @@ export async function getNearbyDeliveries(
       -- Only parcels the sender has actually paid for. Unpaid ones used to be
       -- listed and claimable, so a driver could do the whole job for nothing.
       AND dr."paymentStatus" = 'authorised'
+      -- Nothing whose delivery window has already passed; the expiry job will
+      -- close it and refund the sender.
+      AND dr."deliveryWindowEnd" > NOW()
       AND ST_DWithin(
         dr."pickupPoint"::geography,
         ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,
@@ -528,6 +537,12 @@ export async function offerToRoute(deliveryId: string, senderId: string, routeId
   if (!route.isActive) throw new AppError(400, 'Diese Route ist nicht mehr aktiv');
   if (route.driverId === senderId) {
     throw new AppError(400, 'Du kannst deine eigene Route nicht anfragen');
+  }
+  // Never put a parcel in front of a driver who could not legally take it.
+  try {
+    await assertDriverVerified(route.driverId);
+  } catch {
+    throw new AppError(400, 'Diese fahrende Person kann im Moment keine Lieferungen übernehmen');
   }
   if (!sizesUpTo(route.availableSize).includes(delivery.packageSize as PackageSize)) {
     throw new AppError(400, 'Diese Route hat nicht genug Platz für dieses Paket');
@@ -654,6 +669,7 @@ export async function acceptOffer(deliveryId: string, driverId: string) {
   if (delivery.status !== 'offered') {
     throw new AppError(400, 'Diese Anfrage ist nicht mehr offen');
   }
+  await assertDriverVerified(driverId);
   // Same gate as claiming a delivery: we must be able to pay this person.
   if (!(await paymentService.driverCanReceivePayouts(driverId))) {
     throw new AppError(400, 'Complete payout setup before accepting deliveries');
@@ -756,6 +772,7 @@ export async function declineOffer(deliveryId: string, driverId: string) {
 }
 
 export async function assignDelivery(deliveryId: string, driverId: string) {
+  await assertDriverVerified(driverId);
   // In real-payment mode, block drivers who haven't completed payout onboarding —
   // otherwise we couldn't pay them out on delivery. (No-op in simulated mode.)
   if (!(await paymentService.driverCanReceivePayouts(driverId))) {
@@ -927,6 +944,9 @@ export async function verifyPickup(deliveryId: string, driverId: string, code: s
   if (!delivery) throw new AppError(404, 'Delivery not found');
   if (delivery.driverId !== driverId) throw new AppError(403, 'Not authorized');
   if (delivery.status !== 'accepted') throw new AppError(400, 'Delivery is not in accepted state');
+  // Verified when they claimed it — and still verified now. A rejected or
+  // revoked verification in between must stop the handover.
+  await assertDriverVerified(driverId);
   // Collecting a parcel nobody has paid for means a job with no money behind it.
   if (delivery.paymentStatus !== 'authorised') {
     throw new AppError(400, 'Diese Sendung ist noch nicht bezahlt');
@@ -987,7 +1007,11 @@ export async function verifyDelivery(deliveryId: string, driverId: string, code:
   const delivery = await getDeliveryById(deliveryId);
   if (!delivery) throw new AppError(404, 'Delivery not found');
   if (delivery.driverId !== driverId) throw new AppError(403, 'Not authorized');
-  if (delivery.status !== 'in_transit') throw new AppError(400, 'Delivery is not in transit');
+  // A dispute opened while the parcel was on its way is settled by the
+  // recipient's code just as well: it proves the handover happened.
+  if (delivery.status !== 'in_transit' && delivery.status !== 'disputed') {
+    throw new AppError(400, 'Delivery is not in transit');
+  }
   await checkHandoverCode(deliveryId, delivery.deliveryCode, code, driverId, 'delivery');
 
   // ── Impact ──────────────────────────────────────────────────────
@@ -1057,8 +1081,10 @@ export async function verifyDelivery(deliveryId: string, driverId: string, code:
   await prisma.$transaction(async (tx) => {
     const applied = await tx.$executeRawUnsafe(
       `UPDATE delivery_requests
-          SET status = 'delivered'::"DeliveryStatus", "co2SavedKg" = $3, "updatedAt" = NOW()
-        WHERE id = $1 AND status = 'in_transit'::"DeliveryStatus" AND "driverId" = $2`,
+          SET "disputeResolvedAt" = CASE WHEN status = 'disputed' THEN NOW() ELSE "disputeResolvedAt" END,
+              "disputeResolution" = CASE WHEN status = 'disputed' THEN 'delivered with the recipient''s code' ELSE "disputeResolution" END,
+              status = 'delivered'::"DeliveryStatus", "co2SavedKg" = $3, "updatedAt" = NOW()
+        WHERE id = $1 AND status IN ('in_transit'::"DeliveryStatus", 'disputed'::"DeliveryStatus") AND "driverId" = $2`,
       deliveryId,
       driverId,
       co2SavedKg,

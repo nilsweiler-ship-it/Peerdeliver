@@ -2,7 +2,8 @@ import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import * as userController from '../controllers/user';
 import * as verificationController from '../controllers/verification';
-import { authenticate } from '../middleware';
+import { authenticate, validate } from '../middleware';
+import { updateProfileSchema } from '@peerdeliver/shared';
 
 const router = Router();
 
@@ -21,7 +22,7 @@ const smsLimiter = rateLimit({
 
 router.use(authenticate);
 router.get('/profile', userController.getProfile);
-router.patch('/profile', userController.updateProfile);
+router.patch('/profile', validate(updateProfileSchema), userController.updateProfile);
 router.delete('/account', userController.deleteAccount);
 router.post('/verification', verificationController.verify);
 router.post('/verification/phone/start', smsLimiter, verificationController.startPhoneVerification);

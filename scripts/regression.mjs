@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 /**
- * Regression suite for the seven P0 trust/money bugs found in the
- * 2026-10-30 review (reviews/2026-10-30/SUMMARY.md).
+ * Regression suite for the trust/money bugs found in the 2026-10-30 review
+ * (reviews/2026-10-30/SUMMARY.md): the seven P0s, the follow-ups from the
+ * independent review, and the pre-pilot (P1) behaviour — ID verification
+ * before driving, disputes, ratings, input validation, account deletion.
  *
- * Every check reproduces one of the original exploits and asserts that it no
- * longer works. Run it against a LOCAL server in simulated-payment mode (no
+ * Every check reproduces an original exploit or a missing behaviour and
+ * asserts it is fixed. Run it against a LOCAL server in simulated-payment mode (no
  * Stripe key): it registers throwaway users and pays with the sim TWINT
  * endpoint, which is deliberately unavailable once a real provider is set.
  *
@@ -55,15 +57,23 @@ async function reg(name, role, extra = {}) {
   if (!tok) throw new Error(`register ${name} failed: ${r.s} ${JSON.stringify(r.j)}`);
   return { email, tok, id: r.d?.user?.id };
 }
+/** Drivers must be verified to drive. Locally that is the dev shortcut. */
+async function verified(user) {
+  const v = await call('POST', '/users/verification/dev-verify-all', user.tok);
+  if (v.s !== 200) throw new Error(`dev-verify-all failed (${v.s}) — is the server in development mode without a live Stripe key?`);
+  return user;
+}
 
 const ZH = { label: 'Zürich HB', point: { lat: 47.3779, lng: 8.5403 } };
 const WI = { label: 'Winterthur HB', point: { lat: 47.5001, lng: 8.7238 } };
 const DAY = 864e5;
 const car = { licensePlate: 'ZH 123456', vehicleSize: 'L', maxLoadKg: 100 };
 
-const S = await reg('sender', 'both', car);
-const D = await reg('driver', 'driver', car);
-const D2 = await reg('driver2', 'driver', car);
+// Verified too, so that 'cannot claim your own parcel' is tested for itself
+// rather than refused earlier for being unverified.
+const S = await verified(await reg('sender', 'both', car));
+const D = await verified(await reg('driver', 'driver', car));
+const D2 = await verified(await reg('driver2', 'driver', car));
 const R = await reg('recipient', 'recipient');
 const T = await reg('stranger', 'both', car);
 
@@ -229,7 +239,7 @@ console.log('\n#5 payment required');
 // ── #6 A handover completes exactly once ────────────────────────────────
 console.log('\n#6 duplicate handover');
 {
-  const Dx = await reg('driverx', 'driver', car);
+  const Dx = await verified(await reg('driverx', 'driver', car));
   const id = await toInTransit(Dx);
   const code = await deliveryCodeFor(id);
   const rs = await Promise.all(Array.from({ length: 10 }, () =>
@@ -334,6 +344,147 @@ console.log('\n#7b driver backing out is announced');
   await call('PATCH', `/deliveries/${id}/status`, D.tok, { status: 'cancelled', cancelReason: 'flat tyre' });
   const msgs = (await call('GET', `/chat/${id}/messages`, S.tok)).d ?? [];
   check('sender sees a chat message', JSON.stringify(msgs).includes('can no longer do this delivery'), { n: msgs.length });
+}
+
+// ── P1: ID verification before driving ─────────────────────────────────
+console.log('\nP1 verification gate');
+{
+  const U = await reg('unverified', 'driver', car);
+  const id = await create();
+  await pay(id);
+  const a = await call('PATCH', `/deliveries/${id}/assign`, U.tok);
+  check('unverified driver cannot claim', a.s === 403 && a.j?.code === 'VERIFICATION_REQUIRED', { s: a.s, code: a.j?.code });
+  const routeBody = {
+    originAddress: ZH.label, originPoint: ZH.point, destinationAddress: WI.label, destinationPoint: WI.point,
+    routeType: 'one_time', departureTime: new Date(Date.now() + DAY).toISOString(), availableSize: 'L',
+  };
+  const r = await call('POST', '/routes', U.tok, routeBody);
+  check('unverified driver cannot publish a route', r.s === 403 && r.j?.code === 'VERIFICATION_REQUIRED', { s: r.s });
+  const ok = await call('POST', '/routes', D.tok, routeBody);
+  check('verified driver can publish', ok.s === 201, { s: ok.s, e: ok.j?.error });
+}
+
+// ── P1: disputes ────────────────────────────────────────────────────────
+console.log('\nP1 disputes');
+{
+  const early = await create();
+  const e = await call('POST', `/deliveries/${early}/dispute`, S.tok, { reason: 'Something is wrong here' });
+  check('no dispute before pickup (cancel instead)', e.s === 400, { s: e.s });
+
+  const id = await toInTransit();
+  const short = await call('POST', `/deliveries/${id}/dispute`, S.tok, { reason: 'bad' });
+  check('a reason is required', short.s === 400, { s: short.s });
+  const stranger = await call('POST', `/deliveries/${id}/dispute`, T.tok, { reason: 'I am not part of this delivery' });
+  check('a stranger cannot open one', stranger.s === 404, { s: stranger.s });
+  const open = await call('POST', `/deliveries/${id}/dispute`, S.tok, { reason: 'The parcel was due yesterday and nobody answers.' });
+  const d = await get(id);
+  check('sender opens a dispute in transit → disputed, money held', open.s === 200 && d?.status === 'disputed' && d?.paymentStatus === 'authorised',
+    { s: open.s, st: d?.status, pay: d?.paymentStatus });
+  const twice = await call('POST', `/deliveries/${id}/dispute`, R.tok, { reason: 'Still not here, reporting again.' });
+  check('only one open dispute at a time', twice.s === 409, { s: twice.s });
+  const cx = await call('PATCH', `/deliveries/${id}/status`, S.tok, { status: 'cancelled', cancelReason: 'x' });
+  check('a disputed delivery cannot be cancelled by the sender', cx.s >= 400, { s: cx.s });
+  const done = await call('POST', `/deliveries/${id}/verify-delivery`, D.tok, { code: await deliveryCodeFor(id) });
+  const after = await get(id);
+  check('the recipient\'s code still completes it and settles the dispute',
+    done.s === 200 && after?.status === 'delivered' && after?.paymentStatus === 'captured' && !!after?.disputeResolvedAt,
+    { s: done.s, st: after?.status, pay: after?.paymentStatus, resolved: after?.disputeResolvedAt });
+}
+
+// ── P1: ratings ─────────────────────────────────────────────────────────
+console.log('\nP1 ratings');
+{
+  const Dr = await verified(await reg('rated', 'driver', car));
+  const id = await toInTransit(Dr);
+  const early = await call('POST', `/deliveries/${id}/rating`, S.tok, { score: 5 });
+  check('no rating before delivery', early.s === 400, { s: early.s });
+  await call('POST', `/deliveries/${id}/verify-delivery`, Dr.tok, { code: await deliveryCodeFor(id) });
+  const bad = await call('POST', `/deliveries/${id}/rating`, S.tok, { score: 7 });
+  check('score must be 1–5', bad.s === 400, { s: bad.s });
+  const r1 = await call('POST', `/deliveries/${id}/rating`, S.tok, { score: 4, comment: 'Friendly and on time' });
+  check('sender rates the driver', r1.s === 201 && r1.d?.score === 4, { s: r1.s });
+  const r2 = await call('POST', `/deliveries/${id}/rating`, S.tok, { score: 1 });
+  check('…once', r2.s === 409, { s: r2.s });
+  const r3 = await call('POST', `/deliveries/${id}/rating`, R.tok, { score: 5 });
+  check('the recipient can rate the driver too', r3.s === 201, { s: r3.s });
+  const prof = (await call('GET', '/users/profile', Dr.tok)).d;
+  check('driver average = 4.5 from 2 ratings', prof?.totalRatings === 2 && Math.abs((prof?.averageRating ?? 0) - 4.5) < 1e-9,
+    { avg: prof?.averageRating, n: prof?.totalRatings });
+  const mine = await call('GET', `/deliveries/${id}/rating`, S.tok);
+  check('GET returns my rating', mine.d?.score === 4, mine.d);
+  const back = await call('POST', `/deliveries/${id}/rating`, Dr.tok, { score: 5 });
+  check('the driver rates the sender', back.s === 201, { s: back.s });
+}
+
+// ── P1: input validation ────────────────────────────────────────────────
+console.log('\nP1 validation');
+{
+  const bad = async (name, over, expectText) => {
+    const r = await call('POST', '/deliveries', S.tok, body(over));
+    check(`refused: ${name}`, r.s === 400 && (!expectText || String(r.j?.error).includes(expectText)), { s: r.s, e: r.j?.error });
+  };
+  await bad('budget CHF 12.34 (off the 5-Rappen grid)', { budgetCHF: 12.34 }, 'Rappen');
+  await bad('budget CHF 1', { budgetCHF: 1 });
+  await bad('budget CHF 6000 (over TWINT limit)', { budgetCHF: 6000 });
+  await bad('9999 kg as size S', { packageSize: 'S', packageWeight: 9999 }, 'kg');
+  await bad('declared value 1e12', { declaredValue: 1e12 });
+  await bad('window in the past', { deliveryWindowStart: new Date(Date.now() - 3 * DAY).toISOString(), deliveryWindowEnd: new Date(Date.now() - 2 * DAY).toISOString() });
+  await bad('window ending before it starts', { deliveryWindowStart: new Date(Date.now() + 2 * DAY).toISOString(), deliveryWindowEnd: new Date(Date.now() + DAY).toISOString() });
+  await bad('pickup at (0,0)', { pickupAddress: { label: 'Null Island', point: { lat: 0, lng: 0 } } });
+  await bad('pickup = drop-off', { deliveryAddress: ZH });
+
+  const offset = await call('POST', '/deliveries', S.tok, body({
+    deliveryWindowStart: '2099-01-01T09:00:00+01:00', deliveryWindowEnd: '2099-01-02T09:00:00+01:00',
+  }));
+  check('far future refused, but the +01:00 offset is understood', offset.s === 400 && /Voraus/.test(offset.j?.error ?? ''), { s: offset.s, e: offset.j?.error });
+  const soon = new Date(Date.now() + DAY);
+  const pad = (n) => String(n).padStart(2, '0');
+  const local = (d) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:00:00+00:00`;
+  const ok = await call('POST', '/deliveries', S.tok, body({ deliveryWindowStart: local(soon), deliveryWindowEnd: local(new Date(soon.getTime() + DAY)) }));
+  check('a datetime with an offset is accepted', ok.s === 201, { s: ok.s, e: ok.j?.error });
+
+  const grid = await create({ budgetCHF: 12.35 });
+  await pay(grid);
+  await call('PATCH', `/deliveries/${grid}/assign`, D2.tok);
+  await call('PATCH', `/deliveries/${grid}/confirm`, S.tok);
+  await call('PATCH', `/deliveries/${grid}/status`, D2.tok, { status: 'accepted' });
+  await call('POST', `/deliveries/${grid}/verify-pickup`, D2.tok, { code: (await get(grid, S)).pickupCode });
+  await call('POST', `/deliveries/${grid}/verify-delivery`, D2.tok, { code: await deliveryCodeFor(grid) });
+  const g = await get(grid);
+  check('CHF 12.35 → fee 1.50 / payout 10.85, both on the grid', g?.platformFeeCHF === 1.5 && g?.driverPayoutCHF === 10.85,
+    { fee: g?.platformFeeCHF, payout: g?.driverPayoutCHF });
+
+  const lang = await call('PATCH', '/users/profile', T.tok, { language: 'klingon' });
+  check('profile: unknown language refused', lang.s === 400, { s: lang.s });
+  const veh = await call('PATCH', '/users/profile', T.tok, { vehicleSize: 'HUGE', maxLoadKg: -50 });
+  check('profile: bad vehicle fields → 400, not 500', veh.s === 400, { s: veh.s });
+  const it = await call('POST', '/auth/register', null, {
+    email: `p0-it-${run}@example.com`, password: 'P0-Regression-1', firstName: 'Lia', lastName: 'Ticino', role: 'sender', language: 'it',
+  });
+  check('Italian accepted at sign-up', it.s === 201 && it.d?.user?.language === 'it', { s: it.s, lang: it.d?.user?.language });
+
+  const chatId = await toAccepted();
+  const empty = await call('POST', `/chat/${chatId}/messages`, S.tok, { content: '   ' });
+  check('chat: empty message → 400, not 500', empty.s === 400, { s: empty.s });
+  const long = await call('POST', `/chat/${chatId}/messages`, S.tok, { content: 'x'.repeat(3000) });
+  check('chat: 3000 characters → 400', long.s === 400, { s: long.s });
+}
+
+// ── P1: account deletion ────────────────────────────────────────────────
+console.log('\nP1 account deletion');
+{
+  const X = await reg('leaver', 'both', car);
+  const busy = (await call('POST', '/deliveries', X.tok, body())).d.id;
+  const blocked = await call('DELETE', '/users/account', X.tok);
+  check('refused while a delivery is in progress', blocked.s === 409, { s: blocked.s });
+  await call('PATCH', `/deliveries/${busy}/status`, X.tok, { status: 'cancelled', cancelReason: 'leaving' });
+  const del = await call('DELETE', '/users/account', X.tok);
+  check('then deletes (anonymises, since a past delivery refers to it)', del.s === 200, { s: del.s, e: del.j?.error });
+  const login = await call('POST', '/auth/login', null, { email: X.email, password: 'P0-Regression-1' });
+  check('the old login no longer works', login.s === 401, { s: login.s });
+  const fresh = await reg('leaver2', 'sender');
+  const del2 = await call('DELETE', '/users/account', fresh.tok);
+  check('an account with no history is deleted outright', del2.s === 200, { s: del2.s });
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

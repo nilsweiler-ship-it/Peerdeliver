@@ -26,11 +26,13 @@
     "payment:stripe": "cd packages/server && npx tsx scripts/payment-trace.ts --stripe",
     "match:why": "cd packages/server && npx tsx scripts/match-why.ts",
     "payout:retry": "cd packages/server && npx tsx scripts/payout-retry.ts",
+    "dispute": "cd packages/server && npx tsx scripts/dispute.ts",
     "e2e:seed": "npm run db:generate --silent && cd packages/server && npx tsx scripts/seed-e2e-users.ts",
     "e2e": "node scripts/e2e.mjs",
     "verify:all": "node scripts/verify-all.mjs",
     "e2e:ui": "maestro test .maestro",
-    "test:p0": "node scripts/p0-regression.mjs"
+    "test:regression": "node scripts/regression.mjs",
+    "test:expiry": "cd packages/server && npx tsx scripts/expiry-check.ts"
   },
   "prisma": {
     "schema": "packages/server/prisma/schema.prisma"

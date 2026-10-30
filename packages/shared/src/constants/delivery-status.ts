@@ -9,6 +9,7 @@ export const DELIVERY_STATUS = {
   DELIVERED: 'delivered',
   CANCELLED: 'cancelled',
   EXPIRED: 'expired',
+  DISPUTED: 'disputed',
 } as const;
 
 /**
@@ -26,12 +27,17 @@ export const DELIVERY_STATUS = {
  */
 export const DELIVERY_STATUS_TRANSITIONS: Record<string, string[]> = {
   pending: ['cancelled', 'expired'],
-  requested: ['matched', 'cancelled'],
-  offered: ['cancelled'],
-  matched: ['accepted', 'cancelled'],
-  accepted: ['picked_up', 'cancelled'],
-  picked_up: ['in_transit', 'cancelled'],
-  in_transit: ['delivered', 'cancelled'],
+  requested: ['matched', 'cancelled', 'expired'],
+  offered: ['cancelled', 'expired'],
+  matched: ['accepted', 'cancelled', 'expired'],
+  accepted: ['picked_up', 'cancelled', 'expired'],
+  // After pickup the parcel is in a stranger's car. It either arrives (with
+  // the recipient's code) or something has gone wrong and a person decides —
+  // it is never simply "cancelled" with a refund any more.
+  picked_up: ['in_transit', 'disputed'],
+  in_transit: ['delivered', 'disputed'],
+  // Support resolves a dispute one way or the other.
+  disputed: ['delivered', 'cancelled'],
   delivered: [],
   cancelled: [],
   expired: [],

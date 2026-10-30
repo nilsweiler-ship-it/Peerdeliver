@@ -293,7 +293,10 @@ export function splitBudget(budgetCHF: number, policy: FeePolicy = DEFAULT_FEE_P
   const pct = Number.isFinite(policy.percent) ? Math.max(0, policy.percent) : 0;
   const minCents = Number.isFinite(policy.minCHF) ? Math.max(0, Math.round(policy.minCHF * 100)) : 0;
 
-  const rawFeeCents = Math.round((budgetCents * pct) / 100);
+  // Rounded to 5 Rappen, so that on a budget on the grid (which the API now
+  // requires) the driver's payout is on the grid too. A CHF 12.35 budget
+  // used to pay out CHF 10.84.
+  const rawFeeCents = Math.round((budgetCents * pct) / 100 / 5) * 5;
   // The fee can never exceed the budget: a floor bigger than the ticket would
   // otherwise produce a negative payout and a transfer Stripe would reject.
   const feeCents = Math.min(Math.max(rawFeeCents, minCents), budgetCents);

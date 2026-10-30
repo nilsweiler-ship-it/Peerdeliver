@@ -3,7 +3,7 @@ import { prisma, env } from '../config';
 import { success, error } from '../utils';
 import { AppError } from '../middleware';
 import { smsService, identityService } from '../services';
-import { stripeConfigured } from '../services/stripe';
+import { stripeConfigured, stripeIsLive } from '../services/stripe';
 
 // Swiss number plates: 2-letter canton code + 1–6 digits (e.g. "ZH 123456").
 const SWISS_CANTONS = new Set([
@@ -191,7 +191,11 @@ export async function startIdentity(req: Request, res: Response, next: NextFunct
 /** Dev-only shortcut to fully verify the current user (for testing). */
 export async function devVerifyAll(req: Request, res: Response, next: NextFunction) {
   try {
-    if (env.NODE_ENV !== 'development') {
+    // Off unless in development AND not holding a live Stripe key. NODE_ENV
+    // defaults to 'development' when unset, so on its own this check failed
+    // open: any deploy that forgot the variable let every account mark itself
+    // fully verified with one call. A live key means real people and money.
+    if (env.NODE_ENV !== 'development' || stripeIsLive()) {
       error(res, 'Not found', 404);
       return;
     }

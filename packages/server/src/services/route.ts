@@ -1,5 +1,6 @@
 import { prisma } from '../config';
 import type { CreateRouteInput } from '@peerdeliver/shared';
+import { assertDriverVerified, phoneOnlyDriversAllowed } from './driverEligibility';
 
 const ROUTE_COLS = `
   dr.id, dr."driverId",
@@ -46,6 +47,9 @@ function transformRoute(row: RawRouteRow) {
 }
 
 export async function createRoute(driverId: string, input: CreateRouteInput) {
+  // A published route is an offer to carry strangers' parcels; senders can
+  // pick it directly. Same bar as claiming a delivery.
+  await assertDriverVerified(driverId);
   const inserted: { id: string }[] = await prisma.$queryRaw`
     INSERT INTO driver_routes (
       id, "driverId", "originAddress", "originPoint",
@@ -113,6 +117,10 @@ export async function searchRoutes(fromLat: number, fromLng: number, toLat: numb
     FROM driver_routes dr
     JOIN users u ON u.id = dr."driverId"
     WHERE dr."isActive" = true
+      -- Only drivers who may take a delivery (see driverEligibility). A route
+      -- from an unverified driver used to be offered to senders, who could
+      -- then hand their parcel to someone nobody had checked.
+      AND (u."verificationStatus" = 'verified' OR ($6::boolean AND u."phoneVerified"))
       AND ST_DWithin(
         dr."originPoint"::geography,
         ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,
@@ -130,6 +138,7 @@ export async function searchRoutes(fromLat: number, fromLng: number, toLat: numb
     toLat,
     toLng,
     radiusKm * 1000,
+    phoneOnlyDriversAllowed(),
   );
   return rows.map(transformRoute);
 }

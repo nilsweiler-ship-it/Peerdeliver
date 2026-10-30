@@ -9,6 +9,11 @@ export function stripeConfigured(): boolean {
   return Boolean(env.STRIPE_SECRET_KEY);
 }
 
+/** True when the key moves real money (sk_live_ / rk_live_), as opposed to test mode. */
+export function stripeIsLive(): boolean {
+  return /^(sk|rk)_live_/.test(env.STRIPE_SECRET_KEY ?? '');
+}
+
 export function getStripe(): Stripe {
   if (client) return client;
   if (!env.STRIPE_SECRET_KEY) {

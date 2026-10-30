@@ -24,10 +24,11 @@ import {
 } from '../../services/backgroundLocation';
 import type { DeliveryRequest, DeliveryStatus } from '@peerdeliver/shared';
 import { SOCKET_EVENTS } from '@peerdeliver/shared';
+import { showApiError } from '../../utils/apiError';
 
-const DRIVER_ACTIVE_STATUSES: DeliveryStatus[] = ['requested', 'offered', 'matched', 'accepted', 'picked_up', 'in_transit'];
+const DRIVER_ACTIVE_STATUSES: DeliveryStatus[] = ['requested', 'offered', 'matched', 'accepted', 'picked_up', 'in_transit', 'disputed'];
 
-function DeliveryActionCard({ delivery }: { delivery: DeliveryRequest }) {
+function DeliveryActionCard({ delivery, navigation }: { delivery: DeliveryRequest; navigation?: any }) {
   const { t } = useTranslation();
   const [code, setCode] = useState('');
   const verifyPickup = useVerifyPickup();
@@ -41,7 +42,7 @@ function DeliveryActionCard({ delivery }: { delivery: DeliveryRequest }) {
       await acceptOffer.mutateAsync(delivery.id);
       Alert.alert(t('driver.offerAccepted'));
     } catch (err: any) {
-      Alert.alert(t('common.error'), err?.response?.data?.error || err?.message);
+      showApiError(err, t, navigation);
     }
   };
 
@@ -73,7 +74,7 @@ function DeliveryActionCard({ delivery }: { delivery: DeliveryRequest }) {
       Alert.alert(t('driver.pickupConfirmed'));
       setCode('');
     } catch (err: any) {
-      Alert.alert(t('common.error'), err?.response?.data?.error || err?.message);
+      showApiError(err, t, navigation);
     }
   };
 
@@ -92,7 +93,8 @@ function DeliveryActionCard({ delivery }: { delivery: DeliveryRequest }) {
   };
 
   const isPickupCode = delivery.status === 'accepted';
-  const isDeliveryCode = delivery.status === 'in_transit';
+  // A dispute opened on the way is still settled by the recipient's code.
+  const isDeliveryCode = delivery.status === 'in_transit' || delivery.status === 'disputed';
 
   return (
     <View style={styles.card}>
@@ -188,6 +190,18 @@ function DeliveryActionCard({ delivery }: { delivery: DeliveryRequest }) {
           >
             <CodeInput value={code} onChange={setCode} />
           </TicketStub>
+          {delivery.status === 'disputed' ? (
+            <Text style={styles.waitingText}>{t('dispute.underReviewDriver')}</Text>
+          ) : (
+            // Recipient not there, address wrong, parcel damaged: the driver
+            // needs a way to say so other than sitting on the parcel.
+            <Button
+              title={t('dispute.report')}
+              variant="outline"
+              onPress={() => navigation?.navigate?.('ReportProblem', { deliveryId: delivery.id })}
+              style={{ marginTop: 12 }}
+            />
+          )}
         </View>
       )}
 
@@ -347,7 +361,7 @@ export function ActiveDeliveryScreen({ navigation }: any) {
           />
         ) : (
           activeDeliveries.map((delivery) => (
-            <DeliveryActionCard key={delivery.id} delivery={delivery} />
+            <DeliveryActionCard key={delivery.id} delivery={delivery} navigation={navigation} />
           ))
         )}
       </ScrollView>

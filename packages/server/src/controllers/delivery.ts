@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { deliveryService, userService } from '../services';
+import { deliveryService, userService, lifecycleService } from '../services';
 import { success, error } from '../utils';
 import { getIO } from '../socket';
 import { publishDriverLocation } from '../socket/trackingHandler';
@@ -278,6 +278,47 @@ export async function getDriverInfo(req: Request<{ id: string }>, res: Response,
       },
     });
     success(res, driver);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** Report a problem with a delivery (sender, driver or recipient). */
+export async function dispute(req: Request<{ id: string }>, res: Response, next: NextFunction) {
+  try {
+    const { email } = await userService.getUserById(req.user!.userId);
+    const result = await lifecycleService.openDispute(
+      req.params.id,
+      { userId: req.user!.userId, email },
+      (req.body as { reason?: string })?.reason ?? '',
+    );
+    success(res, result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** Rate the other side of a delivered delivery. */
+export async function rate(req: Request<{ id: string }>, res: Response, next: NextFunction) {
+  try {
+    const { email } = await userService.getUserById(req.user!.userId);
+    const { score, comment } = (req.body ?? {}) as { score?: number; comment?: string };
+    const rating = await lifecycleService.rateDelivery(
+      req.params.id,
+      { userId: req.user!.userId, email },
+      Number(score),
+      comment,
+    );
+    success(res, rating, 201);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** The caller's own rating for this delivery, or null. */
+export async function myRating(req: Request<{ id: string }>, res: Response, next: NextFunction) {
+  try {
+    success(res, await lifecycleService.getMyRating(req.params.id, req.user!.userId));
   } catch (err) {
     next(err);
   }

@@ -17,6 +17,7 @@ import { BackChip, RouteLine, SegmentedControl, DayPicker } from '../../componen
 import { useCreateRoute } from '../../queries/route';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { PackageSize, RouteType, DayOfWeek, CreateRouteInput } from '@peerdeliver/shared';
+import { showApiError } from '../../utils/apiError';
 
 const SIZES: { key: PackageSize; label: string }[] = [
   { key: 'S', label: 'Small' },
@@ -87,8 +88,7 @@ export function PublishRouteScreen({ navigation }: any) {
       Alert.alert(t('driver.publishSuccess'));
       navigation.navigate('MyRoutes');
     } catch (err: any) {
-      const msg = err?.response?.data?.error || err?.message || t('common.error');
-      Alert.alert(t('common.error'), msg);
+      showApiError(err, t, navigation);
     }
   };
 

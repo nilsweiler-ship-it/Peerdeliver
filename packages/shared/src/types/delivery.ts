@@ -26,7 +26,9 @@ export type DeliveryStatus =
   | 'in_transit'
   | 'delivered'
   | 'cancelled'
-  | 'expired';
+  | 'expired'
+  /** Something went wrong after pickup; payment held, support decides. */
+  | 'disputed';
 
 export type PaymentStatus =
   | 'unpaid'
@@ -75,6 +77,11 @@ export interface DeliveryRequest {
   co2SavedKg?: number;
   cancelledBy?: string;
   cancelReason?: string;
+  /** Set when someone reported a problem; open while disputeResolvedAt is unset. */
+  disputeOpenedAt?: string | null;
+  disputeReason?: string | null;
+  disputeResolvedAt?: string | null;
+  disputeResolution?: string | null;
   paymentStatus?: PaymentStatus;
   driverPayoutCHF?: number;
   refundedCHF?: number;

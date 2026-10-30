@@ -17,6 +17,14 @@ interface StatusTimelineProps {
 }
 
 export function StatusTimeline({ currentStatus, orientation = 'horizontal' }: StatusTimelineProps) {
+  if (currentStatus === 'disputed') {
+    return (
+      <View style={styles.terminalContainer}>
+        <View style={[styles.terminalDot, { backgroundColor: colors.signal }]} />
+        <Text style={styles.terminalText}>Under review</Text>
+      </View>
+    );
+  }
   if (currentStatus === 'cancelled' || currentStatus === 'expired') {
     return (
       <View style={styles.terminalContainer}>

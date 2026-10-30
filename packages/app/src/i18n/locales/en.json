@@ -291,6 +291,9 @@
     "impactEarly": "Early days — the savings show up on bulky items."
   },
   "verification": {
+    "requiredTitle": "Verify yourself first",
+    "requiredBody": "Confirm your identity and phone number before you take deliveries.",
+    "verifyNow": "Verify now",
     "title": "Verification & trust",
     "trustScore": "Trust score",
     "getVerified": "Get verified",
@@ -477,5 +480,23 @@
     "on_date": "A specific day",
     "todayClosed": "Too late for today — pick another day.",
     "hint": "The more slack you allow, the likelier someone is already driving."
+  },
+  "dispute": {
+    "report": "Report a problem",
+    "title": "Report a problem",
+    "intro": "Tell us what went wrong — the parcel hasn't arrived, it arrived damaged, or the handover can't happen. Shlep support will look at it and get in touch.",
+    "moneyHeld": "While we look into it, the payment is held: the driver isn't paid out and nothing is refunded until it's resolved.",
+    "whatHappened": "What happened?",
+    "placeholder": "e.g. The parcel was due yesterday and the driver isn't answering.",
+    "submit": "Send report",
+    "sentTitle": "Thanks — we're on it",
+    "sentBody": "Shlep support will get in touch. The payment stays held until it's resolved.",
+    "underReviewTitle": "Being looked into",
+    "underReviewBody": "A problem was reported for this delivery. Shlep support will get in touch; the payment is held until it's resolved.",
+    "underReviewDriver": "A problem was reported. If you hand the parcel over, the recipient's code still completes the delivery."
+  },
+  "rating": {
+    "rateDriver": "Rate your driver",
+    "thanks": "Thanks for rating!"
   }
 }

@@ -216,3 +216,49 @@ export function useDriverInfo(deliveryId: string) {
     enabled: !!deliveryId,
   });
 }
+
+/** Report a problem with a delivery after pickup (or within 14 days of delivery). */
+export function useOpenDispute() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
+      const { data } = await api.post<ApiResponse<unknown>>(`/deliveries/${id}/dispute`, { reason });
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deliveries'] });
+    },
+  });
+}
+
+export interface MyRating {
+  score: number;
+  comment?: string | null;
+  createdAt: string;
+}
+
+/** The caller's own rating for a delivery, or null if they haven't rated it. */
+export function useMyRating(deliveryId?: string | null, enabled = true) {
+  return useQuery({
+    queryKey: ['rating', deliveryId],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<MyRating | null>>(`/deliveries/${deliveryId}/rating`);
+      return data.data ?? null;
+    },
+    enabled: !!deliveryId && enabled,
+  });
+}
+
+export function useRateDelivery() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, score, comment }: { id: string; score: number; comment?: string }) => {
+      const { data } = await api.post<ApiResponse<MyRating>>(`/deliveries/${id}/rating`, { score, comment });
+      return data.data!;
+    },
+    onSuccess: (_d, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['rating', vars.id] });
+      queryClient.invalidateQueries({ queryKey: ['deliveries'] });
+    },
+  });
+}
