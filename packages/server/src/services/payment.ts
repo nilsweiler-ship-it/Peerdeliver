@@ -186,6 +186,12 @@ export async function payWithTwint(deliveryId: string, senderId: string, phone?:
   if (!delivery) throw new AppError(404, 'Delivery not found');
   if (delivery.senderId !== senderId) throw new AppError(403, 'Not authorized');
   if (delivery.paymentStatus === 'authorised' || delivery.paymentStatus === 'captured') return;
+  // Paying for a delivery that has been called off would take money for
+  // nothing, with no path back to the sender.
+  if (delivery.status === 'cancelled' || delivery.status === 'expired' ||
+      delivery.paymentStatus === 'voided' || delivery.paymentStatus === 'refunded') {
+    throw new AppError(400, 'Diese Sendung ist nicht mehr offen');
+  }
   await prisma.deliveryRequest.update({
     where: { id: deliveryId },
     data: {
@@ -394,7 +400,20 @@ export async function voidOnCancel(deliveryId: string) {
       }
       return;
     }
-    await stripe.paymentIntents.cancel(delivery.stripePaymentIntentId).catch(() => {});
+    // Not paid as far as we know — but the payment may be completing right
+    // now, with its webhook not yet arrived. Cancelling a PaymentIntent that
+    // has already succeeded fails; that failure used to be swallowed and the
+    // row marked 'voided', after which the late webhook was ignored and the
+    // sender was charged for a cancelled delivery with no refund.
+    try {
+      await stripe.paymentIntents.cancel(delivery.stripePaymentIntentId);
+    } catch {
+      const intent = await stripe.paymentIntents.retrieve(delivery.stripePaymentIntentId).catch(() => null);
+      if (intent?.status === 'succeeded') {
+        await refundLatePayment(deliveryId, delivery.stripePaymentIntentId, delivery.budgetCHF);
+        return;
+      }
+    }
     await prisma.deliveryRequest.update({ where: { id: deliveryId }, data: { paymentStatus: 'voided' } });
     return;
   }
@@ -408,6 +427,23 @@ export async function voidOnCancel(deliveryId: string) {
   } else {
     await prisma.deliveryRequest.update({ where: { id: deliveryId }, data: { paymentStatus: 'voided' } });
   }
+}
+
+/**
+ * Refund a payment that completed after its delivery was cancelled.
+ * Idempotent: the key is per delivery, and the row records the refund.
+ */
+async function refundLatePayment(deliveryId: string, paymentIntentId: string, budgetCHF: number) {
+  const stripe = getStripe();
+  const refund = await stripe.refunds.create(
+    { payment_intent: paymentIntentId },
+    { idempotencyKey: `delivery-late-refund-${deliveryId}` },
+  );
+  await prisma.deliveryRequest.update({
+    where: { id: deliveryId },
+    data: { paymentStatus: 'refunded', refundedCHF: (refund.amount ?? Math.round(budgetCHF * 100)) / 100, refundedAt: new Date() },
+  });
+  console.log(`[payments] ${deliveryId}: payment completed after cancellation, refunded`);
 }
 
 // ───────────────────────── Webhooks (real mode) ─────────────────────────
@@ -429,6 +465,17 @@ export async function handleStripeEvent(event: Stripe.Event) {
       // announced, but the real Stripe path did not. A sender paying by TWINT
       // in production would have had their recipient told nothing at all.
       if (count > 0) void deliveryService.announceToRecipient(deliveryId);
+      if (count === 0) {
+        // The money arrived for a delivery that was cancelled before it did.
+        // Hand it straight back rather than keep it.
+        const late = await prisma.deliveryRequest.findUnique({
+          where: { id: deliveryId },
+          select: { status: true, paymentStatus: true, budgetCHF: true },
+        });
+        if (late && (late.status === 'cancelled' || late.status === 'expired') && late.paymentStatus === 'voided') {
+          await refundLatePayment(deliveryId, intent.id, late.budgetCHF);
+        }
+      }
       return;
     }
     case 'payment_intent.payment_failed': {
@@ -531,10 +578,20 @@ export async function markDeliveryPaid(
 ): Promise<void> {
   const delivery = await prisma.deliveryRequest.findUnique({
     where: { id: deliveryId },
-    select: { paymentStatus: true, budgetCHF: true },
+    select: { paymentStatus: true, budgetCHF: true, status: true },
   });
   if (!delivery) return;
   if (delivery.paymentStatus === 'authorised' || delivery.paymentStatus === 'captured') return;
+  // Paid after it was cancelled. Marking it 'authorised' would make a dead
+  // delivery look funded. There is no automatic Payrexx refund yet, so this
+  // has to be refunded by hand — say so loudly.
+  if (delivery.status === 'cancelled' || delivery.status === 'expired') {
+    console.error(
+      `[payment] ${deliveryId} was paid via ${opts.provider} after it was ${delivery.status} ` +
+        `(transaction ${opts.transactionId ?? '?'}). REFUND MANUALLY in Payrexx.`,
+    );
+    return;
+  }
 
   const { driverPayoutCHF } = computeSplit(Number(delivery.budgetCHF));
   await prisma.deliveryRequest.update({

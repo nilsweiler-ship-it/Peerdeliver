@@ -129,7 +129,12 @@ export function IncomingDeliveriesScreen() {
                   <Text style={styles.heroSub}>
                     {isTerminal
                       ? t('recipient.deliveryCodeHint')
-                      : t('recipient.codeAvailableWhenInTransit')}
+                      : sel.status === 'in_transit'
+                        ? // In transit but no code here: this account is matched
+                          // to the delivery by email only, which is not proof of
+                          // owning the mailbox, so the code goes to the mailbox.
+                          t('recipient.codeSentByMessage')
+                        : t('recipient.codeAvailableWhenInTransit')}
                   </Text>
 
                   <View style={styles.waitCard}>

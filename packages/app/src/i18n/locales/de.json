@@ -194,7 +194,8 @@
     "sender": "Absender:in",
     "deliveryCodeTitle": "Liefercode",
     "deliveryCodeHint": "Zeige diesen Code der fahrenden Person, um den Erhalt zu bestätigen",
-    "codeAvailableWhenInTransit": "Dein Liefercode erscheint hier, sobald das Paket unterwegs ist"
+    "codeAvailableWhenInTransit": "Dein Liefercode erscheint hier, sobald das Paket unterwegs ist",
+    "codeSentByMessage": "Dein Liefercode wurde dir per E-Mail oder SMS geschickt. Zeig ihn der fahrenden Person an der Tür."
   },
   "chat": {
     "typeMessage": "Nachricht schreiben …",

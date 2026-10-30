@@ -194,7 +194,8 @@
     "sender": "Sender",
     "deliveryCodeTitle": "Delivery Code",
     "deliveryCodeHint": "Show this code to the driver to confirm you received the package",
-    "codeAvailableWhenInTransit": "Your delivery code will appear here once the package is on its way"
+    "codeAvailableWhenInTransit": "Your delivery code will appear here once the package is on its way",
+    "codeSentByMessage": "Your delivery code was sent to you by email or SMS. Show it to the driver at the door."
   },
   "chat": {
     "typeMessage": "Type a message...",

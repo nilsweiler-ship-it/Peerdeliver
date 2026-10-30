@@ -169,6 +169,10 @@ model DeliveryRequest {
   driverPayoutCHF       Float?
   refundedCHF           Float?
   refundedAt            DateTime?
+  /// Wrong pickup/delivery codes entered for this delivery. Five in a row
+  /// lock code entry for a while; see registerWrongCode in services/delivery.ts.
+  codeFailedAttempts    Int            @default(0)
+  codeLockedUntil       DateTime?
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
 

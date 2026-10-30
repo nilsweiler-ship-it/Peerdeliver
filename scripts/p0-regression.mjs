@@ -255,5 +255,86 @@ console.log('\n#7 role escalation');
   check('switching between ordinary roles still works', ok.s === 200 && ok.d?.role === 'driver', { s: ok.s, role: ok.d?.role });
 }
 
+// ── Follow-ups from the independent review ──────────────────────────────
+console.log('\n#1b no code via a second account under the recipient\'s email');
+{
+  // The driver can no longer even see the recipient's address…
+  const id = await toAccepted();
+  const asDriver = await get(id, D);
+  check('driver view has no recipient contact or payment refs',
+    asDriver && !asDriver.recipientEmail && !asDriver.recipientPhone && !asDriver.stripePaymentIntentId && !asDriver.twintPhone, asDriver);
+  // …and could not use it if they had it: same mailbox, different case.
+  const dup = await call('POST', '/auth/register', null, {
+    email: R.email.toUpperCase(), password: 'P0-Regression-1', firstName: 'Mallory', lastName: 'X', role: 'recipient',
+  });
+  check('second account for the same mailbox in other case refused', dup.s === 409, { s: dup.s });
+  const login = await call('POST', '/auth/login', null, { email: R.email.toUpperCase(), password: 'P0-Regression-1' });
+  check('login is case-insensitive', login.s === 200, { s: login.s });
+
+  // A recipient who signs up only after the delivery exists is matched by
+  // email: they see the delivery, but the code reaches them by mail/SMS only.
+  const lateEmail = `p0-late-${run}@example.com`;
+  const lid = (await call('POST', '/deliveries', S.tok, body({ recipientEmail: lateEmail }))).d.id;
+  await pay(lid);
+  const late = await call('POST', '/auth/register', null, {
+    email: lateEmail, password: 'P0-Regression-1', firstName: 'Late', lastName: 'R', role: 'recipient',
+  });
+  const lateTok = late.d?.tokens?.accessToken;
+  const lateView = ((await call('GET', '/deliveries/mine', lateTok)).d ?? []).find((d) => d.id === lid);
+  check('email-matched recipient sees the delivery', !!lateView, {});
+  check('…but not the code (unverified email)', lateView && !lateView.deliveryCode && !lateView.pickupCode, lateView);
+}
+
+console.log('\n#1c open-job list shows only the job');
+{
+  const id = await create();
+  await pay(id);
+  const row = ((await call('GET', `/deliveries/nearby?lat=${ZH.point.lat}&lng=${ZH.point.lng}`, D2.tok)).d ?? []).find((d) => d.id === id);
+  const leaked = row && ['recipientEmail', 'recipientPhone', 'twintPhone', 'twintRef', 'stripePaymentIntentId', 'paymentStatus']
+    .filter((k) => k in row);
+  check('nearby row has no contact or payment fields', row && leaked.length === 0, { leaked });
+}
+
+console.log('\n#2b wrong-code lockout');
+{
+  const id = await toAccepted();
+  const codes = [];
+  for (let i = 0; i < 5; i++) codes.push((await call('POST', `/deliveries/${id}/verify-pickup`, D.tok, { code: String(100000 + i) })).s);
+  const { pickupCode } = await get(id, S);
+  // Make sure none of the guesses happened to be right.
+  const guessedRight = [0, 1, 2, 3, 4].some((i) => String(100000 + i) === pickupCode);
+  check('4 wrong codes → 400, the 5th → 429', guessedRight || (codes.slice(0, 4).every((s) => s === 400) && codes[4] === 429), codes);
+  const right = await call('POST', `/deliveries/${id}/verify-pickup`, D.tok, { code: pickupCode });
+  check('while locked, even the right code is refused', guessedRight || right.s === 429, { s: right.s });
+  const msgs = (await call('GET', `/chat/${id}/messages`, S.tok)).d ?? [];
+  check('sender is told in the chat', JSON.stringify(msgs).includes('wrong pickup codes'), { n: msgs.length });
+}
+
+console.log('\n#5b nothing offered or paid out of order');
+{
+  const id = await create();
+  const route = await call('POST', '/routes', D2.tok, {
+    originAddress: ZH.label, originPoint: ZH.point, destinationAddress: WI.label, destinationPoint: WI.point,
+    routeType: 'one_time', departureTime: new Date(Date.now() + DAY).toISOString(), availableSize: 'L',
+  });
+  if (route.d?.id) {
+    const off = await call('POST', `/deliveries/${id}/offer`, S.tok, { routeId: route.d.id });
+    check('unpaid delivery cannot be offered to a route', off.s === 400, { s: off.s });
+  } else {
+    check('unpaid delivery cannot be offered to a route (route setup)', false, { s: route.s, e: route.j?.error });
+  }
+  await call('PATCH', `/deliveries/${id}/status`, S.tok, { status: 'cancelled', cancelReason: 'x' });
+  const late = await pay(id);
+  check('a cancelled delivery cannot be paid', late.s === 400, { s: late.s });
+}
+
+console.log('\n#7b driver backing out is announced');
+{
+  const id = await toAccepted();
+  await call('PATCH', `/deliveries/${id}/status`, D.tok, { status: 'cancelled', cancelReason: 'flat tyre' });
+  const msgs = (await call('GET', `/chat/${id}/messages`, S.tok)).d ?? [];
+  check('sender sees a chat message', JSON.stringify(msgs).includes('can no longer do this delivery'), { n: msgs.length });
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

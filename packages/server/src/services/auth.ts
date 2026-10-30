@@ -5,8 +5,25 @@ import { AppError } from '../middleware';
 import * as emailService from './email';
 import type { RegisterInput, LoginInput } from '@peerdeliver/shared';
 
+/**
+ * One account per mailbox, whatever the capitalisation.
+ *
+ * Emails were stored and compared exactly as typed, so Bob@x.ch and bob@x.ch
+ * were two accounts. Besides the confusion, that let anyone open a second
+ * account under someone else's address — including a recipient's, which a
+ * driver can read off the delivery. New addresses are stored lower-case;
+ * lookups are case-insensitive so existing mixed-case accounts still log in.
+ */
+function normaliseEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function findByEmail(email: string) {
+  return prisma.user.findFirst({ where: { email: { equals: normaliseEmail(email), mode: 'insensitive' } } });
+}
+
 export async function register(input: RegisterInput) {
-  const existing = await prisma.user.findUnique({ where: { email: input.email } });
+  const existing = await findByEmail(input.email);
   if (existing) {
     throw new AppError(409, 'Email already registered');
   }
@@ -14,7 +31,7 @@ export async function register(input: RegisterInput) {
   const passwordHash = await hashPassword(input.password);
   const user = await prisma.user.create({
     data: {
-      email: input.email,
+      email: normaliseEmail(input.email),
       passwordHash,
       firstName: input.firstName,
       lastName: input.lastName,
@@ -46,7 +63,7 @@ export async function register(input: RegisterInput) {
 }
 
 export async function login(input: LoginInput) {
-  const user = await prisma.user.findUnique({ where: { email: input.email } });
+  const user = await findByEmail(input.email);
   if (!user) {
     throw new AppError(401, 'Invalid email or password');
   }

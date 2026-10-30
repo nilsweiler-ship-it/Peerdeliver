@@ -102,37 +102,76 @@ function isRecipientByEmail(d: { recipientEmail?: string | null }, viewer: Deliv
   return !!viewer.email && !!d.recipientEmail && d.recipientEmail.toLowerCase() === viewer.email.toLowerCase();
 }
 
+/** Fields only the sender sees: how they paid. */
+const SENDER_ONLY_FIELDS = ['twintRef', 'twintPhone', 'stripePaymentIntentId', 'stripeTransferId'] as const;
+/** Fields the sender and the recipient see, but not the person carrying it. */
+const SENDER_AND_RECIPIENT_FIELDS = ['recipientEmail', 'recipientPhone'] as const;
 /**
- * Strip the handover codes down to what this viewer is entitled to.
+ * What a driver browsing open jobs may see of a delivery that is not theirs:
+ * enough to decide whether to take it, nothing about the people or the money.
+ */
+const PUBLIC_FIELDS = [
+  'id', 'senderId', 'status', 'pickupAddress', 'deliveryAddress',
+  'packageSize', 'packageWeight', 'packageDescription', 'packaging', 'declaredValue',
+  'budgetCHF', 'deliveryWindowStart', 'deliveryWindowEnd',
+  'createdAt', 'updatedAt', 'distanceKm', 'sender',
+] as const;
+
+/**
+ * Cut a delivery down to what this viewer is entitled to.
  *
- * The two codes are the proof that a parcel changed hands: the driver must be
- * *told* the pickup code by the sender and the delivery code by the recipient,
- * in person. Every delivery read used to return both codes to everyone who
- * could see the delivery — the driver included — so a driver could read the
- * delivery code off the API, confirm a delivery that never happened, and be
- * paid for it.
+ * The two handover codes are the proof that a parcel changed hands: the
+ * driver must be *told* the pickup code by the sender and the delivery code
+ * by the recipient, in person. Every delivery read used to return both codes
+ * to everyone who could see the delivery — the driver included — so a driver
+ * could read the delivery code off the API, confirm a delivery that never
+ * happened, and be paid for it.
  *
- *   sender     → both codes (they show the pickup code, and may need to relay
- *                the delivery code to a recipient reached only by phone)
- *   recipient  → delivery code only
- *   driver     → neither
- *   anyone else→ neither (and should not be seeing the delivery at all)
+ *   sender      → everything, including both codes
+ *   recipient   → the delivery code, the recipient contact fields; not how
+ *                 the sender paid
+ *   driver      → the job, no codes, no recipient contact, no payment refs
+ *   anyone else → PUBLIC_FIELDS only
  *
- * A user who is both sender and driver of the same delivery is not possible
- * any more (assignDelivery refuses it), but if they were, the driver rule wins:
- * whoever carries the parcel must never hold the codes.
+ * "Recipient" for the code means linked by recipientId, never by a matching
+ * email alone. Emails are not verified at sign-up, so matching on email let a
+ * driver register a second account under the recipient's address — which they
+ * could read from the delivery — and collect the code with it. A recipient
+ * who registered after the delivery was created still gets the code where it
+ * was always sent: to their inbox and phone.
+ *
+ * If one user were both sender and driver (assignDelivery refuses it now), the
+ * driver rule wins: whoever carries the parcel must never hold the codes.
  */
 export function redactForViewer<T extends Record<string, unknown>>(d: T, viewer: DeliveryViewer): T {
-  const { pickupCode, deliveryCode, ...rest } = d as T & { pickupCode?: unknown; deliveryCode?: unknown };
   const isDriver = d.driverId === viewer.userId;
-  if (isDriver) return rest as T;
-  const isSender = d.senderId === viewer.userId;
-  const isRecipient = d.recipientId === viewer.userId || isRecipientByEmail(d as { recipientEmail?: string | null }, viewer);
-  return {
-    ...rest,
-    ...(isSender ? { pickupCode } : {}),
-    ...(isSender || isRecipient ? { deliveryCode } : {}),
-  } as T;
+  const isSender = !isDriver && d.senderId === viewer.userId;
+  const isLinkedRecipient = !isDriver && d.recipientId === viewer.userId;
+  const isRecipient = isLinkedRecipient || (!isDriver && isRecipientByEmail(d as { recipientEmail?: string | null }, viewer));
+
+  if (!isDriver && !isSender && !isRecipient) {
+    const out: Record<string, unknown> = {};
+    for (const k of PUBLIC_FIELDS) if (k in d) out[k] = d[k];
+    return out as T;
+  }
+
+  const out: Record<string, unknown> = { ...d };
+  delete out.pickupCode;
+  delete out.deliveryCode;
+  delete out.codeFailedAttempts;
+  delete out.codeLockedUntil;
+  if (isSender) {
+    out.pickupCode = d.pickupCode;
+    out.deliveryCode = d.deliveryCode;
+    return out as T;
+  }
+  for (const k of SENDER_ONLY_FIELDS) delete out[k];
+  if (isDriver) {
+    for (const k of SENDER_AND_RECIPIENT_FIELDS) delete out[k];
+    return out as T;
+  }
+  if (isLinkedRecipient) out.deliveryCode = d.deliveryCode;
+  return out as T;
 }
 
 export async function createDelivery(senderId: string, input: CreateDeliveryInput) {
@@ -146,8 +185,10 @@ export async function createDelivery(senderId: string, input: CreateDeliveryInpu
   const recipientPhone = input.recipientPhone?.trim() || null;
   let recipientId: string | null = null;
   if (recipientEmail) {
-    const recipient = await prisma.user.findUnique({
-      where: { email: recipientEmail },
+    // Case-insensitive: an account registered as Bob@x.ch is the same
+    // mailbox as bob@x.ch, and used to go unlinked.
+    const recipient = await prisma.user.findFirst({
+      where: { email: { equals: recipientEmail, mode: 'insensitive' } },
       select: { id: true },
     });
     recipientId = recipient?.id ?? null;
@@ -302,10 +343,14 @@ async function cancelDelivery(
   }
 
   if (isDriver) {
+    // An unanswered offer has its own path, with its own notifications.
+    if (current.status === 'offered') return declineOffer(id, actorId);
+
     // A driver backing out is a decline, not the end of the delivery: the
     // sender still wants the parcel moved and has already paid. Return it to
     // the open pool with the hold intact. A driver used to be able to cancel
     // the sender's whole delivery this way.
+    const ctx = await notifyContext(id);
     const applied = await prisma.$executeRawUnsafe(
       `UPDATE delivery_requests
           SET "driverId" = NULL, "offeredRouteId" = NULL,
@@ -316,6 +361,22 @@ async function cancelDelivery(
       actorId,
     );
     if (applied === 0) throw new AppError(409, 'Diese Lieferung hat sich inzwischen geändert');
+
+    // The sender must hear about it: their app would otherwise just flip back
+    // to "waiting" while the chat still says this driver is confirmed.
+    const driverName = ctx?.driver?.firstName ?? 'Die fahrende Person';
+    await prisma.message.create({
+      data: {
+        deliveryRequestId: id,
+        senderId: actorId,
+        content: `${driverName} can no longer do this delivery. It is open to other drivers again.`,
+      },
+    }).catch(() => {});
+    if (ctx?.sender?.email) {
+      emailService.sendOfferDeclined({ to: ctx.sender.email, driverName, route: ctx.route, language: ctx.sender.language });
+    }
+    if (ctx?.d.senderId) pushService.notifyOfferDeclined(ctx.d.senderId, driverName, id);
+    console.log(`[delivery] ${id}: driver ${actorId} backed out from ${current.status}${cancelReason ? ` (${cancelReason})` : ''}`);
     return getDeliveryById(id);
   }
 
@@ -451,6 +512,12 @@ export async function offerToRoute(deliveryId: string, senderId: string, routeId
   }
   if (delivery.driverId) {
     throw new AppError(400, 'Diese Lieferung hat bereits eine fahrende Person');
+  }
+  // Pay first, then offer. A driver who is asked can only accept a paid
+  // delivery, so an unpaid offer would reach them, fail when they say yes,
+  // and leave the delivery parked in 'offered' and out of the open pool.
+  if (delivery.paymentStatus !== 'authorised') {
+    throw new AppError(400, 'Bitte bezahle die Sendung, bevor du sie anbietest');
   }
 
   const route = await prisma.driverRoute.findUnique({
@@ -797,21 +864,80 @@ export async function confirmDelivery(deliveryId: string, senderId: string) {
   return getDeliveryById(deliveryId);
 }
 
+/** Wrong codes allowed before code entry locks, and for how long. */
+const CODE_TRIES_PER_WINDOW = 5;
+const CODE_LOCK_MINUTES = 15;
+/** After this many wrong codes in total, entry stays locked until support resets it. */
+const CODE_HARD_LIMIT = 20;
+
+/**
+ * Compare a submitted handover code, counting wrong ones.
+ *
+ * Six digits is a million possibilities, which is plenty only if guessing is
+ * slow. It wasn't: a driver holding a parcel could keep trying delivery codes
+ * limited only by the global per-IP rate limit. Now every fifth wrong code
+ * locks entry for 15 minutes (at most ~480 guesses a day, years for the whole
+ * space), and after 20 it stays locked and the sender is told in the chat.
+ */
+async function checkHandoverCode(
+  deliveryId: string,
+  expected: string | undefined,
+  submitted: string,
+  driverId: string,
+  label: 'pickup' | 'delivery',
+): Promise<void> {
+  const lock = await prisma.deliveryRequest.findUnique({
+    where: { id: deliveryId },
+    select: { codeFailedAttempts: true, codeLockedUntil: true },
+  });
+  if (lock?.codeLockedUntil && lock.codeLockedUntil > new Date()) {
+    throw new AppError(429, 'Zu viele falsche Codes. Die Code-Eingabe ist vorübergehend gesperrt.');
+  }
+  if (expected && submitted === expected) return;
+
+  // Count atomically: parallel wrong guesses must each be counted.
+  const [{ n }] = await prisma.$queryRawUnsafe<{ n: number }[]>(
+    `UPDATE delivery_requests SET "codeFailedAttempts" = "codeFailedAttempts" + 1
+      WHERE id = $1 RETURNING "codeFailedAttempts" AS n`,
+    deliveryId,
+  );
+  if (n >= CODE_HARD_LIMIT || n % CODE_TRIES_PER_WINDOW === 0) {
+    const until = n >= CODE_HARD_LIMIT
+      ? new Date('9999-12-31T00:00:00Z')
+      : new Date(Date.now() + CODE_LOCK_MINUTES * 60_000);
+    await prisma.deliveryRequest.update({ where: { id: deliveryId }, data: { codeLockedUntil: until } });
+    console.warn(`[delivery] ${deliveryId}: ${n} wrong ${label} codes, entry locked until ${until.toISOString()}`);
+    // The sender should know someone is guessing at their parcel's code.
+    await prisma.message.create({
+      data: {
+        deliveryRequestId: deliveryId,
+        senderId: driverId,
+        content: n >= CODE_HARD_LIMIT
+          ? 'Too many wrong codes were entered for this delivery. Code entry is locked; please contact support.'
+          : `Several wrong ${label} codes were entered. Code entry is paused for ${CODE_LOCK_MINUTES} minutes.`,
+      },
+    }).catch(() => {});
+    throw new AppError(429, 'Zu viele falsche Codes. Die Code-Eingabe ist vorübergehend gesperrt.');
+  }
+  throw new AppError(400, label === 'pickup' ? 'Invalid pickup code' : 'Invalid delivery code');
+}
+
 export async function verifyPickup(deliveryId: string, driverId: string, code: string) {
   const delivery = await getDeliveryById(deliveryId);
   if (!delivery) throw new AppError(404, 'Delivery not found');
   if (delivery.driverId !== driverId) throw new AppError(403, 'Not authorized');
   if (delivery.status !== 'accepted') throw new AppError(400, 'Delivery is not in accepted state');
-  if (delivery.pickupCode !== code) throw new AppError(400, 'Invalid pickup code');
   // Collecting a parcel nobody has paid for means a job with no money behind it.
   if (delivery.paymentStatus !== 'authorised') {
     throw new AppError(400, 'Diese Sendung ist noch nicht bezahlt');
   }
+  await checkHandoverCode(deliveryId, delivery.pickupCode, code, driverId, 'pickup');
 
   // Move to in_transit (skipping picked_up since both parties confirmed via code).
   // Compare-and-set so a double tap sends the recipient one SMS, not two.
   const applied = await prisma.$executeRawUnsafe(
-    `UPDATE delivery_requests SET status = 'in_transit'::"DeliveryStatus", "updatedAt" = NOW()
+    `UPDATE delivery_requests SET status = 'in_transit'::"DeliveryStatus",
+            "codeFailedAttempts" = 0, "codeLockedUntil" = NULL, "updatedAt" = NOW()
       WHERE id = $1 AND status = 'accepted'::"DeliveryStatus" AND "driverId" = $2`,
     deliveryId,
     driverId,
@@ -862,7 +988,7 @@ export async function verifyDelivery(deliveryId: string, driverId: string, code:
   if (!delivery) throw new AppError(404, 'Delivery not found');
   if (delivery.driverId !== driverId) throw new AppError(403, 'Not authorized');
   if (delivery.status !== 'in_transit') throw new AppError(400, 'Delivery is not in transit');
-  if (delivery.deliveryCode !== code) throw new AppError(400, 'Invalid delivery code');
+  await checkHandoverCode(deliveryId, delivery.deliveryCode, code, driverId, 'delivery');
 
   // ── Impact ──────────────────────────────────────────────────────
   // Computed before anything is written: it only reads, and the write below

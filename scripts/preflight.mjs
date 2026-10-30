@@ -189,7 +189,16 @@ try {
   const verifyBody = vdStart === -1 ? '' : deliverySrc.slice(vdStart, vdEnd === -1 ? undefined : vdEnd);
 
   const insideVerify = /captureAndPayoutOnDelivered\s*\(/.test(verifyBody);
-  const gatedOnCode = /deliveryCode\s*!==\s*code/.test(verifyBody);
+  // The comparison moved into checkHandoverCode (which also counts wrong
+  // codes). Accept either form, but insist the check comes before the payout
+  // and that the helper really refuses a mismatch.
+  const checkAt = verifyBody.search(/deliveryCode\s*!==\s*code|checkHandoverCode\([^)]*deliveryCode\s*,\s*code/);
+  const captureAt = verifyBody.search(/captureAndPayoutOnDelivered\s*\(/);
+  const helperStart = deliverySrc.indexOf('async function checkHandoverCode');
+  const helperBody = helperStart === -1 ? '' : deliverySrc.slice(helperStart, deliverySrc.indexOf('\nexport ', helperStart));
+  const helperRefuses = !/checkHandoverCode\(/.test(verifyBody) ||
+    (/submitted\s*===\s*expected\)\s*return/.test(helperBody) && /throw new AppError\(400/.test(helperBody));
+  const gatedOnCode = checkAt !== -1 && captureAt !== -1 && checkAt < captureAt && helperRefuses;
   const transferCalls = (paymentSrc.match(/stripe\.transfers\.create\s*\(/g) ?? []).length;
 
   const problems = [];

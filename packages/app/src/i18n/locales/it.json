@@ -194,7 +194,8 @@
     "sender": "Mittente",
     "deliveryCodeTitle": "Codice di consegna",
     "deliveryCodeHint": "Mostra questo codice al conducente per confermare la ricezione del pacco",
-    "codeAvailableWhenInTransit": "Il tuo codice di consegna apparirà qui quando il pacco sarà in viaggio"
+    "codeAvailableWhenInTransit": "Il tuo codice di consegna apparirà qui quando il pacco sarà in viaggio",
+    "codeSentByMessage": "Il tuo codice di consegna ti è stato inviato via e-mail o SMS. Mostralo a chi consegna alla porta."
   },
   "chat": {
     "typeMessage": "Scrivi un messaggio …",

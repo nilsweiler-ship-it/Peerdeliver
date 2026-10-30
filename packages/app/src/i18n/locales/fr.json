@@ -194,7 +194,8 @@
     "sender": "Expéditeur",
     "deliveryCodeTitle": "Code de livraison",
     "deliveryCodeHint": "Montrez ce code au conducteur pour confirmer la réception du colis",
-    "codeAvailableWhenInTransit": "Votre code de livraison apparaîtra ici dès que le colis sera en route"
+    "codeAvailableWhenInTransit": "Votre code de livraison apparaîtra ici dès que le colis sera en route",
+    "codeSentByMessage": "Votre code de livraison vous a été envoyé par e-mail ou SMS. Montrez-le au chauffeur à la porte."
   },
   "chat": {
     "typeMessage": "Écrire un message …",
