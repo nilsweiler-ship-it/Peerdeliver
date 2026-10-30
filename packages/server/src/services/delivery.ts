@@ -20,7 +20,7 @@ const DELIVERY_COLS = `
   dr."deliveryWindowStart", dr."deliveryWindowEnd",
   dr.status, dr."offeredRouteId", dr."pickupCode", dr."deliveryCode",
   dr."co2SavedKg", dr."cancelledBy", dr."cancelReason",
-  dr."disputeOpenedAt", dr."disputeReason", dr."disputeResolvedAt", dr."disputeResolution",
+  dr."disputeOpenedAt", dr."disputeReason", dr."disputeResolvedAt", dr."disputeResolution", dr."deliveredAt",
   dr."twintRef", dr."twintPhone", dr."paymentStatus", dr."driverPayoutCHF",
   dr."stripePaymentIntentId", dr."stripeTransferId", dr."refundedCHF", dr."refundedAt",
   dr."createdAt", dr."updatedAt"
@@ -342,9 +342,12 @@ async function cancelDelivery(
   }
 
   if (!CANCELLABLE_BEFORE_PICKUP.includes(current.status)) {
+    const afterPickup = ['picked_up', 'in_transit', 'disputed'].includes(current.status);
     throw new AppError(
       409,
-      'Das Paket wurde bereits abgeholt und kann nicht mehr storniert werden. Bitte kontaktiere den Support.',
+      afterPickup
+        ? 'Das Paket wurde bereits abgeholt und kann nicht mehr storniert werden. Melde stattdessen ein Problem.'
+        : 'Diese Lieferung ist bereits abgeschlossen.',
     );
   }
 
@@ -1071,25 +1074,46 @@ export async function verifyDelivery(deliveryId: string, driverId: string, code:
 
   // ── Status + stats, once ────────────────────────────────────────
   //
-  // One transaction, and a compare-and-set on the status inside it. The old
+  // One transaction, with the row locked and its status re-read inside it. The old
   // code read the status, then wrote unconditionally in seven separate
   // statements: ten simultaneous verify-delivery calls (a double tap, a client
   // retry) credited the driver ten deliveries and ten times the CO₂, and
   // re-ran the capture five times. Now exactly one call moves the delivery to
   // 'delivered' and credits the stats; the others get 409 and do nothing. A
   // crash part-way leaves nothing half-written.
+  let heldForDispute = false;
   await prisma.$transaction(async (tx) => {
-    const applied = await tx.$executeRawUnsafe(
-      `UPDATE delivery_requests
-          SET "disputeResolvedAt" = CASE WHEN status = 'disputed' THEN NOW() ELSE "disputeResolvedAt" END,
-              "disputeResolution" = CASE WHEN status = 'disputed' THEN 'delivered with the recipient''s code' ELSE "disputeResolution" END,
-              status = 'delivered'::"DeliveryStatus", "co2SavedKg" = $3, "updatedAt" = NOW()
-        WHERE id = $1 AND status IN ('in_transit'::"DeliveryStatus", 'disputed'::"DeliveryStatus") AND "driverId" = $2`,
+    // Lock the row and read the state it is really in, so a dispute opened
+    // a moment ago is seen here rather than paid past.
+    const [row] = await tx.$queryRawUnsafe<
+      { status: string; disputeOpenedById: string | null; disputeResolvedAt: Date | null }[]
+    >(
+      `SELECT status, "disputeOpenedById", "disputeResolvedAt" FROM delivery_requests
+        WHERE id = $1 AND "driverId" = $2 FOR UPDATE`,
       deliveryId,
       driverId,
-      co2SavedKg,
     );
-    if (applied === 0) throw new AppError(409, 'Diese Lieferung wurde bereits abgeschlossen');
+    if (!row || (row.status !== 'in_transit' && row.status !== 'disputed')) {
+      throw new AppError(409, 'Diese Lieferung wurde bereits abgeschlossen');
+    }
+    // The code proves the parcel changed hands, which settles "it never
+    // arrived" — the automatic dispute — on its own. It does not settle a
+    // dispute a person opened ("damaged", "not what I sent"): the delivery
+    // completes, but the payout waits for support.
+    const openDispute = row.status === 'disputed' && !row.disputeResolvedAt;
+    heldForDispute = openDispute && !!row.disputeOpenedById;
+    const autoResolve = openDispute && !row.disputeOpenedById;
+    await tx.$executeRawUnsafe(
+      `UPDATE delivery_requests
+          SET status = 'delivered'::"DeliveryStatus", "deliveredAt" = NOW(), "co2SavedKg" = $2,
+              "disputeResolvedAt" = CASE WHEN $3 THEN NOW() ELSE "disputeResolvedAt" END,
+              "disputeResolution" = CASE WHEN $3 THEN 'delivered with the recipient''s code' ELSE "disputeResolution" END,
+              "updatedAt" = NOW()
+        WHERE id = $1`,
+      deliveryId,
+      co2SavedKg,
+      autoResolve,
+    );
     // Credit both parties' lifetime impact; the driver also gets a completed delivery.
     await tx.user.update({
       where: { id: driverId },
@@ -1126,7 +1150,13 @@ export async function verifyDelivery(deliveryId: string, driverId: string, code:
    * with the split recorded, and npm run payout:retry pays it.
    */
   let payout: { ok: boolean; reason?: string } = { ok: true };
-  try {
+  if (heldForDispute) {
+    payout = { ok: false, reason: 'held: open dispute' };
+    emailService.sendInternal({
+      subject: 'Delivered during an open dispute — payout held',
+      lines: { delivery: deliveryId, next: `npm run dispute -- show ${deliveryId}` },
+    });
+  } else try {
     await paymentService.captureAndPayoutOnDelivered(deliveryId);
     // captureAndPayoutOnDelivered returns quietly when there was nothing to
     // capture. "ok" must mean money moved, not merely that nothing threw —
@@ -1156,7 +1186,8 @@ export async function verifyDelivery(deliveryId: string, driverId: string, code:
         language: ctx.sender.language,
       });
     }
-    if (ctx.driver?.email) {
+    // Like the push below: only tell the driver about money that moved.
+    if (ctx.driver?.email && payout.ok) {
       const split = paymentService.computeSplit(ctx.d.budgetCHF);
       emailService.sendDriverPayout({
         to: ctx.driver.email,

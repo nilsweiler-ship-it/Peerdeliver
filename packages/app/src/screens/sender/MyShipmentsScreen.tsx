@@ -45,7 +45,12 @@ function AfterHandover({ delivery, onReport, onRate }: {
 }) {
   const { t } = useTranslation();
   const disputeOpen = delivery.status === 'disputed' || (!!delivery.disputeOpenedAt && !delivery.disputeResolvedAt);
-  const canReport = !disputeOpen && ['picked_up', 'in_transit', 'delivered'].includes(delivery.status);
+  // One report per delivery, and for a delivered parcel within 14 days —
+  // the same rules the server applies, so the button never leads to a "no".
+  const deliveredDaysAgo = delivery.deliveredAt ? (Date.now() - Date.parse(delivery.deliveredAt)) / 86_400_000 : 0;
+  const canReport =
+    !delivery.disputeOpenedAt &&
+    (['picked_up', 'in_transit'].includes(delivery.status) || (delivery.status === 'delivered' && deliveredDaysAgo <= 14));
   const { data: myRating, isLoading: ratingLoading } = useMyRating(delivery.id, delivery.status === 'delivered');
   const canRate = delivery.status === 'delivered' && !ratingLoading && !myRating;
 

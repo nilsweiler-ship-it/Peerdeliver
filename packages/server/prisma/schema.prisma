@@ -182,6 +182,8 @@ model DeliveryRequest {
   disputeReason         String?
   disputeResolvedAt     DateTime?
   disputeResolution     String?
+  /// When the parcel was handed over; dispute and rating windows run from here.
+  deliveredAt           DateTime?
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
 

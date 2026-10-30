@@ -82,6 +82,8 @@ export interface DeliveryRequest {
   disputeReason?: string | null;
   disputeResolvedAt?: string | null;
   disputeResolution?: string | null;
+  /** When the parcel was handed over. */
+  deliveredAt?: string | null;
   paymentStatus?: PaymentStatus;
   driverPayoutCHF?: number;
   refundedCHF?: number;

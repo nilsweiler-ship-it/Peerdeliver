@@ -85,7 +85,10 @@ export const createDeliverySchema = z.object({
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['packageWeight'],
-        message: `Grösse ${d.packageSize} trägt höchstens ${maxKg} kg. Wähle eine grössere Grösse.`,
+        message:
+          d.packageSize === 'XL'
+            ? `Über ${maxKg} kg können wir im Moment nicht transportieren.`
+            : `Grösse ${d.packageSize} trägt höchstens ${maxKg} kg. Wähle eine grössere Grösse.`,
       });
     }
     const start = Date.parse(d.deliveryWindowStart);

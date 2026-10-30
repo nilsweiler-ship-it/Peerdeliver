@@ -44,9 +44,21 @@ export async function updateProfile(
     roleValue = role as UserRole;
   }
 
+  // A new phone number is an unconfirmed phone number. Keeping
+  // phoneVerified across a change meant "verified some phone, once" — and
+  // with ALLOW_PHONE_ONLY_DRIVERS that is the whole driver check.
+  const extra: Record<string, unknown> = {};
+  if (rest.phone !== undefined) {
+    const current = await prisma.user.findUnique({ where: { id: userId }, select: { phone: true, verificationStatus: true } });
+    if ((current?.phone ?? '') !== (rest.phone ?? '')) {
+      extra.phoneVerified = false;
+      if (current?.verificationStatus === 'verified') extra.verificationStatus = 'pending';
+    }
+  }
+
   const user = await prisma.user.update({
     where: { id: userId },
-    data: roleValue === undefined ? rest : { ...rest, role: roleValue },
+    data: { ...rest, ...extra, ...(roleValue === undefined ? {} : { role: roleValue }) },
   });
   const { passwordHash: _, refreshToken: __, ...safeUser } = user;
   return safeUser;
@@ -104,7 +116,16 @@ export async function deleteAccount(userId: string) {
       carModel: null,
       expoPushToken: null,
       shareLocation: false,
+      // Nobody can be offered, pay or drive as this account any more.
+      verificationStatus: 'unverified',
+      phoneVerified: false,
+      idVerified: false,
+      plateVerified: false,
+      stripePayoutsEnabled: false,
     },
   });
+  // Their published routes would otherwise stay in senders' search results,
+  // bookable by people whose money would then be held for nobody.
+  await prisma.driverRoute.updateMany({ where: { driverId: userId }, data: { isActive: false } });
   return { deleted: false, anonymised: true };
 }

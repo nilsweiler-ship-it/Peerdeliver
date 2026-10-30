@@ -32,13 +32,31 @@ export interface ExpiryResult {
  * each row is claimed by an UPDATE … RETURNING, so it is handled exactly once.
  */
 export async function expireStale(): Promise<ExpiryResult> {
+  // 0. Finish refunds a previous run started but didn't complete. The status
+  //    flips first and the refund follows, so a Stripe error or a restart in
+  //    between left a delivery expired (or cancelled) with the sender still
+  //    charged — and nothing would ever look at it again.
+  const unrefunded = await prisma.deliveryRequest.findMany({
+    where: { status: { in: ['expired', 'cancelled'] }, paymentStatus: 'authorised', refundedAt: null },
+    select: { id: true },
+    take: 50,
+  });
+  for (const { id } of unrefunded) {
+    try {
+      await paymentService.voidOnCancel(id);
+      console.log(`[expiry] ${id}: finished an interrupted refund`);
+    } catch (err) {
+      console.error(`[expiry] ${id}: refund retry failed — ${(err as Error).message}`);
+    }
+  }
+
   // 1. Nobody took it in time. The parcel never left the sender.
-  const expired = await prisma.$queryRawUnsafe<{ id: string; senderId: string }[]>(
+  const expired = await prisma.$queryRawUnsafe<{ id: string; senderId: string; driverId: string | null }[]>(
     `UPDATE delivery_requests
         SET status = 'expired'::"DeliveryStatus", "updatedAt" = NOW()
       WHERE status IN ('pending'::"DeliveryStatus", 'requested'::"DeliveryStatus", 'offered'::"DeliveryStatus")
         AND "deliveryWindowEnd" < NOW()
-      RETURNING id, "senderId"`,
+      RETURNING id, "senderId", "driverId"`,
   );
 
   // 2. A driver was confirmed but never collected. The parcel is still with
@@ -66,6 +84,16 @@ export async function expireStale(): Promise<ExpiryResult> {
       body: 'Für deine Sendung hat sich im Zeitfenster niemand gefunden. Der Betrag wird dir zurückerstattet.',
       data: { type: 'delivery_expired', deliveryId: row.id },
     });
+  }
+  // A driver who had asked for, or been offered, the job should hear it ended.
+  for (const row of [...expired, ...noShows]) {
+    if (row.driverId) {
+      pushService.sendToUser(row.driverId, {
+        title: 'Lieferung abgelaufen',
+        body: 'Eine Lieferung, die du angefragt oder angenommen hattest, ist abgelaufen.',
+        data: { type: 'delivery_expired', deliveryId: row.id },
+      });
+    }
   }
   for (const row of noShows) {
     if (row.driverId) {
@@ -136,8 +164,10 @@ function roleOf(
 ): 'sender' | 'driver' | 'recipient' | null {
   if (d.driverId === viewer.userId) return 'driver';
   if (d.senderId === viewer.userId) return 'sender';
+  // Linked by account only. An email match is not proof of owning the
+  // mailbox (emails aren't verified at sign-up), and it would let anyone who
+  // knows the address freeze a delivery or rate its driver.
   if (d.recipientId === viewer.userId) return 'recipient';
-  if (viewer.email && d.recipientEmail && d.recipientEmail.toLowerCase() === viewer.email.toLowerCase()) return 'recipient';
   return null;
 }
 
@@ -161,13 +191,21 @@ export async function openDispute(deliveryId: string, viewer: Viewer, reason: st
     where: { id: deliveryId },
     select: {
       id: true, status: true, senderId: true, driverId: true, recipientId: true, recipientEmail: true,
-      disputeOpenedAt: true, disputeResolvedAt: true, updatedAt: true, budgetCHF: true,
+      disputeOpenedAt: true, disputeResolvedAt: true, updatedAt: true, deliveredAt: true, budgetCHF: true,
     },
   });
   const role = d ? roleOf(d, viewer) : null;
   if (!d || !role) throw new AppError(404, 'Delivery not found');
-  if (d.disputeOpenedAt && !d.disputeResolvedAt) {
-    throw new AppError(409, 'Zu dieser Lieferung ist bereits eine Meldung offen. Unser Support meldet sich.');
+  // One report per delivery. A second one goes to support by email: letting
+  // open → resolve → open repeat meant a delivery could be re-disputed (and
+  // re-refunded) for ever.
+  if (d.disputeOpenedAt) {
+    throw new AppError(
+      409,
+      d.disputeResolvedAt
+        ? 'Zu dieser Lieferung gab es bereits eine Meldung. Bitte schreib uns an hello@shlep.ch.'
+        : 'Zu dieser Lieferung ist bereits eine Meldung offen. Unser Support meldet sich.',
+    );
   }
 
   if (d.status === 'picked_up' || d.status === 'in_transit') {
@@ -180,7 +218,7 @@ export async function openDispute(deliveryId: string, viewer: Viewer, reason: st
     );
     if (applied === 0) throw new AppError(409, 'Diese Lieferung hat sich inzwischen geändert');
   } else if (d.status === 'delivered') {
-    const ageDays = (Date.now() - d.updatedAt.getTime()) / 86_400_000;
+    const ageDays = (Date.now() - (d.deliveredAt ?? d.updatedAt).getTime()) / 86_400_000;
     if (ageDays > DISPUTE_WINDOW_DAYS) {
       throw new AppError(400, `Probleme können bis ${DISPUTE_WINDOW_DAYS} Tage nach der Zustellung gemeldet werden.`);
     }
@@ -245,7 +283,10 @@ export async function openDispute(deliveryId: string, viewer: Viewer, reason: st
 export async function resolveDispute(deliveryId: string, outcome: 'deliver' | 'refund', note: string) {
   const d = await prisma.deliveryRequest.findUnique({
     where: { id: deliveryId },
-    select: { status: true, disputeOpenedAt: true, disputeResolvedAt: true, paymentStatus: true },
+    select: {
+      status: true, disputeOpenedAt: true, disputeResolvedAt: true, paymentStatus: true,
+      driverId: true, senderId: true, co2SavedKg: true,
+    },
   });
   if (!d) throw new Error('Delivery not found');
   if (!d.disputeOpenedAt || d.disputeResolvedAt) throw new Error('No open dispute on this delivery');
@@ -265,11 +306,30 @@ export async function resolveDispute(deliveryId: string, outcome: 'deliver' | 'r
     if (outcome === 'deliver') await paymentService.captureAndPayoutOnDelivered(deliveryId);
     else await paymentService.voidOnCancel(deliveryId);
   } else if (d.status === 'delivered') {
-    await prisma.deliveryRequest.update({
-      where: { id: deliveryId },
+    // Claim the resolution atomically so two support runs can't both act.
+    const { count } = await prisma.deliveryRequest.updateMany({
+      where: { id: deliveryId, disputeResolvedAt: null },
       data: { disputeResolvedAt: new Date(), disputeResolution: resolution },
     });
-    if (outcome === 'refund') await paymentService.voidOnCancel(deliveryId);
+    if (count === 0) throw new Error('Resolved by someone else in the meantime');
+    if (outcome === 'deliver') {
+      // Delivered with the code while the dispute was open: the payout was
+      // held. Release it now. (No-op if it was already captured.)
+      await paymentService.captureAndPayoutOnDelivered(deliveryId);
+    } else {
+      await paymentService.voidOnCancel(deliveryId);
+      // Not a completed delivery after all: take back what it credited.
+      const co2 = d.co2SavedKg ?? 0;
+      if (d.driverId) {
+        await prisma.user.update({
+          where: { id: d.driverId },
+          data: { totalDeliveries: { decrement: 1 }, co2Saved: { decrement: co2 } },
+        }).catch(() => {});
+      }
+      if (co2) {
+        await prisma.user.update({ where: { id: d.senderId }, data: { co2Saved: { decrement: co2 } } }).catch(() => {});
+      }
+    }
   } else {
     throw new Error(`Unexpected status ${d.status} for an open dispute`);
   }
@@ -286,8 +346,8 @@ export async function resolveDispute(deliveryId: string, outcome: 'deliver' | 'r
 const RATING_WINDOW_DAYS = 30;
 
 /**
- * Rate the other side of a completed delivery: the sender and the recipient
- * rate the driver, the driver rates the sender. Once per person per delivery.
+ * Rate the other side of a completed delivery: the sender rates the driver,
+ * the driver rates the sender. Once each per delivery.
  * The rated person's average is recomputed from the ratings table in the same
  * transaction, so it can never drift from the ratings it summarises.
  */
@@ -300,12 +360,17 @@ export async function rateDelivery(deliveryId: string, viewer: Viewer, score: nu
 
   const d = await prisma.deliveryRequest.findUnique({
     where: { id: deliveryId },
-    select: { status: true, senderId: true, driverId: true, recipientId: true, recipientEmail: true, updatedAt: true },
+    select: { status: true, senderId: true, driverId: true, recipientId: true, recipientEmail: true, updatedAt: true, deliveredAt: true },
   });
   const role = d ? roleOf(d, viewer) : null;
   if (!d || !role) throw new AppError(404, 'Delivery not found');
+  // One rating each way per delivery: the sender rates the driver, the
+  // driver rates the sender. The recipient doesn't add a second rating of
+  // the driver — a sender could name their own second account as recipient
+  // and rate twice.
+  if (role === 'recipient') throw new AppError(403, 'Die sendende Person bewertet diese Lieferung.');
   if (d.status !== 'delivered') throw new AppError(400, 'Bewerten kannst du nach der Zustellung.');
-  if ((Date.now() - d.updatedAt.getTime()) / 86_400_000 > RATING_WINDOW_DAYS) {
+  if ((Date.now() - (d.deliveredAt ?? d.updatedAt).getTime()) / 86_400_000 > RATING_WINDOW_DAYS) {
     throw new AppError(400, `Bewertungen sind bis ${RATING_WINDOW_DAYS} Tage nach der Zustellung möglich.`);
   }
   const toUserId = role === 'driver' ? d.senderId : d.driverId;

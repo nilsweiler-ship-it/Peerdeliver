@@ -386,9 +386,14 @@ console.log('\nP1 disputes');
   check('a disputed delivery cannot be cancelled by the sender', cx.s >= 400, { s: cx.s });
   const done = await call('POST', `/deliveries/${id}/verify-delivery`, D.tok, { code: await deliveryCodeFor(id) });
   const after = await get(id);
-  check('the recipient\'s code still completes it and settles the dispute',
-    done.s === 200 && after?.status === 'delivered' && after?.paymentStatus === 'captured' && !!after?.disputeResolvedAt,
-    { s: done.s, st: after?.status, pay: after?.paymentStatus, resolved: after?.disputeResolvedAt });
+  // A dispute a person opened ("damaged", "not what I sent") is not settled by
+  // the code: the delivery completes, the payout waits for support.
+  check('the recipient\'s code completes it, but the payout stays held for support',
+    done.s === 200 && after?.status === 'delivered' && after?.paymentStatus === 'authorised' && !after?.disputeResolvedAt &&
+      done.d?.payout?.ok === false,
+    { s: done.s, st: after?.status, pay: after?.paymentStatus, resolved: after?.disputeResolvedAt, payout: done.d?.payout });
+  const again = await call('POST', `/deliveries/${id}/dispute`, S.tok, { reason: 'One more time, please refund me.' });
+  check('one report per delivery', again.s === 409, { s: again.s });
 }
 
 // ── P1: ratings ─────────────────────────────────────────────────────────
@@ -406,9 +411,9 @@ console.log('\nP1 ratings');
   const r2 = await call('POST', `/deliveries/${id}/rating`, S.tok, { score: 1 });
   check('…once', r2.s === 409, { s: r2.s });
   const r3 = await call('POST', `/deliveries/${id}/rating`, R.tok, { score: 5 });
-  check('the recipient can rate the driver too', r3.s === 201, { s: r3.s });
+  check('the recipient does not add a second rating of the driver', r3.s === 403, { s: r3.s });
   const prof = (await call('GET', '/users/profile', Dr.tok)).d;
-  check('driver average = 4.5 from 2 ratings', prof?.totalRatings === 2 && Math.abs((prof?.averageRating ?? 0) - 4.5) < 1e-9,
+  check('driver average = 4 from 1 rating', prof?.totalRatings === 1 && prof?.averageRating === 4,
     { avg: prof?.averageRating, n: prof?.totalRatings });
   const mine = await call('GET', `/deliveries/${id}/rating`, S.tok);
   check('GET returns my rating', mine.d?.score === 4, mine.d);
@@ -458,6 +463,11 @@ console.log('\nP1 validation');
   check('profile: unknown language refused', lang.s === 400, { s: lang.s });
   const veh = await call('PATCH', '/users/profile', T.tok, { vehicleSize: 'HUGE', maxLoadKg: -50 });
   check('profile: bad vehicle fields → 400, not 500', veh.s === 400, { s: veh.s });
+  const P = await verified(await reg('phone', 'driver', car));
+  await call('PATCH', '/users/profile', P.tok, { phone: '+41 79 000 00 00' });
+  const pp = (await call('GET', '/users/profile', P.tok)).d;
+  check('a new phone number is unverified again', pp?.phoneVerified === false && pp?.verificationStatus !== 'verified',
+    { phoneVerified: pp?.phoneVerified, status: pp?.verificationStatus });
   const it = await call('POST', '/auth/register', null, {
     email: `p0-it-${run}@example.com`, password: 'P0-Regression-1', firstName: 'Lia', lastName: 'Ticino', role: 'sender', language: 'it',
   });

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { paymentService, deliveryService, payrexxService } from '../services';
-import { stripeConfigured, stripeIsLive } from '../services/stripe';
+import { stripeConfigured, devEndpointsEnabled } from '../services/stripe';
 import { success, error } from '../utils';
 import { env } from '../config';
 
@@ -67,10 +67,10 @@ export async function getConnectStatus(req: Request, res: Response, next: NextFu
 
 export async function devCompleteOnboarding(req: Request, res: Response, next: NextFunction) {
   try {
-    // Same fail-closed rule as dev-verify-all: development only, and never
-    // with a live Stripe key (NODE_ENV defaults to 'development'). Test keys
-    // are fine — this exists to onboard test drivers against Stripe test mode.
-    if (env.NODE_ENV !== 'development' || stripeIsLive()) {
+    // Same rule as dev-verify-all: only with ENABLE_DEV_ENDPOINTS=true and
+    // never with a live key. Test keys are fine — this exists to onboard test
+    // drivers against Stripe test mode.
+    if (!devEndpointsEnabled()) {
       error(res, 'Not found', 404);
       return;
     }

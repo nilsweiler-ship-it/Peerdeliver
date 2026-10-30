@@ -87,6 +87,10 @@ async function main() {
     inTransitStuck: await delivery(sender.id, driver.id, 'in_transit', 60),
   };
 
+  // An interrupted refund from an earlier run: cancelled, still charged.
+  const interrupted = await delivery(sender.id, null, 'pending', -24);
+  await prisma.$executeRawUnsafe(`UPDATE delivery_requests SET status = 'cancelled'::"DeliveryStatus" WHERE id = $1`, interrupted);
+
   const result = await expireStale();
   const again = await expireStale();
 
@@ -104,6 +108,8 @@ async function main() {
   const mine = new Set(Object.values(cases));
   const secondTouchedMine = [...again.expired, ...again.noShows, ...again.stuck].filter((id) => mine.has(id));
   check('a second pass changes nothing (each row handled once)', secondTouchedMine.length === 0, secondTouchedMine);
+  const intr = await state(interrupted);
+  check('an interrupted refund is finished by the next run', intr?.paymentStatus === 'refunded', intr);
   check('first pass reported them', result.expired.includes(cases.pendingPast) && result.noShows.includes(cases.acceptedNoShow) && result.stuck.includes(cases.inTransitStuck), result);
 
   console.log(`\n${pass} passed, ${fail} failed`);
