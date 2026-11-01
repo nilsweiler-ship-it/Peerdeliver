@@ -291,6 +291,7 @@
     "impactEarly": "Encore au début — les économies arrivent avec les objets encombrants."
   },
   "verification": {
+    "plateOnFile": "Enregistrée",
     "requiredTitle": "Vérifiez-vous d’abord",
     "requiredBody": "Confirmez votre identité et votre numéro de téléphone avant d’accepter des livraisons.",
     "verifyNow": "Vérifier maintenant",

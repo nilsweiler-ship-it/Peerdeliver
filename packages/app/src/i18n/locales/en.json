@@ -291,6 +291,7 @@
     "impactEarly": "Early days — the savings show up on bulky items."
   },
   "verification": {
+    "plateOnFile": "Recorded",
     "requiredTitle": "Verify yourself first",
     "requiredBody": "Confirm your identity and phone number before you take deliveries.",
     "verifyNow": "Verify now",

@@ -291,6 +291,7 @@
     "impactEarly": "Noch am Anfang — spürbar wird es bei sperrigen Sendungen."
   },
   "verification": {
+    "plateOnFile": "Erfasst",
     "requiredTitle": "Zuerst verifizieren",
     "requiredBody": "Bestätige deine Identität und Telefonnummer, bevor du Lieferungen übernimmst.",
     "verifyNow": "Jetzt verifizieren",

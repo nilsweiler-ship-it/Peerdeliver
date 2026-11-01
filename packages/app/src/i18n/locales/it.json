@@ -291,6 +291,7 @@
     "impactEarly": "Siamo agli inizi — il risparmio si vede con gli oggetti ingombranti."
   },
   "verification": {
+    "plateOnFile": "Registrata",
     "requiredTitle": "Prima verificati",
     "requiredBody": "Conferma la tua identità e il tuo numero di telefono prima di accettare consegne.",
     "verifyNow": "Verifica ora",
