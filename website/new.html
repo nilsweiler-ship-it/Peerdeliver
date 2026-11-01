@@ -172,7 +172,7 @@
   if (km != null) facts.push({ t: Math.round(km * 10) / 10 + ' km' });
   facts.push({ t: SIZE_LABEL[size] || 'Klein' });
   if (value) facts.push({ t: 'Warenwert CHF ' + value });
-  facts.push({ t: 'Zahlung erst nach bestätigter Zustellung' });
+  facts.push({ t: 'Auszahlung erst nach bestätigter Zustellung' });
   facts.push({ t: 'Code-verifizierte Übergabe' });
   if (km != null) facts.push({ t: (Math.round(km * 0.18 * 10) / 10) + ' kg CO₂ gespart', eco: true });
 
