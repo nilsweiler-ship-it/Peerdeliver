@@ -21,7 +21,6 @@ import { EmptyState, LoadingSpinner, Button } from '../../components/ui';
 import { Pill, BackChip } from '../../components/brand';
 import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 import type { DeliveryRequest } from '@peerdeliver/shared';
-import { PACKAGE_SIZES } from '@peerdeliver/shared';
 import { showApiError } from '../../utils/apiError';
 
 /**
@@ -191,7 +190,7 @@ export function AvailableDeliveriesScreen({ navigation }: any) {
             <View style={styles.sheetHeader}>
               <Text style={styles.sheetTitle} numberOfLines={2}>
                 {(selectedDelivery.packageDescription || t('driver.availableDeliveries'))} ·{' '}
-                {PACKAGE_SIZES[selectedDelivery.packageSize].label}
+                {t(`ui.size${selectedDelivery.packageSize}`)}
               </Text>
               <Text style={styles.sheetPrice}>CHF {selectedDelivery.budgetCHF.toFixed(0)}</Text>
             </View>

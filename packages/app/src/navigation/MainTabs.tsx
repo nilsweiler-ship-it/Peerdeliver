@@ -67,7 +67,7 @@ export function MainTabs() {
           // 8 + 10 px padding clipped the labels; dropping the height let the
           // default 49 px bar squeeze them to nothing. Height and bottom
           // padding both grow by the safe-area inset (home indicator).
-          height: 62 + insets.bottom,
+          height: 72 + insets.bottom,
           paddingTop: 6,
           paddingBottom: 8 + insets.bottom,
         },

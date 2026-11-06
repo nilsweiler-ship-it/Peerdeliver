@@ -7,7 +7,6 @@ import { RouteLine } from '../brand/RouteLine';
 import { colors, spacing, typography } from '../../theme';
 import { useTranslation } from 'react-i18next';
 import type { DeliveryRequest } from '@peerdeliver/shared';
-import { PACKAGE_SIZES } from '@peerdeliver/shared';
 
 interface DeliveryCardProps {
   delivery: DeliveryRequest;
@@ -16,7 +15,6 @@ interface DeliveryCardProps {
 
 export function DeliveryCard({ delivery, onPress }: DeliveryCardProps) {
   const { t } = useTranslation();
-  const sizeInfo = PACKAGE_SIZES[delivery.packageSize];
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} disabled={!onPress}>
@@ -36,7 +34,7 @@ export function DeliveryCard({ delivery, onPress }: DeliveryCardProps) {
 
         <View style={styles.footer}>
           <Text style={styles.meta} numberOfLines={1}>
-            {sizeInfo.label} · {delivery.packageDescription || t('sender.packageSize')}
+            {t(`ui.size${delivery.packageSize}`)} · {delivery.packageDescription || t('sender.packageSize')}
           </Text>
           {/* While a delivery is merely offered or requested, a driver id is
               set but nobody has agreed to anything. Showing their name here
