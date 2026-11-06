@@ -81,7 +81,10 @@ export function IncomingDeliveriesScreen() {
 
               {showCode ? (
                 <>
-                  <Text style={styles.heroTitle}>{t('incoming.almostHere')}</Text>
+                  <Text style={styles.heroTitle}>
+                    {/* Disputed on the way: "almost here" would be a promise nobody can make. */}
+                    {sel?.status === 'disputed' ? t('dispute.underReviewTitle') : t('incoming.almostHere')}
+                  </Text>
                   <Text style={styles.heroSub}>
                     {t('incoming.showCode')}
                   </Text>

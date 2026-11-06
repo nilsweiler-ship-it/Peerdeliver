@@ -50,11 +50,9 @@ export function LoginScreen({ navigation }: any) {
           </View>
 
           <View style={styles.hero}>
-            <Text style={styles.headline}>Send it with someone already going there.</Text>
-            <Text style={styles.subcopy}>
-              Send greener. Earn on the side. On your schedule.
-            </Text>
-            <CO2Chip label="LOW-CARBON BY DESIGN" onDark style={styles.pill} />
+            <Text style={styles.headline}>{t('ui.loginHeadline')}</Text>
+            <Text style={styles.subcopy}>{t('ui.loginSub')}</Text>
+            <CO2Chip label={t('ui.lowCarbon')} onDark style={styles.pill} />
           </View>
 
           <View style={styles.form}>

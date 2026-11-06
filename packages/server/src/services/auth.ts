@@ -4,6 +4,7 @@ import { generateTokenPair, verifyRefreshToken } from './token';
 import { AppError } from '../middleware';
 import * as emailService from './email';
 import type { RegisterInput, LoginInput } from '@peerdeliver/shared';
+import { TERMS_VERSION } from '@peerdeliver/shared';
 
 /**
  * One account per mailbox, whatever the capitalisation.
@@ -42,6 +43,9 @@ export async function register(input: RegisterInput) {
       carModel: input.carModel,
       maxLoadKg: input.maxLoadKg,
       vehicleSize: input.vehicleSize,
+      // Proof of consent: when, and to which version of the terms.
+      termsAcceptedAt: new Date(),
+      termsVersion: TERMS_VERSION,
     },
   });
 

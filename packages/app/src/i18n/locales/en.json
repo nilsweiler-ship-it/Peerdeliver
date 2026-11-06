@@ -23,6 +23,7 @@
     "optional": "optional"
   },
   "auth": {
+    "maxLoadInvalid": "Enter how much you can carry as a number in kg, up to 2000.",
     "login": "Log In",
     "register": "Sign Up",
     "email": "Email",
@@ -52,6 +53,13 @@
     "incoming": "Incoming"
   },
   "sender": {
+    "weightInvalidTitle": "Check the weight",
+    "weightInvalid": "Enter the weight as a number, e.g. 2.5 or 2,5.",
+    "weightTooHeavy": "Size {{size}} carries at most {{max}} kg. Choose a larger size.",
+    "weightTooHeavyXL": "We can't carry more than {{max}} kg at the moment.",
+    "valueInvalidTitle": "Check the value",
+    "valueInvalid": "Enter the value as a number in CHF, e.g. 150.",
+    "valueTooHigh": "We can't accept parcels worth more than CHF {{max}} at the moment.",
     "createRequest": "Create Delivery Request",
     "myShipments": "My Shipments",
     "searchDrivers": "Find Drivers",
@@ -238,7 +246,7 @@
   },
   "legal": {
     "lastUpdated": "Last updated: {{date}}",
-    "agree": "By continuing, you agree to our Terms and Privacy Policy."
+    "agree": "I have read and accept:"
   },
   "home": {
     "activeDeliveries": "Active Deliveries",
@@ -255,6 +263,7 @@
     "actionNeeded": "Action needed"
   },
   "status": {
+    "disputed": "Under review",
     "pending": "Pending",
     "requested": "Driver Requested",
     "matched": "Matched",
@@ -375,6 +384,35 @@
     "eta": "ETA {{time}}"
   },
   "ui": {
+    "co2SavedSoFar": "CO₂ saved so far",
+    "carTripsAvoided": "≈ {{count}} car trips never made",
+    "kmAway": "{{km}} km away",
+    "availableNearby": "Available nearby",
+    "distance": "Distance",
+    "myShipments": "My shipments",
+    "pickupCodeTitle": "PICKUP CODE",
+    "deliveryCodeTitle": "DELIVERY CODE",
+    "marketplaceQuestion": "Shipping from a marketplace?",
+    "marketplacePlaceholder": "Paste the listing title or a link, e.g. 'IKEA Ektorp 2-seat sofa'",
+    "autoFill": "Auto-fill",
+    "stepOf": "STEP {{n}} / {{total}}",
+    "howWillYouUse": "How will you use Shlep?",
+    "senderCaption": "Get parcels delivered by people already heading your way.",
+    "driverCaption": "Earn on routes you're already driving — and cut carbon.",
+    "howMuchCarry": "How much can you carry?",
+    "capS": "Bags & small boxes",
+    "capM": "Backpack-sized",
+    "capL": "Boot space / bulky",
+    "createAccount": "Create account  →",
+    "loginHeadline": "Send it with someone already going there.",
+    "loginSub": "Send greener. Earn on the side. On your schedule.",
+    "lowCarbon": "LOW-CARBON BY DESIGN",
+    "verifiedUnit": "done",
+    "verifiedDriversHint": "Verified drivers get more deliveries and build a safer network.",
+    "plateFormatNote": "We check the format and canton of the plate. It is not looked up in a vehicle registry.",
+    "progressPickedUp": "Picked up",
+    "progressInTransit": "In transit",
+    "progressDelivered": "Delivered",
     "close": "Close",
     "verified": "Verified"
   },

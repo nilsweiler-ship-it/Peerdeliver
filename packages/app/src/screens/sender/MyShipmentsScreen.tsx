@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
+import { Alert } from '../../utils/alert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -27,9 +28,9 @@ const COMPLETED_STATUSES: DeliveryStatus[] = ['delivered', 'cancelled', 'expired
 
 // 3-step mini progress nodes shown in the Track view.
 const PROGRESS_STEPS: { label: string; reaches: DeliveryStatus[] }[] = [
-  { label: 'Picked up', reaches: ['picked_up', 'in_transit', 'delivered', 'disputed'] },
-  { label: 'In transit', reaches: ['in_transit', 'delivered', 'disputed'] },
-  { label: 'Delivered', reaches: ['delivered'] },
+  { label: 'ui.progressPickedUp', reaches: ['picked_up', 'in_transit', 'delivered', 'disputed'] },
+  { label: 'ui.progressInTransit', reaches: ['in_transit', 'delivered', 'disputed'] },
+  { label: 'ui.progressDelivered', reaches: ['delivered'] },
 ];
 
 /**
@@ -274,7 +275,7 @@ export function MyShipmentsScreen({ navigation }: any) {
     <View style={styles.container}>
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
-        <Text style={styles.title}>My shipments</Text>
+        <Text style={styles.title}>{t('ui.myShipments')}</Text>
         <SegmentedControl
           segments={segments}
           value={filter}
@@ -373,7 +374,7 @@ export function MyShipmentsScreen({ navigation }: any) {
                             ]}
                           />
                           <Text style={[styles.progressLabel, done && styles.progressLabelDone]}>
-                            {step.label}
+                            {t(step.label)}
                           </Text>
                         </View>
                         {i < PROGRESS_STEPS.length - 1 && (

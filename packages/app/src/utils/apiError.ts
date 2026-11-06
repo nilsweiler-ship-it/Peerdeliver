@@ -1,4 +1,4 @@
-import { Alert } from 'react-native';
+import { Alert } from '../utils/alert';
 import type { TFunction } from 'i18next';
 
 /** The server's own explanation, if it sent one. */

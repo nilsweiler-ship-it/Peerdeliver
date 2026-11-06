@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { Alert } from '../../utils/alert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -50,7 +51,8 @@ export function VerificationScreen({ navigation }: any) {
     true, // email
     !!user?.phoneVerified,
     !!user?.idVerified,
-    ...(isDriver ? [!!user?.plateVerified] : []),
+    // The plate is only format-checked ("Erfasst"), so it doesn't count
+    // towards the verified score.
   ];
   const done = checks.filter(Boolean).length;
   const total = checks.length;
@@ -131,7 +133,7 @@ export function VerificationScreen({ navigation }: any) {
           <View style={styles.flex}>
             <Text style={styles.heroOverline}>{t('verification.trustScore').toUpperCase()}</Text>
             <Text style={styles.heroScore}>
-              {done} / {total} <Text style={styles.heroScoreUnit}>verified</Text>
+              {done} / {total} <Text style={styles.heroScoreUnit}>{t('ui.verifiedUnit')}</Text>
             </Text>
           </View>
           {isVerified ? (
@@ -149,7 +151,7 @@ export function VerificationScreen({ navigation }: any) {
           />
         </View>
         <Text style={styles.heroHint}>
-          Verified drivers get more deliveries and build a safer network.
+          {t('ui.verifiedDriversHint')}
         </Text>
       </View>
 
@@ -268,8 +270,7 @@ export function VerificationScreen({ navigation }: any) {
                 disabled={!plate.trim()}
               />
               <Text style={styles.caption}>
-                Swiss plate format check. Real registry authentication requires a licensed
-                vehicle-data provider.
+                {t('ui.plateFormatNote')}
               </Text>
             </View>
           )}

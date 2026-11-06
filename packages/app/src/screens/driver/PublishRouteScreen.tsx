@@ -4,11 +4,11 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
 } from 'react-native';
+import { Alert } from '../../utils/alert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Button, Input, Card, AddressAutocomplete } from '../../components/ui';

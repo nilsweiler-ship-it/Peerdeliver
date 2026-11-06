@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   ScrollView,
-  Alert,
 } from 'react-native';
+import { Alert } from '../../utils/alert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import Svg, { Rect } from 'react-native-svg';

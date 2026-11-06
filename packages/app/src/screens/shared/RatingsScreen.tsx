@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { Alert } from '../../utils/alert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -24,7 +25,9 @@ export function RatingsScreen({ navigation, route }: any) {
   // Whole stars: the server stores 1–5. This started at 4.5 and the submit
   // button only went back — the rating was never sent anywhere, so every
   // driver's average stayed empty however many deliveries they did.
-  const [rating, setRating] = useState<number>(5);
+  // No stars until the person picks: a preselected 5 turned "submit without
+  // thinking" into a perfect score and inflated every driver's average.
+  const [rating, setRating] = useState<number>(0);
   const rate = useRateDelivery();
 
   const handleSubmit = async () => {
@@ -97,13 +100,14 @@ export function RatingsScreen({ navigation, route }: any) {
               );
             })}
           </View>
-          <Text style={styles.ratingValue}>{rating}</Text>
+          <Text style={styles.ratingValue}>{rating || '–'}</Text>
         </View>
 
         <Button
           title={t('delivered.submit')}
           onPress={handleSubmit}
           loading={rate.isPending}
+          disabled={rating === 0}
           variant="light"
           style={styles.submit}
         />

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { localize, requestLang } from '../i18n/messages';
 
 export class AppError extends Error {
   constructor(
@@ -12,11 +13,13 @@ export class AppError extends Error {
   }
 }
 
-export function errorHandler(err: Error & { type?: string }, _req: Request, res: Response, _next: NextFunction): void {
+export function errorHandler(err: Error & { type?: string }, req: Request, res: Response, _next: NextFunction): void {
   console.error('[Error]', err.message, err.stack);
 
   if (err instanceof AppError) {
-    res.status(err.statusCode).json({ success: false, error: err.message, ...(err.code ? { code: err.code } : {}) });
+    // In the language the app asked for (see i18n/messages.ts).
+    const message = localize(err.message, requestLang(req.headers['accept-language']));
+    res.status(err.statusCode).json({ success: false, error: message, ...(err.code ? { code: err.code } : {}) });
     return;
   }
 

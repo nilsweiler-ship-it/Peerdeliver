@@ -51,7 +51,7 @@ const run = Date.now().toString(36);
 async function reg(name, role, extra = {}) {
   const email = `p0-${name}-${run}@example.com`;
   const r = await call('POST', '/auth/register', null, {
-    email, password: 'P0-Regression-1', firstName: name, lastName: 'Test', role, ...extra,
+    email, password: 'P0-Regression-1', acceptTerms: true, firstName: name, lastName: 'Test', role, ...extra,
   });
   const tok = r.d?.tokens?.accessToken ?? r.d?.accessToken;
   if (!tok) throw new Error(`register ${name} failed: ${r.s} ${JSON.stringify(r.j)}`);
@@ -275,7 +275,7 @@ console.log('\n#1b no code via a second account under the recipient\'s email');
     asDriver && !asDriver.recipientEmail && !asDriver.recipientPhone && !asDriver.stripePaymentIntentId && !asDriver.twintPhone, asDriver);
   // …and could not use it if they had it: same mailbox, different case.
   const dup = await call('POST', '/auth/register', null, {
-    email: R.email.toUpperCase(), password: 'P0-Regression-1', firstName: 'Mallory', lastName: 'X', role: 'recipient',
+    email: R.email.toUpperCase(), password: 'P0-Regression-1', acceptTerms: true, firstName: 'Mallory', lastName: 'X', role: 'recipient',
   });
   check('second account for the same mailbox in other case refused', dup.s === 409, { s: dup.s });
   const login = await call('POST', '/auth/login', null, { email: R.email.toUpperCase(), password: 'P0-Regression-1' });
@@ -287,7 +287,7 @@ console.log('\n#1b no code via a second account under the recipient\'s email');
   const lid = (await call('POST', '/deliveries', S.tok, body({ recipientEmail: lateEmail }))).d.id;
   await pay(lid);
   const late = await call('POST', '/auth/register', null, {
-    email: lateEmail, password: 'P0-Regression-1', firstName: 'Late', lastName: 'R', role: 'recipient',
+    email: lateEmail, password: 'P0-Regression-1', acceptTerms: true, firstName: 'Late', lastName: 'R', role: 'recipient',
   });
   const lateTok = late.d?.tokens?.accessToken;
   const lateView = ((await call('GET', '/deliveries/mine', lateTok)).d ?? []).find((d) => d.id === lid);
@@ -469,7 +469,7 @@ console.log('\nP1 validation');
   check('a new phone number is unverified again', pp?.phoneVerified === false && pp?.verificationStatus !== 'verified',
     { phoneVerified: pp?.phoneVerified, status: pp?.verificationStatus });
   const it = await call('POST', '/auth/register', null, {
-    email: `p0-it-${run}@example.com`, password: 'P0-Regression-1', firstName: 'Lia', lastName: 'Ticino', role: 'sender', language: 'it',
+    email: `p0-it-${run}@example.com`, password: 'P0-Regression-1', acceptTerms: true, firstName: 'Lia', lastName: 'Ticino', role: 'sender', language: 'it',
   });
   check('Italian accepted at sign-up', it.s === 201 && it.d?.user?.language === 'it', { s: it.s, lang: it.d?.user?.language });
 
@@ -495,6 +495,45 @@ console.log('\nP1 account deletion');
   const fresh = await reg('leaver2', 'sender');
   const del2 = await call('DELETE', '/users/account', fresh.tok);
   check('an account with no history is deleted outright', del2.s === 200, { s: del2.s });
+}
+
+// ── App polish: consent and language ────────────────────────────────────
+console.log('\nconsent + language');
+{
+  const noConsent = await call('POST', '/auth/register', null, {
+    email: `p0-noconsent-${run}@example.com`, password: 'P0-Regression-1', firstName: 'No', lastName: 'Consent', role: 'sender',
+  });
+  check('sign-up without accepting the terms is refused', noConsent.s === 400, { s: noConsent.s, e: noConsent.j?.error });
+  const prof = (await call('GET', '/users/profile', S.tok)).d;
+  check('consent is recorded with the terms version', !!prof?.termsAcceptedAt && /^\d{4}-\d{2}-\d{2}$/.test(prof?.termsVersion ?? ''),
+    { at: prof?.termsAcceptedAt, v: prof?.termsVersion });
+
+  // The same refusal, asked for in English and in French.
+  const ask = async (lang) => {
+    const r = await fetch(`${API}/api/deliveries`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${S.tok}`, 'accept-language': lang,
+        'x-forwarded-for': `10.77.0.${ip++ % 250}` },
+      body: JSON.stringify(body({ budgetCHF: 12.34 })),
+    });
+    return (await r.json()).error;
+  };
+  check('no Accept-Language → original German', (await ask('')) === 'Bitte runde den Betrag auf 5 Rappen.', {});
+  const en = await ask('en-GB,en;q=0.9');
+  check('Accept-Language en → English', en === 'Please round the amount to 5 centimes.', { en });
+  const fr = await ask('fr-CH');
+  check('Accept-Language fr → French', fr === 'Veuillez arrondir le montant à 5 centimes.', { fr });
+  const heavy = await fetch(`${API}/api/deliveries`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${S.tok}`, 'accept-language': 'it' },
+    body: JSON.stringify(body({ packageSize: 'S', packageWeight: 50 })),
+  });
+  const it = (await heavy.json()).error;
+  check('templated message translated (it)', /^La taglia S porta al massimo \d+ kg/.test(it ?? ''), { it });
+  const nf = await fetch(`${API}/api/deliveries/00000000-0000-0000-0000-000000000000`, {
+    headers: { authorization: `Bearer ${T.tok}`, 'accept-language': 'en' },
+  });
+  check('error() helper translated too (404, en)', (await nf.json()).error === 'Delivery not found.', {});
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

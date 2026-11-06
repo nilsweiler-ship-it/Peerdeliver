@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, RefreshControl, TextInput, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TextInput, Pressable } from 'react-native';
+import { Alert } from '../../utils/alert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
@@ -158,7 +159,7 @@ function DeliveryActionCard({ delivery, navigation }: { delivery: DeliveryReques
         <View style={styles.codeSection}>
           <Text style={styles.codePrompt}>{t('driver.enterPickupCode')}</Text>
           <TicketStub
-            title="PICKUP CODE"
+            title={t('ui.pickupCodeTitle')}
             locked
             footer={
               <Button
@@ -178,7 +179,7 @@ function DeliveryActionCard({ delivery, navigation }: { delivery: DeliveryReques
         <View style={styles.codeSection}>
           <Text style={styles.codePrompt}>{t('driver.enterDeliveryCode')}</Text>
           <TicketStub
-            title="DELIVERY CODE"
+            title={t('ui.deliveryCodeTitle')}
             locked
             footer={
               <Button
@@ -337,12 +338,8 @@ export function ActiveDeliveryScreen({ navigation }: any) {
             style={StyleSheet.flatten([styles.backChip, { top: insets.top + spacing.xs }])}
           />
         )}
-        <Pill
-          label="ETA 14:25"
-          mono
-          onDark
-          style={StyleSheet.flatten([styles.etaPill, { top: insets.top + spacing.xs }])}
-        />
+        {/* A hard-coded "ETA 14:25" pill sat here, shown to every driver
+            whatever the route or time. Removed until there is a real ETA. */}
       </LiveMap>
 
       <ScrollView

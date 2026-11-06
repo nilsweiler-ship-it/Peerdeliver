@@ -11,6 +11,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { Alert } from '../../utils/alert';
+import { parseLocaleNumber } from '../../utils/number';
 import { Button, Input } from '../../components/ui';
 import { BackChip, Pill } from '../../components/brand';
 import { useRegister } from '../../queries/auth';
@@ -18,10 +20,11 @@ import { fonts, colors, spacing, typography, borderRadius, shadow } from '../../
 
 type RegisterRole = 'sender' | 'driver' | 'both' | 'recipient';
 
+// Captions are translation keys (ui.capS/M/L).
 const CAPACITY_OPTIONS: { key: 'S' | 'M' | 'L'; caption: string }[] = [
-  { key: 'S', caption: 'Bags & small boxes' },
-  { key: 'M', caption: 'Backpack-sized' },
-  { key: 'L', caption: 'Boot space / bulky' },
+  { key: 'S', caption: 'ui.capS' },
+  { key: 'M', caption: 'ui.capM' },
+  { key: 'L', caption: 'ui.capL' },
 ];
 
 // Common car models with estimated max load in kg
@@ -78,6 +81,13 @@ export function RegisterScreen({ navigation }: any) {
   };
 
   const handleRegister = () => {
+    // "1'200" or "1,5" are how loads get typed here; parseFloat read them as
+    // 1 and silently capped what the driver could be offered.
+    const loadKg = parseLocaleNumber(maxLoadKg);
+    if (isDriver && loadKg !== undefined && (!Number.isFinite(loadKg) || loadKg <= 0 || loadKg > 2000)) {
+      Alert.alert(t('common.error'), t('auth.maxLoadInvalid'));
+      return;
+    }
     const lang = i18n.language?.slice(0, 2);
     // Italian is a full language here (app, emails); it used to fall back to English.
     const language: 'en' | 'de' | 'fr' | 'it' =
@@ -89,9 +99,11 @@ export function RegisterScreen({ navigation }: any) {
       lastName,
       role,
       language,
+      // Sent explicitly; the server stores when and to which version.
+      acceptTerms: true as const,
       ...(isDriver && licensePlate && { licensePlate }),
       ...(isDriver && carModel && { carModel }),
-      ...(isDriver && maxLoadKg && { maxLoadKg: parseFloat(maxLoadKg) }),
+      ...(isDriver && loadKg !== undefined && { maxLoadKg: loadKg }),
       ...(isDriver && { vehicleSize }),
     });
   };
@@ -117,10 +129,10 @@ export function RegisterScreen({ navigation }: any) {
         {/* Header */}
         <View style={styles.headerRow}>
           <BackChip onPress={() => navigation.goBack()} />
-          <Pill label="STEP 2 / 2" mono tone="sunken" />
+          <Pill label={t('ui.stepOf', { n: 2, total: 2 })} mono tone="sunken" />
         </View>
 
-        <Text style={styles.title}>How will you use Shlep?</Text>
+        <Text style={styles.title}>{t('ui.howWillYouUse')}</Text>
         <Text style={styles.subtitle}>{t('auth.selectRole')}</Text>
 
         {/* Hero role cards */}
@@ -129,7 +141,7 @@ export function RegisterScreen({ navigation }: any) {
             icon="package"
             iconColor={colors.primary}
             title={t('auth.roleSender')}
-            caption="Get parcels delivered by verified drivers already heading your way."
+            caption={t('ui.senderCaption')}
             selected={role === 'sender'}
             onPress={() => setRole('sender')}
           />
@@ -137,7 +149,7 @@ export function RegisterScreen({ navigation }: any) {
             icon="truck"
             iconColor={colors.destination}
             title={t('auth.roleDriver')}
-            caption="Earn on routes you're already driving — and cut carbon."
+            caption={t('ui.driverCaption')}
             selected={role === 'driver'}
             onPress={() => setRole('driver')}
           />
@@ -237,7 +249,7 @@ export function RegisterScreen({ navigation }: any) {
               placeholder="kg"
             />
 
-            <Text style={styles.capacityLabel}>How much can you carry?</Text>
+            <Text style={styles.capacityLabel}>{t('ui.howMuchCarry')}</Text>
             <View style={styles.capacityRow}>
               {CAPACITY_OPTIONS.map((o) => {
                 const selected = vehicleSize === o.key;
@@ -252,7 +264,7 @@ export function RegisterScreen({ navigation }: any) {
                       {o.key}
                     </Text>
                     <Text style={[styles.capacityCaption, selected && styles.capacityCaptionSelected]}>
-                      {o.caption}
+                      {t(o.caption)}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -267,6 +279,9 @@ export function RegisterScreen({ navigation }: any) {
             style={[styles.checkbox, agreed && styles.checkboxOn]}
             onPress={() => setAgreed((v) => !v)}
             activeOpacity={0.7}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: agreed }}
+            accessibilityLabel={t('legal.agree')}
           >
             {agreed && <Feather name="check" size={14} color={colors.textInverse} />}
           </TouchableOpacity>
@@ -289,7 +304,7 @@ export function RegisterScreen({ navigation }: any) {
         )}
 
         <Button
-          title="Create account  →"
+          title={t('ui.createAccount')}
           onPress={handleRegister}
           loading={register.isPending}
           // Vehicle details are NOT required to sign up. Everyone defaults to

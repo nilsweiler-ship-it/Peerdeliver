@@ -34,9 +34,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
     justifyContent: 'center',
+    alignSelf: 'stretch',
   },
+  // Flexible up to 44 px: six fixed 44 px boxes plus gaps overflowed the
+  // driver's code card at phone width and clipped the sixth digit.
   box: {
-    width: 44,
+    flex: 1,
+    maxWidth: 44,
     height: 54,
     borderRadius: borderRadius.md,
     backgroundColor: colors.surfaceAlt,

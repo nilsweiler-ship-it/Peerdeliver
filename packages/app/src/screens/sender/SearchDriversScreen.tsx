@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { Alert } from '../../utils/alert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Button, EmptyState, LoadingSpinner, Modal, AddressAutocomplete } from '../../components/ui';

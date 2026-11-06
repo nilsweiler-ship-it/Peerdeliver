@@ -61,9 +61,10 @@ export function MainTabs() {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 64,
-          paddingTop: 8,
-          paddingBottom: 10,
+          // No fixed height: 64 px with 18 px of padding left the labels a few
+          // pixels tall ("Start", "Profil" clipped). The navigator sizes the
+          // bar itself and adds the safe-area inset.
+          paddingTop: 6,
         },
         tabBarLabelStyle: {
           fontFamily: typography.bodyStrong.fontFamily,

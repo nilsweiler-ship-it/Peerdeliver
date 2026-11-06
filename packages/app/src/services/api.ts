@@ -1,4 +1,5 @@
 import axios from 'axios';
+import i18n from '../i18n';
 import { Platform } from 'react-native';
 import { resolveDevApiUrl } from './devHost';
 
@@ -31,6 +32,9 @@ export const api = axios.create({
 
 // Attach access token
 api.interceptors.request.use(async (config) => {
+  // The server answers errors in this language (DE/FR/IT/EN). Without it,
+  // every message came back in German whatever language the app was in.
+  config.headers['Accept-Language'] = (i18n.language || 'de').slice(0, 2);
   const token = await storage.getItemAsync('accessToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

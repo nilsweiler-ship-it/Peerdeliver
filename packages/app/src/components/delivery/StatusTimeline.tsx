@@ -1,15 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { DeliveryStatus } from '@peerdeliver/shared';
 
-const STATUSES: { key: DeliveryStatus; label: string }[] = [
-  { key: 'matched', label: 'Matched' },
-  { key: 'accepted', label: 'Accepted' },
-  { key: 'picked_up', label: 'Picked up' },
-  { key: 'in_transit', label: 'In transit' },
-  { key: 'delivered', label: 'Delivered' },
-];
+// Labels come from status.* in the locale files (they were English only).
+const STATUS_KEYS: DeliveryStatus[] = ['matched', 'accepted', 'picked_up', 'in_transit', 'delivered'];
 
 interface StatusTimelineProps {
   currentStatus: DeliveryStatus;
@@ -17,11 +13,13 @@ interface StatusTimelineProps {
 }
 
 export function StatusTimeline({ currentStatus, orientation = 'horizontal' }: StatusTimelineProps) {
+  const { t } = useTranslation();
+  const STATUSES = STATUS_KEYS.map((key) => ({ key, label: t(`status.${key}`) }));
   if (currentStatus === 'disputed') {
     return (
       <View style={styles.terminalContainer}>
         <View style={[styles.terminalDot, { backgroundColor: colors.signal }]} />
-        <Text style={styles.terminalText}>Under review</Text>
+        <Text style={styles.terminalText}>{t('status.disputed')}</Text>
       </View>
     );
   }
@@ -35,7 +33,7 @@ export function StatusTimeline({ currentStatus, orientation = 'horizontal' }: St
           ]}
         />
         <Text style={styles.terminalText}>
-          {currentStatus === 'cancelled' ? 'Cancelled' : 'Expired'}
+          {t(`status.${currentStatus}`)}
         </Text>
       </View>
     );

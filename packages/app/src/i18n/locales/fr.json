@@ -23,6 +23,7 @@
     "optional": "facultatif"
   },
   "auth": {
+    "maxLoadInvalid": "Indiquez la charge possible en kg, en chiffres (2000 au maximum).",
     "login": "Se connecter",
     "register": "S'inscrire",
     "email": "E-mail",
@@ -52,6 +53,13 @@
     "incoming": "À recevoir"
   },
   "sender": {
+    "weightInvalidTitle": "Vérifiez le poids",
+    "weightInvalid": "Indiquez le poids en chiffres, p. ex. 2,5 ou 2.5.",
+    "weightTooHeavy": "La taille {{size}} supporte au plus {{max}} kg. Choisissez une taille plus grande.",
+    "weightTooHeavyXL": "Nous ne pouvons pas transporter plus de {{max}} kg pour le moment.",
+    "valueInvalidTitle": "Vérifiez la valeur",
+    "valueInvalid": "Indiquez la valeur en CHF, p. ex. 150.",
+    "valueTooHigh": "Nous ne pouvons pas accepter d'envois de plus de CHF {{max}} pour le moment.",
     "createRequest": "Créer une demande de livraison",
     "myShipments": "Mes envois",
     "searchDrivers": "Trouver des conducteurs",
@@ -238,7 +246,7 @@
   },
   "legal": {
     "lastUpdated": "Dernière mise à jour : {{date}}",
-    "agree": "En continuant, vous acceptez nos Conditions générales et notre Politique de confidentialité."
+    "agree": "J’ai lu et j’accepte :"
   },
   "home": {
     "activeDeliveries": "Livraisons actives",
@@ -255,6 +263,7 @@
     "actionNeeded": "Action requise"
   },
   "status": {
+    "disputed": "En cours d’examen",
     "pending": "En attente",
     "requested": "Conducteur demandé",
     "matched": "Associé",
@@ -375,6 +384,35 @@
     "eta": "ETA {{time}}"
   },
   "ui": {
+    "co2SavedSoFar": "CO₂ économisé jusqu’ici",
+    "carTripsAvoided": "≈ {{count}} trajets en voiture évités",
+    "kmAway": "à {{km}} km",
+    "availableNearby": "À proximité",
+    "distance": "Distance",
+    "myShipments": "Mes envois",
+    "pickupCodeTitle": "CODE DE RETRAIT",
+    "deliveryCodeTitle": "CODE DE LIVRAISON",
+    "marketplaceQuestion": "Envoi depuis une petite annonce ?",
+    "marketplacePlaceholder": "Collez le titre ou le lien de l’annonce, p. ex. « IKEA Ektorp canapé 2 places »",
+    "autoFill": "Remplir",
+    "stepOf": "ÉTAPE {{n}} / {{total}}",
+    "howWillYouUse": "Comment utiliserez-vous Shlep ?",
+    "senderCaption": "Faites transporter vos colis par des personnes qui vont déjà dans votre direction.",
+    "driverCaption": "Gagnez de l’argent sur des trajets que vous faites déjà — et réduisez le CO₂.",
+    "howMuchCarry": "Combien pouvez-vous transporter ?",
+    "capS": "Sacs et petits cartons",
+    "capM": "Taille sac à dos",
+    "capL": "Coffre / encombrant",
+    "createAccount": "Créer un compte  →",
+    "loginHeadline": "Envoyez-le avec quelqu’un qui y va déjà.",
+    "loginSub": "Envoyez plus vert. Gagnez en plus. À votre rythme.",
+    "lowCarbon": "BAS CARBONE PAR CONCEPTION",
+    "verifiedUnit": "faits",
+    "verifiedDriversHint": "Les chauffeurs vérifiés reçoivent plus de livraisons et rendent le réseau plus sûr.",
+    "plateFormatNote": "Nous vérifions le format et le canton de la plaque. Elle n’est pas consultée dans un registre des véhicules.",
+    "progressPickedUp": "Récupéré",
+    "progressInTransit": "En route",
+    "progressDelivered": "Livré",
     "close": "Fermer",
     "verified": "Vérifié"
   },

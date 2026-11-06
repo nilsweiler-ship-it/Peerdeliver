@@ -1,3 +1,4 @@
+import { localize, requestLang } from '../i18n/messages';
 import { randomInt } from 'crypto';
 import { Response } from 'express';
 
@@ -6,7 +7,9 @@ export function success<T>(res: Response, data: T, statusCode = 200) {
 }
 
 export function error(res: Response, message: string, statusCode = 400) {
-  return res.status(statusCode).json({ success: false, error: message });
+  // In the language the app asked for (see i18n/messages.ts).
+  const lang = requestLang(res.req?.headers['accept-language']);
+  return res.status(statusCode).json({ success: false, error: localize(message, lang) });
 }
 
 /**
