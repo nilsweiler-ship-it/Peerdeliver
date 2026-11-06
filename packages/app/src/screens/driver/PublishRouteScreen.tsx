@@ -20,12 +20,13 @@ import type { PackageSize, RouteType, DayOfWeek, CreateRouteInput } from '@peerd
 import { showApiError } from '../../utils/apiError';
 
 const SIZES: { key: PackageSize; label: string }[] = [
-  { key: 'S', label: 'Small' },
-  { key: 'M', label: 'Medium' },
-  { key: 'L', label: 'Large' },
+  // Translation keys (they showed "Small"/"Medium" in every language).
+  { key: 'S', label: 'ui.sizeS' },
+  { key: 'M', label: 'ui.sizeM' },
+  { key: 'L', label: 'ui.sizeL' },
   // Declaring XL is what makes a driver eligible for the best-paid jobs: the
   // items Post refuses, where the sender's alternative costs CHF 100+.
-  { key: 'XL', label: 'Extra large' },
+  { key: 'XL', label: 'ui.sizeXL' },
 ];
 
 // DayPicker uses lowercase keys; the API/state stays uppercase DayOfWeek.
@@ -198,7 +199,7 @@ export function PublishRouteScreen({ navigation }: any) {
                     {s.key}
                   </Text>
                   <Text style={[styles.sizeDesc, selected && styles.sizeDescSelected]}>
-                    {s.label}
+                    {t(s.label)}
                   </Text>
                 </TouchableOpacity>
               );

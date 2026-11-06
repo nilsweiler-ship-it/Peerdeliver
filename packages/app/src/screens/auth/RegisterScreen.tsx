@@ -223,7 +223,7 @@ export function RegisterScreen({ navigation }: any) {
                   setCarModel(text);
                   setShowCarSuggestions(text.length >= 2);
                 }}
-                placeholder="e.g. VW Golf"
+                placeholder={t('ui.carModelPlaceholder')}
               />
               {showCarSuggestions && filteredSuggestions.length > 0 && (
                 <View style={styles.suggestions}>
@@ -281,6 +281,9 @@ export function RegisterScreen({ navigation }: any) {
             activeOpacity={0.7}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: agreed }}
+            // react-native-web doesn't map accessibilityState for a
+            // TouchableOpacity; aria-checked does.
+            aria-checked={agreed}
             accessibilityLabel={t('legal.agree')}
           >
             {agreed && <Feather name="check" size={14} color={colors.textInverse} />}

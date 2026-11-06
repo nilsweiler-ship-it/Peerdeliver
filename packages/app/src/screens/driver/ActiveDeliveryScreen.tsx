@@ -457,6 +457,8 @@ const styles = StyleSheet.create({
   },
   codeInputWrap: {
     position: 'relative',
+    alignSelf: 'stretch',
+    alignItems: 'center',
   },
   // Tiny + offscreen so it captures the keyboard without intercepting taps on
   // the boxes (the Pressable wrapper handles focus).
