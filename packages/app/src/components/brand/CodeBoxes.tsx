@@ -34,9 +34,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
     justifyContent: 'center',
+    // A definite width, whatever the parent's alignItems: with only
+    // alignSelf:'stretch' a centring parent gave the row no width and the
+    // flexible boxes collapsed to slivers.
+    width: '100%',
+    maxWidth: 44 * 6 + 8 * 5,
   },
+  // Flexible up to 44 px: six fixed 44 px boxes plus gaps overflowed the
+  // driver's code card at phone width and clipped the sixth digit.
   box: {
-    width: 44,
+    flex: 1,
+    maxWidth: 44,
     height: 54,
     borderRadius: borderRadius.md,
     backgroundColor: colors.surfaceAlt,

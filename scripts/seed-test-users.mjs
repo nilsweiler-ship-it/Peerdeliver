@@ -88,7 +88,7 @@ for (const u of USERS) {
     const res = await fetch(`${apiUrl}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...payload, email, password: PASSWORD, language: 'de' }),
+      body: JSON.stringify({ ...payload, email, password: PASSWORD, language: 'de', acceptTerms: true }),
     });
     const body = await res.json().catch(() => ({}));
 

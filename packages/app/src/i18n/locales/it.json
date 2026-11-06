@@ -23,6 +23,7 @@
     "optional": "facoltativo"
   },
   "auth": {
+    "maxLoadInvalid": "Indica quanto puoi caricare in kg, come numero (massimo 2000).",
     "login": "Accedi",
     "register": "Registrati",
     "email": "E-mail",
@@ -52,6 +53,13 @@
     "incoming": "In arrivo"
   },
   "sender": {
+    "weightInvalidTitle": "Controlla il peso",
+    "weightInvalid": "Inserisci il peso come numero, ad es. 2,5 o 2.5.",
+    "weightTooHeavy": "La taglia {{size}} porta al massimo {{max}} kg. Scegli una taglia più grande.",
+    "weightTooHeavyXL": "Al momento non possiamo trasportare più di {{max}} kg.",
+    "valueInvalidTitle": "Controlla il valore",
+    "valueInvalid": "Inserisci il valore in CHF come numero, ad es. 150.",
+    "valueTooHigh": "Al momento non possiamo accettare spedizioni di valore superiore a CHF {{max}}.",
     "createRequest": "Crea richiesta di consegna",
     "myShipments": "Le mie spedizioni",
     "searchDrivers": "Trova conducenti",
@@ -238,7 +246,7 @@
   },
   "legal": {
     "lastUpdated": "Ultimo aggiornamento: {{date}}",
-    "agree": "Continuando, accetti le nostre Condizioni generali e l'Informativa sulla privacy."
+    "agree": "Ho letto e accetto:"
   },
   "home": {
     "activeDeliveries": "Consegne attive",
@@ -255,6 +263,7 @@
     "actionNeeded": "Azione necessaria"
   },
   "status": {
+    "disputed": "In verifica",
     "pending": "In attesa",
     "requested": "Conducente richiesto",
     "matched": "Abbinato",
@@ -375,6 +384,48 @@
     "eta": "ETA {{time}}"
   },
   "ui": {
+    "sizeS": "Piccolo",
+    "sizeM": "Medio",
+    "sizeL": "Grande",
+    "sizeXL": "Extra grande",
+    "carModelPlaceholder": "ad es. VW Golf",
+    "twintConfirmed": "Pagamento confermato",
+    "twintContinue": "Continua",
+    "twintAmount": "IMPORTO DA PAGARE",
+    "twintQrHint": "Scansiona con l’app TWINT o conferma con il tuo numero qui sotto.",
+    "twintMobile": "NUMERO DI CELLULARE",
+    "twintConfirm": "Conferma in TWINT",
+    "twintSimulated": "Pagamento simulato · nessun addebito reale",
+    "twintHeld": "Pagato e trattenuto fino alla consegna del pacco, poi versato al conducente.",
+    "co2SavedSoFar": "CO₂ risparmiata finora",
+    "carTripsAvoided": "≈ {{count}} viaggi in auto evitati",
+    "kmAway": "a {{km}} km",
+    "availableNearby": "Nelle vicinanze",
+    "distance": "Distanza",
+    "myShipments": "Le mie spedizioni",
+    "pickupCodeTitle": "CODICE DI RITIRO",
+    "deliveryCodeTitle": "CODICE DI CONSEGNA",
+    "marketplaceQuestion": "Spedisci da un annuncio?",
+    "marketplacePlaceholder": "Incolla il titolo o il link dell’annuncio, ad es. «IKEA Ektorp divano 2 posti»",
+    "autoFill": "Compila",
+    "stepOf": "PASSO {{n}} / {{total}}",
+    "howWillYouUse": "Come userai Shlep?",
+    "senderCaption": "Fai portare i tuoi pacchi da persone che vanno già nella tua direzione.",
+    "driverCaption": "Guadagna sui tragitti che fai già — e riduci la CO₂.",
+    "howMuchCarry": "Quanto puoi trasportare?",
+    "capS": "Borse e scatole piccole",
+    "capM": "Formato zaino",
+    "capL": "Bagagliaio / ingombrante",
+    "createAccount": "Crea account  →",
+    "loginHeadline": "Spediscilo con qualcuno che ci va già.",
+    "loginSub": "Spedisci più verde. Guadagna qualcosa in più. Quando vuoi tu.",
+    "lowCarbon": "A BASSE EMISSIONI PER DESIGN",
+    "verifiedUnit": "fatti",
+    "verifiedDriversHint": "I conducenti verificati ricevono più consegne e rendono la rete più sicura.",
+    "plateFormatNote": "Controlliamo il formato e il cantone della targa. Non viene consultata in un registro dei veicoli.",
+    "progressPickedUp": "Ritirato",
+    "progressInTransit": "In viaggio",
+    "progressDelivered": "Consegnato",
     "close": "Chiudi",
     "verified": "Verificato"
   },

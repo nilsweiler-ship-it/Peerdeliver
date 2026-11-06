@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { statusColors, colors, spacing, typography, borderRadius } from '../../theme';
 
 type StatusKey = keyof typeof statusColors;
@@ -25,8 +26,11 @@ function resolve(status: string) {
 }
 
 export function StatusBadge({ status, label, dot = true, style }: StatusBadgeProps) {
+  const { t } = useTranslation();
   const c = resolve(status);
-  const text = (label ?? status.replace(/_/g, ' ')).toUpperCase();
+  // Translated status name (status.* in the locale files); it showed the raw
+  // English key — "IN TRANSIT", "DISPUTED" — in every language.
+  const text = (label ?? t(`status.${status}`, { defaultValue: status.replace(/_/g, ' ') })).toUpperCase();
   return (
     <View style={[styles.badge, { backgroundColor: c.bg }, style]}>
       {dot && <View style={[styles.dot, { backgroundColor: c.dot }]} />}

@@ -4,12 +4,12 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  Alert,
   RefreshControl,
   TouchableOpacity,
   Modal,
   Pressable,
 } from 'react-native';
+import { Alert } from '../../utils/alert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +21,6 @@ import { EmptyState, LoadingSpinner, Button } from '../../components/ui';
 import { Pill, BackChip } from '../../components/brand';
 import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 import type { DeliveryRequest } from '@peerdeliver/shared';
-import { PACKAGE_SIZES } from '@peerdeliver/shared';
 import { showApiError } from '../../utils/apiError';
 
 /**
@@ -94,7 +93,7 @@ export function AvailableDeliveriesScreen({ navigation }: any) {
           {distanceKm != null && (
             <View style={styles.distanceRow}>
               <Pill
-                label={`${distanceKm.toFixed(1)} km away`}
+                label={t('ui.kmAway', { km: distanceKm.toFixed(1) })}
                 icon="navigation"
                 iconColor={colors.destination}
                 mono
@@ -134,7 +133,7 @@ export function AvailableDeliveriesScreen({ navigation }: any) {
           <View style={styles.headerBlock}>
             <View style={styles.headerRow}>
               <BackChip onPress={() => navigation.goBack()} />
-              <Text style={styles.title}>Available nearby</Text>
+              <Text style={styles.title}>{t('ui.availableNearby')}</Text>
             </View>
             {/* Say where this list is looking. An empty list is otherwise
                 indistinguishable from "nobody needs anything near me", which
@@ -191,7 +190,7 @@ export function AvailableDeliveriesScreen({ navigation }: any) {
             <View style={styles.sheetHeader}>
               <Text style={styles.sheetTitle} numberOfLines={2}>
                 {(selectedDelivery.packageDescription || t('driver.availableDeliveries'))} ·{' '}
-                {PACKAGE_SIZES[selectedDelivery.packageSize].label}
+                {t(`ui.size${selectedDelivery.packageSize}`)}
               </Text>
               <Text style={styles.sheetPrice}>CHF {selectedDelivery.budgetCHF.toFixed(0)}</Text>
             </View>
@@ -199,7 +198,7 @@ export function AvailableDeliveriesScreen({ navigation }: any) {
             <View style={styles.detail}>
               <DetailRow label={t('sender.pickup')} value={selectedDelivery.pickupAddress.label} />
               <DetailRow label={t('sender.delivery')} value={selectedDelivery.deliveryAddress.label} />
-              {detailDistance && <DetailRow label="Distance" value={detailDistance} mono />}
+              {detailDistance && <DetailRow label={t('ui.distance')} value={detailDistance} mono />}
               {senderRating && <DetailRow label={t('driver.senderRating')} value={senderRating} mono />}
             </View>
 

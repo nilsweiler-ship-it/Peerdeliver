@@ -4,11 +4,11 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
 } from 'react-native';
+import { Alert } from '../../utils/alert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import { Feather } from '@expo/vector-icons';
@@ -27,7 +27,10 @@ import {
   windowFor,
   sameDayStillPossible,
   DELIVERY_SPEEDS,
+  PACKAGE_SIZES,
+  MAX_DECLARED_VALUE_CHF,
 } from '@peerdeliver/shared';
+import { parseLocaleNumber } from '../../utils/number';
 
 /** Straight-line km. Good enough to anchor a price; no routing call needed. */
 function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
@@ -175,14 +178,39 @@ export function CreateRequestScreen({ navigation }: any) {
 
     const windowRange = windowFor(speed, new Date(), onDate);
 
+    // Check the free-text numbers here, in the sender's language, before the
+    // server has to: "2,5" is 2.5 kg, not 2; "abc" is a question, not null.
+    const weightKg = parseLocaleNumber(weight);
+    if (weightKg !== undefined && (!Number.isFinite(weightKg) || weightKg <= 0)) {
+      Alert.alert(t('sender.weightInvalidTitle'), t('sender.weightInvalid'));
+      return;
+    }
+    const maxKg = PACKAGE_SIZES[packageSize].maxKg;
+    if (weightKg !== undefined && weightKg > maxKg) {
+      Alert.alert(
+        t('sender.weightInvalidTitle'),
+        packageSize === 'XL' ? t('sender.weightTooHeavyXL', { max: maxKg }) : t('sender.weightTooHeavy', { size: packageSize, max: maxKg }),
+      );
+      return;
+    }
+    const valueChf = parseLocaleNumber(declaredValue);
+    if (valueChf !== undefined && (!Number.isFinite(valueChf) || valueChf < 0)) {
+      Alert.alert(t('sender.valueInvalidTitle'), t('sender.valueInvalid'));
+      return;
+    }
+    if (valueChf !== undefined && valueChf > MAX_DECLARED_VALUE_CHF) {
+      Alert.alert(t('sender.valueInvalidTitle'), t('sender.valueTooHigh', { max: MAX_DECLARED_VALUE_CHF }));
+      return;
+    }
+
     const input: CreateDeliveryInput = {
       pickupAddress,
       deliveryAddress,
       packageSize,
       packaging,
       packageDescription: description,
-      packageWeight: weight ? parseFloat(weight) : undefined,
-      declaredValue: declaredValue ? parseFloat(declaredValue) : undefined,
+      packageWeight: weightKg,
+      declaredValue: valueChf,
       budgetCHF: budget,
       deliveryWindowStart: windowRange.start.toISOString(),
       deliveryWindowEnd: windowRange.end.toISOString(),
@@ -276,14 +304,14 @@ export function CreateRequestScreen({ navigation }: any) {
         {step === 0 && (
           <Card style={styles.stepCard}>
             <View style={styles.autoFillCard}>
-              <Text style={styles.autoFillLabel}>Shipping from a marketplace?</Text>
+              <Text style={styles.autoFillLabel}>{t('ui.marketplaceQuestion')}</Text>
               <Input
                 value={listingText}
                 onChangeText={setListingText}
-                placeholder="Paste the listing title or a link, e.g. 'IKEA Ektorp 2-seat sofa'"
+                placeholder={t('ui.marketplacePlaceholder')}
               />
               <Button
-                title="Auto-fill"
+                title={t('ui.autoFill')}
                 onPress={handleAutoFill}
                 variant="outline"
                 style={styles.autoFillButton}

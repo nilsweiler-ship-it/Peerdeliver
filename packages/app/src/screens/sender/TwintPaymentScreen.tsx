@@ -7,12 +7,13 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   ScrollView,
-  Alert,
 } from 'react-native';
+import { Alert } from '../../utils/alert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import Svg, { Rect } from 'react-native-svg';
 import { useTwintPay } from '../../queries/payment';
+import { useTranslation } from 'react-i18next';
 import { spacing, typography, borderRadius } from '../../theme';
 
 // TWINT brand: near-black surface with the signature magenta accent.
@@ -54,6 +55,7 @@ function FauxQR({ seed, size = 132 }: { seed: string; size?: number }) {
 }
 
 export function TwintPaymentScreen({ navigation, route }: any) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { deliveryId, amountCHF = 0, summary = 'Delivery' } = route?.params ?? {};
   const pay = useTwintPay();
@@ -97,27 +99,27 @@ export function TwintPaymentScreen({ navigation, route }: any) {
             <View style={styles.successRing}>
               <Feather name="check" size={42} color="#FFFFFF" />
             </View>
-            <Text style={styles.successTitle}>Payment confirmed</Text>
+            <Text style={styles.successTitle}>{t('ui.twintConfirmed')}</Text>
             <Text style={styles.successAmount}>CHF {Number(amountCHF).toFixed(2)}</Text>
             <Text style={styles.successSub}>
-              Held securely until your parcel is delivered, then released to your driver.
+              {t('ui.twintHeld')}
             </Text>
             <TouchableOpacity style={styles.payButton} onPress={finish} activeOpacity={0.85}>
-              <Text style={styles.payButtonText}>Continue</Text>
+              <Text style={styles.payButtonText}>{t('ui.twintContinue')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <>
-            <Text style={styles.amountLabel}>AMOUNT TO PAY</Text>
+            <Text style={styles.amountLabel}>{t('ui.twintAmount')}</Text>
             <Text style={styles.amount}>CHF {Number(amountCHF).toFixed(2)}</Text>
             <Text style={styles.summary}>{summary}</Text>
 
             <View style={styles.card}>
               <FauxQR seed={deliveryId ?? summary} />
-              <Text style={styles.qrHint}>Scan with the TWINT app, or confirm with your number below.</Text>
+              <Text style={styles.qrHint}>{t('ui.twintQrHint')}</Text>
             </View>
 
-            <Text style={styles.fieldLabel}>MOBILE NUMBER</Text>
+            <Text style={styles.fieldLabel}>{t('ui.twintMobile')}</Text>
             <TextInput
               style={styles.input}
               value={phone}
@@ -136,13 +138,13 @@ export function TwintPaymentScreen({ navigation, route }: any) {
               {pay.isPending ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.payButtonText}>Confirm in TWINT</Text>
+                <Text style={styles.payButtonText}>{t('ui.twintConfirm')}</Text>
               )}
             </TouchableOpacity>
 
             <View style={styles.secureRow}>
               <Feather name="lock" size={12} color="rgba(255,255,255,0.45)" />
-              <Text style={styles.secureText}>Simulated payment · no real charge</Text>
+              <Text style={styles.secureText}>{t('ui.twintSimulated')}</Text>
             </View>
           </>
         )}

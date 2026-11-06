@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodSchema, ZodError } from 'zod';
+import { localize, requestLang } from '../i18n/messages';
 
 export function validate(schema: ZodSchema) {
   return (req: Request, res: Response, next: NextFunction): void => {
@@ -18,7 +19,7 @@ export function validate(schema: ZodSchema) {
             const first = err.errors[0];
             if (!first) return 'Validation failed';
             return first.message.trim().endsWith('.')
-              ? first.message
+              ? localize(first.message, requestLang(req.headers['accept-language']))
               : `${first.path.join('.') || 'input'}: ${first.message}`;
           })(),
           details: err.errors.map((e) => ({

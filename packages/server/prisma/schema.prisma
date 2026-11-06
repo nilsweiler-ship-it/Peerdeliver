@@ -117,6 +117,10 @@ model User {
   ratingsGiven       Rating[]          @relation("RatingsGiven")
   ratingsReceived    Rating[]          @relation("RatingsReceived")
 
+  /// When the person accepted the terms and privacy policy at sign-up, and which version.
+  termsAcceptedAt       DateTime?
+  termsVersion          String?
+
   @@map("users")
 }
 

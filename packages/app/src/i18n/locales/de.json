@@ -23,6 +23,7 @@
     "optional": "optional"
   },
   "auth": {
+    "maxLoadInvalid": "Gib an, wie viel du laden kannst, als Zahl in kg (höchstens 2000).",
     "login": "Anmelden",
     "register": "Registrieren",
     "email": "E-Mail",
@@ -52,6 +53,13 @@
     "incoming": "Eingehend"
   },
   "sender": {
+    "weightInvalidTitle": "Gewicht prüfen",
+    "weightInvalid": "Gib das Gewicht als Zahl ein, z. B. 2,5 oder 2.5.",
+    "weightTooHeavy": "Grösse {{size}} trägt höchstens {{max}} kg. Wähle eine grössere Grösse.",
+    "weightTooHeavyXL": "Über {{max}} kg können wir im Moment nicht transportieren.",
+    "valueInvalidTitle": "Wert prüfen",
+    "valueInvalid": "Gib den Wert als Zahl in CHF ein, z. B. 150.",
+    "valueTooHigh": "Sendungen über CHF {{max}} können wir im Moment nicht annehmen.",
     "createRequest": "Lieferauftrag erstellen",
     "myShipments": "Meine Sendungen",
     "searchDrivers": "Fahrer:innen finden",
@@ -238,7 +246,7 @@
   },
   "legal": {
     "lastUpdated": "Zuletzt aktualisiert: {{date}}",
-    "agree": "Mit dem Fortfahren akzeptierst du unsere AGB und die Datenschutzerklärung."
+    "agree": "Ich habe gelesen und akzeptiere:"
   },
   "home": {
     "activeDeliveries": "Aktive Lieferungen",
@@ -255,6 +263,7 @@
     "actionNeeded": "Aktion erforderlich"
   },
   "status": {
+    "disputed": "Wird geklärt",
     "pending": "Offen",
     "requested": "Fahrer:in angefragt",
     "matched": "Zugeordnet",
@@ -375,6 +384,48 @@
     "eta": "ETA {{time}}"
   },
   "ui": {
+    "sizeS": "Klein",
+    "sizeM": "Mittel",
+    "sizeL": "Gross",
+    "sizeXL": "Extra gross",
+    "carModelPlaceholder": "z. B. VW Golf",
+    "twintConfirmed": "Zahlung bestätigt",
+    "twintContinue": "Weiter",
+    "twintAmount": "ZU ZAHLENDER BETRAG",
+    "twintQrHint": "Mit der TWINT-App scannen oder unten mit deiner Nummer bestätigen.",
+    "twintMobile": "HANDYNUMMER",
+    "twintConfirm": "In TWINT bestätigen",
+    "twintSimulated": "Simulierte Zahlung · keine echte Belastung",
+    "twintHeld": "Bezahlt und zurückgehalten, bis dein Paket zugestellt ist; danach geht es an die fahrende Person.",
+    "co2SavedSoFar": "Bisher gespartes CO₂",
+    "carTripsAvoided": "≈ {{count}} Autofahrten, die nie stattfanden",
+    "kmAway": "{{km}} km entfernt",
+    "availableNearby": "In deiner Nähe",
+    "distance": "Distanz",
+    "myShipments": "Meine Sendungen",
+    "pickupCodeTitle": "ABHOLCODE",
+    "deliveryCodeTitle": "LIEFERCODE",
+    "marketplaceQuestion": "Versand von einem Marktplatz?",
+    "marketplacePlaceholder": "Titel oder Link des Inserats einfügen, z. B. «IKEA Ektorp 2er-Sofa»",
+    "autoFill": "Ausfüllen",
+    "stepOf": "SCHRITT {{n}} / {{total}}",
+    "howWillYouUse": "Wie nutzt du Shlep?",
+    "senderCaption": "Lass Pakete von Menschen mitnehmen, die ohnehin in deine Richtung fahren.",
+    "driverCaption": "Verdiene auf Fahrten, die du sowieso machst — und spare CO₂.",
+    "howMuchCarry": "Wie viel kannst du mitnehmen?",
+    "capS": "Taschen & kleine Kartons",
+    "capM": "Rucksackgross",
+    "capL": "Kofferraum / sperrig",
+    "createAccount": "Konto erstellen  →",
+    "loginHeadline": "Verschick es mit jemandem, der ohnehin hinfährt.",
+    "loginSub": "Grüner versenden. Nebenbei verdienen. Wann es dir passt.",
+    "lowCarbon": "CO₂-ARM VON GRUND AUF",
+    "verifiedUnit": "erledigt",
+    "verifiedDriversHint": "Verifizierte Fahrer:innen erhalten mehr Lieferungen und machen das Netzwerk sicherer.",
+    "plateFormatNote": "Wir prüfen Format und Kanton des Kennzeichens. Es wird nicht in einem Fahrzeugregister abgefragt.",
+    "progressPickedUp": "Abgeholt",
+    "progressInTransit": "Unterwegs",
+    "progressDelivered": "Geliefert",
     "close": "Schliessen",
     "verified": "Verifiziert"
   },

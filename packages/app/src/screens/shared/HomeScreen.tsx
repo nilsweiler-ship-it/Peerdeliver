@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { Alert } from '../../utils/alert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -192,8 +193,9 @@ export function HomeScreen({ navigation }: any) {
       {/* Impact card */}
       <ImpactCard
         amount={`${co2.toFixed(1)} kg`}
-        caption="CO₂ saved this year"
-        sub={`≈ ${carTrips} car trips never made`}
+        // The figure is the lifetime total; the caption said "this year".
+        caption={t('ui.co2SavedSoFar')}
+        sub={t('ui.carTripsAvoided', { count: carTrips })}
         onPress={() => navigation.navigate('Profile')}
         style={styles.block}
       />

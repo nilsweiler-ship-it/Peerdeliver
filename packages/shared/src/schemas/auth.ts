@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+/**
+ * The version of the terms and privacy policy a new account accepts — the
+ * date they were last changed (keep in step with LEGAL_LAST_UPDATED in the
+ * app's legal/content.ts). Stored with the account as proof of consent.
+ */
+export const TERMS_VERSION = '2026-07-04';
+
 export const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(128),
@@ -14,6 +21,11 @@ export const registerSchema = z.object({
   carModel: z.string().max(100).optional(),
   maxLoadKg: z.number().positive().optional(),
   vehicleSize: z.enum(['S', 'M', 'L', 'XL']).optional(),
+  // Consent is an explicit yes. It used to be implied by a (pre-ticked)
+  // checkbox and never reached the server, so there was no record of it.
+  acceptTerms: z.literal(true, {
+    errorMap: () => ({ message: 'Bitte akzeptiere die AGB und die Datenschutzerklärung.' }),
+  }),
 });
 
 /**

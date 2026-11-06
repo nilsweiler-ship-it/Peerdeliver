@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Feather } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../stores/authStore';
 import { useMyDeliveries } from '../queries/delivery';
 import { HomeScreen } from '../screens/shared/HomeScreen';
@@ -23,6 +24,7 @@ const icon = (name: FeatherName) =>
 
 export function MainTabs() {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const role = useAuthStore((s) => s.user?.role);
   const userId = useAuthStore((s) => s.user?.id);
   const { data: deliveries } = useMyDeliveries();
@@ -61,9 +63,13 @@ export function MainTabs() {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 64,
-          paddingTop: 8,
-          paddingBottom: 10,
+          // Room for a 24 px icon and an 11 px label. The original 64 px with
+          // 8 + 10 px padding clipped the labels; dropping the height let the
+          // default 49 px bar squeeze them to nothing. Height and bottom
+          // padding both grow by the safe-area inset (home indicator).
+          height: 72 + insets.bottom,
+          paddingTop: 6,
+          paddingBottom: 8 + insets.bottom,
         },
         tabBarLabelStyle: {
           fontFamily: typography.bodyStrong.fontFamily,

@@ -5,7 +5,7 @@ import { Badge } from '../ui/Badge';
 import { Avatar } from '../ui/Avatar';
 import { RouteLine } from '../brand/RouteLine';
 import { colors, spacing, typography, borderRadius } from '../../theme';
-import { PACKAGE_SIZES } from '@peerdeliver/shared';
+import { useTranslation } from 'react-i18next';
 import type { DriverRoute } from '@peerdeliver/shared';
 
 interface RouteCardProps {
@@ -15,7 +15,7 @@ interface RouteCardProps {
 }
 
 export function RouteCard({ route, onPress, showDriver = false }: RouteCardProps) {
-  const sizeInfo = PACKAGE_SIZES[route.availableSize];
+  const { t } = useTranslation();
   const departureDate = new Date(route.departureTime);
   const formattedDate = departureDate.toLocaleDateString(undefined, {
     weekday: 'short',
@@ -55,7 +55,7 @@ export function RouteCard({ route, onPress, showDriver = false }: RouteCardProps
           <Text style={styles.meta}>
             {formattedDate} · <Text style={styles.metaMono}>{formattedTime}</Text>
           </Text>
-          <Text style={styles.meta}>{sizeInfo.label}</Text>
+          <Text style={styles.meta}>{t(`ui.size${route.availableSize}`)}</Text>
         </View>
 
         {showDriver && route.driver && (
