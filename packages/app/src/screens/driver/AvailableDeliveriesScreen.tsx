@@ -79,6 +79,9 @@ export function AvailableDeliveriesScreen({ navigation }: any) {
     } catch (err: any) {
       // The server says why — not paid yet, already taken, too heavy, or
       // the driver still needs to verify — so show that, not "Error".
+      // Close the sheet first: "Verify now" navigates away, and the open
+      // sheet would otherwise stay on top of the Verification screen.
+      setSelectedDelivery(null);
       showApiError(err, t, navigation);
     }
   };

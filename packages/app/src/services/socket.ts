@@ -6,7 +6,10 @@ const storage = Platform.OS === 'web'
   ? { getItemAsync: async (key: string) => localStorage.getItem(key) }
   : require('expo-secure-store');
 
-const SOCKET_URL = __DEV__ ? resolveDevApiUrl() : 'https://api.peerdeliver.ch';
+// Same host as the REST API (services/api.ts). This still pointed at
+// api.peerdeliver.ch, a domain that was never registered, after api.ts was
+// fixed — so in every release build live tracking and chat never connected.
+const SOCKET_URL = __DEV__ ? resolveDevApiUrl() : 'https://api.shlep.ch';
 
 let socket: Socket | null = null;
 
