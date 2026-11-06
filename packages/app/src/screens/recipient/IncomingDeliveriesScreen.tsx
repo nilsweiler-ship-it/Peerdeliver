@@ -27,7 +27,10 @@ export function IncomingDeliveriesScreen() {
   const sel = selected;
   // Recipients hold the delivery code and show it to the driver; it only becomes
   // relevant once the parcel is in transit.
-  const showCode = !!sel && sel.status === 'in_transit' && !!sel.deliveryCode;
+  // In transit — or disputed on the way, which the recipient's code still
+  // completes. Hiding it then would remove the one thing that settles it.
+  const onTheWay = !!sel && (sel.status === 'in_transit' || sel.status === 'disputed');
+  const showCode = onTheWay && !!sel?.deliveryCode;
   const isTerminal = sel?.status === 'delivered' || sel?.status === 'cancelled';
 
   const driver: any = sel?.driver;
@@ -129,7 +132,12 @@ export function IncomingDeliveriesScreen() {
                   <Text style={styles.heroSub}>
                     {isTerminal
                       ? t('recipient.deliveryCodeHint')
-                      : t('recipient.codeAvailableWhenInTransit')}
+                      : onTheWay
+                        ? // In transit but no code here: this account is matched
+                          // to the delivery by email only, which is not proof of
+                          // owning the mailbox, so the code goes to the mailbox.
+                          t('recipient.codeSentByMessage')
+                        : t('recipient.codeAvailableWhenInTransit')}
                   </Text>
 
                   <View style={styles.waitCard}>

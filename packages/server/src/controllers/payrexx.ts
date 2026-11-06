@@ -20,6 +20,11 @@ export async function createTwintPayment(
   next: NextFunction,
 ) {
   try {
+    // Stripe-only MVP: see payrexxService.isEnabled.
+    if (!payrexxService.isEnabled()) {
+      error(res, 'Not found', 404);
+      return;
+    }
     if (!payrexxService.isConfigured()) {
       error(res, 'TWINT payments are not configured', 503);
       return;
@@ -75,6 +80,15 @@ export async function createTwintPayment(
  */
 export async function webhook(req: Request, res: Response) {
   try {
+    if (!payrexxService.isEnabled()) {
+      // Nothing should be calling this: no Payrexx gateway is ever created
+      // while Payrexx is off. If something does, it is real money arriving
+      // somewhere we don't book it — say so loudly, and acknowledge so
+      // Payrexx stops retrying.
+      console.error('[payrexx] webhook received while Payrexx is disabled — check the Payrexx dashboard for an unbooked payment');
+      res.status(200).json({ received: true, ignored: true });
+      return;
+    }
     const raw = typeof req.body === 'string' ? req.body : (req.body as Buffer)?.toString('utf8');
     if (!raw) {
       res.status(200).json({ received: true });

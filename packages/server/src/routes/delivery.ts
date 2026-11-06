@@ -22,6 +22,10 @@ router.patch('/:id/reject', deliveryController.reject);
 router.post('/:id/verify-pickup', validate(verifyCodeSchema), deliveryController.verifyPickup);
 router.post('/:id/verify-delivery', validate(verifyCodeSchema), deliveryController.verifyDelivery);
 router.get('/:id/driver', deliveryController.getDriverInfo);
+// After the handover: report a problem, and rate each other.
+router.post('/:id/dispute', deliveryController.dispute);
+router.post('/:id/rating', deliveryController.rate);
+router.get('/:id/rating', deliveryController.myRating);
 // Background location reports from the driver's phone (no socket available).
 router.post('/:id/location', deliveryController.reportLocation);
 

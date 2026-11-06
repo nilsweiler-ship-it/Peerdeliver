@@ -3,7 +3,7 @@ import { prisma, env } from '../config';
 import { success, error } from '../utils';
 import { AppError } from '../middleware';
 import { smsService, identityService } from '../services';
-import { stripeConfigured } from '../services/stripe';
+import { stripeConfigured, devEndpointsEnabled } from '../services/stripe';
 
 // Swiss number plates: 2-letter canton code + 1–6 digits (e.g. "ZH 123456").
 const SWISS_CANTONS = new Set([
@@ -191,7 +191,9 @@ export async function startIdentity(req: Request, res: Response, next: NextFunct
 /** Dev-only shortcut to fully verify the current user (for testing). */
 export async function devVerifyAll(req: Request, res: Response, next: NextFunction) {
   try {
-    if (env.NODE_ENV !== 'development') {
+    // Off unless explicitly enabled (see devEndpointsEnabled). Any account
+    // could otherwise mark itself fully verified and walk past the driver gate.
+    if (!devEndpointsEnabled()) {
       error(res, 'Not found', 404);
       return;
     }

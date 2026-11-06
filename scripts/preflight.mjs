@@ -160,6 +160,9 @@ try {
 // who adds a second call site, and the failure would be silent: money leaves,
 // nothing errors.
 //
+// One exception is allowed: support resolving a dispute in the driver's
+// favour (services/lifecycle.ts), and only while it is not reachable over HTTP.
+//
 // So the structure itself is asserted here. If this check fails, either the
 // promise changed (update the copy in the app, the terms, and the driver
 // outreach at the same time) or something paid out early.
@@ -180,7 +183,24 @@ try {
       }
     })
     .filter(([, src]) => /captureAndPayoutOnDelivered\s*\(/.test(src))
-    .map(([name]) => name);
+    .map(([name]) => name)
+    // The one sanctioned exception: support settling a dispute in the
+    // driver's favour (lifecycle.ts resolveDispute). It is a person's decision
+    // after looking at the case, run from scripts/dispute.ts — so it is allowed
+    // only while nothing reachable over HTTP can call resolveDispute.
+    .filter((name) => {
+      if (name !== 'services/lifecycle.ts') return true;
+      const httpReach = ['controllers', 'routes']
+        .flatMap((dir) => {
+          try {
+            return readdirSync(`packages/server/src/${dir}`).map((f) => readFileSync(`packages/server/src/${dir}/${f}`, 'utf8'));
+          } catch {
+            return [];
+          }
+        })
+        .some((src) => /resolveDispute/.test(src));
+      return httpReach;
+    });
 
   // Is the one call inside verifyDelivery? Take the body from `export async
   // function verifyDelivery` to the next top-level `export`.
@@ -189,7 +209,16 @@ try {
   const verifyBody = vdStart === -1 ? '' : deliverySrc.slice(vdStart, vdEnd === -1 ? undefined : vdEnd);
 
   const insideVerify = /captureAndPayoutOnDelivered\s*\(/.test(verifyBody);
-  const gatedOnCode = /deliveryCode\s*!==\s*code/.test(verifyBody);
+  // The comparison moved into checkHandoverCode (which also counts wrong
+  // codes). Accept either form, but insist the check comes before the payout
+  // and that the helper really refuses a mismatch.
+  const checkAt = verifyBody.search(/deliveryCode\s*!==\s*code|checkHandoverCode\([^)]*deliveryCode\s*,\s*code/);
+  const captureAt = verifyBody.search(/captureAndPayoutOnDelivered\s*\(/);
+  const helperStart = deliverySrc.indexOf('async function checkHandoverCode');
+  const helperBody = helperStart === -1 ? '' : deliverySrc.slice(helperStart, deliverySrc.indexOf('\nexport ', helperStart));
+  const helperRefuses = !/checkHandoverCode\(/.test(verifyBody) ||
+    (/submitted\s*===\s*expected\)\s*return/.test(helperBody) && /throw new AppError\(400/.test(helperBody));
+  const gatedOnCode = checkAt !== -1 && captureAt !== -1 && checkAt < captureAt && helperRefuses;
   const transferCalls = (paymentSrc.match(/stripe\.transfers\.create\s*\(/g) ?? []).length;
 
   const problems = [];

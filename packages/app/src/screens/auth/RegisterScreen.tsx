@@ -60,7 +60,10 @@ export function RegisterScreen({ navigation }: any) {
   const [maxLoadKg, setMaxLoadKg] = useState('');
   const [vehicleSize, setVehicleSize] = useState<'S' | 'M' | 'L'>('L');
   const [showCarSuggestions, setShowCarSuggestions] = useState(false);
-  const [agreed, setAgreed] = useState(true);
+  // Unticked by default: consent has to be an action the person takes. A
+  // pre-ticked box is not consent under GDPR (recital 32) and is poor practice
+  // under the Swiss nFADP.
+  const [agreed, setAgreed] = useState(false);
 
   const isDriver = role === 'driver' || role === 'both';
 
@@ -76,8 +79,9 @@ export function RegisterScreen({ navigation }: any) {
 
   const handleRegister = () => {
     const lang = i18n.language?.slice(0, 2);
-    const language: 'en' | 'de' | 'fr' =
-      lang === 'de' || lang === 'fr' ? lang : 'en';
+    // Italian is a full language here (app, emails); it used to fall back to English.
+    const language: 'en' | 'de' | 'fr' | 'it' =
+      lang === 'de' || lang === 'fr' || lang === 'it' ? lang : 'en';
     register.mutate({
       email,
       password,

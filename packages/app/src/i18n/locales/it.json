@@ -194,7 +194,8 @@
     "sender": "Mittente",
     "deliveryCodeTitle": "Codice di consegna",
     "deliveryCodeHint": "Mostra questo codice al conducente per confermare la ricezione del pacco",
-    "codeAvailableWhenInTransit": "Il tuo codice di consegna apparirà qui quando il pacco sarà in viaggio"
+    "codeAvailableWhenInTransit": "Il tuo codice di consegna apparirà qui quando il pacco sarà in viaggio",
+    "codeSentByMessage": "Il tuo codice di consegna ti è stato inviato via e-mail o SMS. Mostralo a chi consegna alla porta."
   },
   "chat": {
     "typeMessage": "Scrivi un messaggio …",
@@ -290,6 +291,10 @@
     "impactEarly": "Siamo agli inizi — il risparmio si vede con gli oggetti ingombranti."
   },
   "verification": {
+    "plateOnFile": "Registrata",
+    "requiredTitle": "Prima verificati",
+    "requiredBody": "Conferma la tua identità e il tuo numero di telefono prima di accettare consegne.",
+    "verifyNow": "Verifica ora",
     "title": "Verifica e fiducia",
     "trustScore": "Punteggio di fiducia",
     "getVerified": "Fatti verificare",
@@ -476,5 +481,23 @@
     "on_date": "Un giorno preciso",
     "todayClosed": "Troppo tardi per oggi — scegli un altro giorno.",
     "hint": "Più margine lasci, più è probabile che qualcuno ci vada comunque."
+  },
+  "dispute": {
+    "report": "Segnala un problema",
+    "title": "Segnala un problema",
+    "intro": "Dicci cosa è andato storto — il pacco non è arrivato, è arrivato danneggiato o la consegna non è possibile. Il supporto Shlep verificherà e ti contatterà.",
+    "moneyHeld": "Nel frattempo il pagamento resta sospeso: chi consegna non viene pagato e nulla viene rimborsato finché non è risolto.",
+    "whatHappened": "Cosa è successo?",
+    "placeholder": "ad es. Il pacco doveva arrivare ieri e chi consegna non risponde.",
+    "submit": "Invia segnalazione",
+    "sentTitle": "Grazie — ce ne occupiamo",
+    "sentBody": "Il supporto Shlep ti contatterà. Il pagamento resta sospeso fino alla risoluzione.",
+    "underReviewTitle": "In verifica",
+    "underReviewBody": "È stato segnalato un problema per questa consegna. Il supporto Shlep ti contatterà; il pagamento resta sospeso fino alla risoluzione.",
+    "underReviewDriver": "È stato segnalato un problema. Se consegni il pacco, il codice del destinatario completa comunque la consegna."
+  },
+  "rating": {
+    "rateDriver": "Valuta chi ha consegnato",
+    "thanks": "Grazie per la valutazione!"
   }
 }

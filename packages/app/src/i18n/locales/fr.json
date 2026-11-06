@@ -194,7 +194,8 @@
     "sender": "Expéditeur",
     "deliveryCodeTitle": "Code de livraison",
     "deliveryCodeHint": "Montrez ce code au conducteur pour confirmer la réception du colis",
-    "codeAvailableWhenInTransit": "Votre code de livraison apparaîtra ici dès que le colis sera en route"
+    "codeAvailableWhenInTransit": "Votre code de livraison apparaîtra ici dès que le colis sera en route",
+    "codeSentByMessage": "Votre code de livraison vous a été envoyé par e-mail ou SMS. Montrez-le au chauffeur à la porte."
   },
   "chat": {
     "typeMessage": "Écrire un message …",
@@ -290,6 +291,10 @@
     "impactEarly": "Encore au début — les économies arrivent avec les objets encombrants."
   },
   "verification": {
+    "plateOnFile": "Enregistrée",
+    "requiredTitle": "Vérifiez-vous d’abord",
+    "requiredBody": "Confirmez votre identité et votre numéro de téléphone avant d’accepter des livraisons.",
+    "verifyNow": "Vérifier maintenant",
     "title": "Vérification et confiance",
     "trustScore": "Score de confiance",
     "getVerified": "Se faire vérifier",
@@ -476,5 +481,23 @@
     "on_date": "Un jour précis",
     "todayClosed": "Trop tard pour aujourd'hui — choisissez un autre jour.",
     "hint": "Plus vous laissez de marge, plus il est probable que quelqu’y aille déjà."
+  },
+  "dispute": {
+    "report": "Signaler un problème",
+    "title": "Signaler un problème",
+    "intro": "Dites-nous ce qui ne va pas — le colis n’est pas arrivé, il est arrivé endommagé ou la remise est impossible. Le support Shlep examinera la situation et vous contactera.",
+    "moneyHeld": "Pendant ce temps, le paiement est retenu : le chauffeur n’est pas payé et rien n’est remboursé jusqu’à la résolution.",
+    "whatHappened": "Que s’est-il passé ?",
+    "placeholder": "p. ex. Le colis devait arriver hier et le chauffeur ne répond pas.",
+    "submit": "Envoyer",
+    "sentTitle": "Merci — nous nous en occupons",
+    "sentBody": "Le support Shlep vous contactera. Le paiement reste retenu jusqu’à la résolution.",
+    "underReviewTitle": "En cours d’examen",
+    "underReviewBody": "Un problème a été signalé pour cette livraison. Le support Shlep vous contactera ; le paiement est retenu jusqu’à la résolution.",
+    "underReviewDriver": "Un problème a été signalé. Si vous remettez le colis, le code du destinataire termine quand même la livraison."
+  },
+  "rating": {
+    "rateDriver": "Évaluer le chauffeur",
+    "thanks": "Merci pour votre évaluation !"
   }
 }

@@ -45,6 +45,9 @@ async function main() {
       status: 'delivered',
       paymentStatus: 'authorised',
       stripeTransferId: null,
+      // Not while a dispute is open: that payout is held on purpose until
+      // support decides (npm run dispute).
+      OR: [{ disputeOpenedAt: null }, { disputeResolvedAt: { not: null } }],
     },
     orderBy: { updatedAt: 'asc' },
     select: {

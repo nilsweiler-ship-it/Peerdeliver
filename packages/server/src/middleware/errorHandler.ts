@@ -4,6 +4,8 @@ export class AppError extends Error {
   constructor(
     public statusCode: number,
     message: string,
+    /** Stable, machine-readable reason the app can act on (e.g. open the verification screen). */
+    public code?: string,
   ) {
     super(message);
     this.name = 'AppError';
@@ -14,7 +16,7 @@ export function errorHandler(err: Error & { type?: string }, _req: Request, res:
   console.error('[Error]', err.message, err.stack);
 
   if (err instanceof AppError) {
-    res.status(err.statusCode).json({ success: false, error: err.message });
+    res.status(err.statusCode).json({ success: false, error: err.message, ...(err.code ? { code: err.code } : {}) });
     return;
   }
 

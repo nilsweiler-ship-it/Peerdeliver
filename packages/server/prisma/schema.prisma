@@ -38,6 +38,9 @@ enum DeliveryStatus {
   delivered
   cancelled
   expired
+  /// Something went wrong after pickup. Payment stays held; support decides
+  /// whether it completes (pay the driver) or is refunded.
+  disputed
 }
 
 enum PackageSize {
@@ -169,6 +172,18 @@ model DeliveryRequest {
   driverPayoutCHF       Float?
   refundedCHF           Float?
   refundedAt            DateTime?
+  /// Wrong pickup/delivery codes entered for this delivery. Five in a row
+  /// lock code entry for a while; see registerWrongCode in services/delivery.ts.
+  codeFailedAttempts    Int            @default(0)
+  codeLockedUntil       DateTime?
+  /// Set when someone reports a problem. Open while disputeResolvedAt is null.
+  disputeOpenedAt       DateTime?
+  disputeOpenedById     String?
+  disputeReason         String?
+  disputeResolvedAt     DateTime?
+  disputeResolution     String?
+  /// When the parcel was handed over; dispute and rating windows run from here.
+  deliveredAt           DateTime?
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
 

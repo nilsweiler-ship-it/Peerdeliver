@@ -1,13 +1,26 @@
 import { Request, Response, NextFunction } from 'express';
-import { deliveryService, userService } from '../services';
+import { deliveryService, userService, lifecycleService } from '../services';
 import { success, error } from '../utils';
 import { getIO } from '../socket';
 import { publishDriverLocation } from '../socket/trackingHandler';
 
+/**
+ * Every delivery that leaves this controller goes through here, so the
+ * handover codes only ever reach the person entitled to each one. See
+ * redactForViewer for the rules and why they matter.
+ */
+function viewerOf(req: Request, email?: string | null): deliveryService.DeliveryViewer {
+  return { userId: req.user!.userId, email: email ?? null };
+}
+
+function sendDelivery(res: Response, req: Request, delivery: Record<string, unknown> | null, status = 200) {
+  success(res, delivery ? deliveryService.redactForViewer(delivery, viewerOf(req)) : delivery, status);
+}
+
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
     const delivery = await deliveryService.createDelivery(req.user!.userId, req.body);
-    success(res, delivery, 201);
+    sendDelivery(res, req, delivery, 201);
   } catch (err) {
     next(err);
   }
@@ -49,7 +62,8 @@ export async function getMine(req: Request, res: Response, next: NextFunction) {
         return true;
       });
 
-    success(res, deliveries);
+    const viewer = viewerOf(req, email);
+    success(res, deliveries.map((d) => deliveryService.redactForViewer(d, viewer)));
   } catch (err) {
     next(err);
   }
@@ -58,11 +72,18 @@ export async function getMine(req: Request, res: Response, next: NextFunction) {
 export async function getById(req: Request<{ id: string }>, res: Response, next: NextFunction) {
   try {
     const delivery = await deliveryService.getDeliveryById(req.params.id);
-    if (!delivery) {
+    // Only the sender, the driver and the recipient may see a delivery. Any
+    // signed-in account used to be able to read any delivery by id — home
+    // addresses, the recipient's phone and email, payment references and both
+    // handover codes. A stranger gets the same 404 as for a missing id, so the
+    // endpoint does not confirm which ids exist.
+    const { email } = await userService.getUserById(req.user!.userId);
+    const viewer = viewerOf(req, email);
+    if (!delivery || !deliveryService.isParticipantView(delivery, viewer)) {
       error(res, 'Delivery not found', 404);
       return;
     }
-    success(res, delivery);
+    success(res, deliveryService.redactForViewer(delivery, viewer));
   } catch (err) {
     next(err);
   }
@@ -77,7 +98,7 @@ export async function updateStatus(req: Request<{ id: string }>, res: Response, 
       req.body.cancelReason,
       req.user!.userId,
     );
-    success(res, delivery);
+    sendDelivery(res, req, delivery);
   } catch (err) {
     next(err);
   }
@@ -100,7 +121,8 @@ export async function getNearby(req: Request, res: Response, next: NextFunction)
       vehicleSize: (driver as any).vehicleSize,
       maxLoadKg: (driver as any).maxLoadKg,
     });
-    success(res, deliveries);
+    // Browsing drivers are not participants in any of these: no codes, ever.
+    success(res, deliveries.map((d) => deliveryService.redactForViewer(d, viewerOf(req))));
   } catch (err) {
     next(err);
   }
@@ -109,7 +131,7 @@ export async function getNearby(req: Request, res: Response, next: NextFunction)
 export async function assign(req: Request<{ id: string }>, res: Response, next: NextFunction) {
   try {
     const delivery = await deliveryService.assignDelivery(req.params.id, req.user!.userId);
-    success(res, delivery);
+    sendDelivery(res, req, delivery);
   } catch (err) {
     next(err);
   }
@@ -124,7 +146,7 @@ export async function offerRoute(req: Request<{ id: string }>, res: Response, ne
       return;
     }
     const delivery = await deliveryService.offerToRoute(req.params.id, req.user!.userId, routeId);
-    success(res, delivery);
+    sendDelivery(res, req, delivery);
   } catch (err) {
     next(err);
   }
@@ -134,7 +156,7 @@ export async function offerRoute(req: Request<{ id: string }>, res: Response, ne
 export async function acceptOffer(req: Request<{ id: string }>, res: Response, next: NextFunction) {
   try {
     const delivery = await deliveryService.acceptOffer(req.params.id, req.user!.userId);
-    success(res, delivery);
+    sendDelivery(res, req, delivery);
   } catch (err) {
     next(err);
   }
@@ -144,7 +166,7 @@ export async function acceptOffer(req: Request<{ id: string }>, res: Response, n
 export async function withdrawOffer(req: Request<{ id: string }>, res: Response, next: NextFunction) {
   try {
     const delivery = await deliveryService.withdrawOffer(req.params.id, req.user!.userId);
-    success(res, delivery);
+    sendDelivery(res, req, delivery);
   } catch (err) {
     next(err);
   }
@@ -154,7 +176,7 @@ export async function withdrawOffer(req: Request<{ id: string }>, res: Response,
 export async function declineOffer(req: Request<{ id: string }>, res: Response, next: NextFunction) {
   try {
     const delivery = await deliveryService.declineOffer(req.params.id, req.user!.userId);
-    success(res, delivery);
+    sendDelivery(res, req, delivery);
   } catch (err) {
     next(err);
   }
@@ -163,7 +185,7 @@ export async function declineOffer(req: Request<{ id: string }>, res: Response, 
 export async function confirm(req: Request<{ id: string }>, res: Response, next: NextFunction) {
   try {
     const delivery = await deliveryService.confirmDelivery(req.params.id, req.user!.userId);
-    success(res, delivery);
+    sendDelivery(res, req, delivery);
   } catch (err) {
     next(err);
   }
@@ -172,7 +194,7 @@ export async function confirm(req: Request<{ id: string }>, res: Response, next:
 export async function reject(req: Request<{ id: string }>, res: Response, next: NextFunction) {
   try {
     const delivery = await deliveryService.rejectDriver(req.params.id, req.user!.userId);
-    success(res, delivery);
+    sendDelivery(res, req, delivery);
   } catch (err) {
     next(err);
   }
@@ -181,7 +203,7 @@ export async function reject(req: Request<{ id: string }>, res: Response, next: 
 export async function verifyPickup(req: Request<{ id: string }>, res: Response, next: NextFunction) {
   try {
     const delivery = await deliveryService.verifyPickup(req.params.id, req.user!.userId, req.body.code);
-    success(res, delivery);
+    sendDelivery(res, req, delivery);
   } catch (err) {
     next(err);
   }
@@ -190,7 +212,7 @@ export async function verifyPickup(req: Request<{ id: string }>, res: Response, 
 export async function verifyDelivery(req: Request<{ id: string }>, res: Response, next: NextFunction) {
   try {
     const delivery = await deliveryService.verifyDelivery(req.params.id, req.user!.userId, req.body.code);
-    success(res, delivery);
+    sendDelivery(res, req, delivery);
   } catch (err) {
     next(err);
   }
@@ -256,6 +278,47 @@ export async function getDriverInfo(req: Request<{ id: string }>, res: Response,
       },
     });
     success(res, driver);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** Report a problem with a delivery (sender, driver or recipient). */
+export async function dispute(req: Request<{ id: string }>, res: Response, next: NextFunction) {
+  try {
+    const { email } = await userService.getUserById(req.user!.userId);
+    const result = await lifecycleService.openDispute(
+      req.params.id,
+      { userId: req.user!.userId, email },
+      (req.body as { reason?: string })?.reason ?? '',
+    );
+    success(res, result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** Rate the other side of a delivered delivery. */
+export async function rate(req: Request<{ id: string }>, res: Response, next: NextFunction) {
+  try {
+    const { email } = await userService.getUserById(req.user!.userId);
+    const { score, comment } = (req.body ?? {}) as { score?: number; comment?: string };
+    const rating = await lifecycleService.rateDelivery(
+      req.params.id,
+      { userId: req.user!.userId, email },
+      Number(score),
+      comment,
+    );
+    success(res, rating, 201);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** The caller's own rating for this delivery, or null. */
+export async function myRating(req: Request<{ id: string }>, res: Response, next: NextFunction) {
+  try {
+    success(res, await lifecycleService.getMyRating(req.params.id, req.user!.userId));
   } catch (err) {
     next(err);
   }

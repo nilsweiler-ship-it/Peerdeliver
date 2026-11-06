@@ -194,7 +194,8 @@
     "sender": "Absender:in",
     "deliveryCodeTitle": "Liefercode",
     "deliveryCodeHint": "Zeige diesen Code der fahrenden Person, um den Erhalt zu bestätigen",
-    "codeAvailableWhenInTransit": "Dein Liefercode erscheint hier, sobald das Paket unterwegs ist"
+    "codeAvailableWhenInTransit": "Dein Liefercode erscheint hier, sobald das Paket unterwegs ist",
+    "codeSentByMessage": "Dein Liefercode wurde dir per E-Mail oder SMS geschickt. Zeig ihn der fahrenden Person an der Tür."
   },
   "chat": {
     "typeMessage": "Nachricht schreiben …",
@@ -290,6 +291,10 @@
     "impactEarly": "Noch am Anfang — spürbar wird es bei sperrigen Sendungen."
   },
   "verification": {
+    "plateOnFile": "Erfasst",
+    "requiredTitle": "Zuerst verifizieren",
+    "requiredBody": "Bestätige deine Identität und Telefonnummer, bevor du Lieferungen übernimmst.",
+    "verifyNow": "Jetzt verifizieren",
     "title": "Verifizierung & Vertrauen",
     "trustScore": "Vertrauenswert",
     "getVerified": "Verifizieren lassen",
@@ -476,5 +481,23 @@
     "on_date": "Bestimmter Tag",
     "todayClosed": "Für heute ist es zu spät — wähle einen anderen Tag.",
     "hint": "Je mehr Spielraum, desto wahrscheinlicher fährt ohnehin jemand."
+  },
+  "dispute": {
+    "report": "Problem melden",
+    "title": "Problem melden",
+    "intro": "Sag uns, was schiefgelaufen ist — das Paket ist nicht angekommen, kam beschädigt an, oder die Übergabe klappt nicht. Der Shlep-Support schaut es sich an und meldet sich.",
+    "moneyHeld": "Solange wir das klären, bleibt die Zahlung zurückgehalten: Die fahrende Person wird nicht ausbezahlt und nichts wird erstattet, bis es gelöst ist.",
+    "whatHappened": "Was ist passiert?",
+    "placeholder": "z. B. Das Paket hätte gestern ankommen sollen und die fahrende Person antwortet nicht.",
+    "submit": "Meldung senden",
+    "sentTitle": "Danke — wir kümmern uns",
+    "sentBody": "Der Shlep-Support meldet sich bei dir. Die Zahlung bleibt bis zur Klärung zurückgehalten.",
+    "underReviewTitle": "Wird geklärt",
+    "underReviewBody": "Zu dieser Lieferung wurde ein Problem gemeldet. Der Shlep-Support meldet sich; die Zahlung bleibt bis zur Klärung zurückgehalten.",
+    "underReviewDriver": "Es wurde ein Problem gemeldet. Wenn du das Paket übergibst, schliesst der Code der empfangenden Person die Lieferung trotzdem ab."
+  },
+  "rating": {
+    "rateDriver": "Fahrende Person bewerten",
+    "thanks": "Danke für deine Bewertung!"
   }
 }

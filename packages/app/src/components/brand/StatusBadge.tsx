@@ -17,6 +17,8 @@ function resolve(status: string) {
   if (status in statusColors) return statusColors[status as StatusKey];
   // Sensible fallbacks for statuses outside the core 4.
   if (status === 'accepted' || status === 'picked_up') return statusColors.matched;
+  // Someone reported a problem; support is on it. Amber: needs attention.
+  if (status === 'disputed') return { bg: colors.signalSoft, fg: colors.signalText, dot: colors.signal };
   if (status === 'cancelled' || status === 'expired')
     return { bg: colors.surfaceSunken, fg: colors.textSecondary, dot: colors.textLight };
   return statusColors.pending;

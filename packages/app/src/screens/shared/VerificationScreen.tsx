@@ -246,6 +246,9 @@ export function VerificationScreen({ navigation }: any) {
           icon="truck"
           title={t('verification.plate')}
           verified={!!user?.plateVerified}
+          // Only the format and canton are checked — there is no registry
+          // lookup — so this says "recorded", not "verified".
+          doneLabel={t('verification.plateOnFile')}
           verifiedValue={user?.licensePlate}
         >
           {!user?.plateVerified && (
@@ -299,11 +302,14 @@ function TrustItem({
   title,
   verified,
   verifiedValue,
+  doneLabel,
   children,
 }: {
   icon: keyof typeof Feather.glyphMap;
   title: string;
   verified?: boolean;
+  /** Pill text when done; defaults to "Verified". */
+  doneLabel?: string;
   /** mono value shown next to the Verified pill (phone, plate). */
   verifiedValue?: string;
   children?: React.ReactNode;
@@ -324,7 +330,7 @@ function TrustItem({
         {verified ? (
           <View style={styles.verifiedPill}>
             <Feather name="check" size={13} color={colors.impact} />
-            <Text style={styles.verifiedText}>{t('verification.verified')}</Text>
+            <Text style={styles.verifiedText}>{doneLabel ?? t('verification.verified')}</Text>
           </View>
         ) : null}
       </View>

@@ -8,6 +8,10 @@ import routes from './routes';
 import { setupSocket } from './socket';
 import { stripeWebhook } from './controllers/webhook';
 import { webhook as payrexxWebhook } from './controllers/payrexx';
+import { payrexxService } from './services';
+import { stripeConfigured } from './services/stripe';
+import { phoneOnlyDriversAllowed } from './services/driverEligibility';
+import { startExpiryJob } from './services/lifecycle';
 
 const app = express();
 const httpServer = createServer(app);
@@ -256,6 +260,31 @@ app.use(errorHandler);
 
 setupSocket(httpServer);
 
+// Stripe-only MVP (payrexxService.isEnabled). Payrexx keys without Stripe would
+// mean no sender could pay: the simulated payment is off once a real provider
+// is configured, and the Payrexx flow is not wired into the app. Fail at boot,
+// where it is obvious, rather than at the first checkout.
+if (payrexxService.isConfigured() && !stripeConfigured()) {
+  console.error(
+    'Refusing to start: PAYREXX_* is set but STRIPE_SECRET_KEY is not. Payrexx is disabled for the MVP; ' +
+      'configure Stripe, or unset the Payrexx keys to run with simulated payments.',
+  );
+  process.exit(1);
+}
+if (phoneOnlyDriversAllowed()) {
+  console.warn(
+    '[drivers] ALLOW_PHONE_ONLY_DRIVERS=true — drivers need only a confirmed phone, not an ID check. ' +
+      'Closed pilot only; do not describe drivers as ID-checked while this is on.',
+  );
+}
+if (payrexxService.isConfigured()) {
+  console.warn('[payrexx] PAYREXX_* is set but Payrexx is disabled for the MVP; its endpoints are off.');
+}
+
 httpServer.listen(env.PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${env.PORT}`);
+  // Expire what time has overtaken and hand stuck parcels to support. Every
+  // 10 minutes; safe with several instances (rows are claimed atomically).
+  // EXPIRY_JOB=off disables it, e.g. for a test that controls time itself.
+  if (process.env.EXPIRY_JOB !== 'off') startExpiryJob(10);
 });

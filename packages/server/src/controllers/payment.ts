@@ -1,15 +1,24 @@
 import { Request, Response, NextFunction } from 'express';
-import { paymentService, deliveryService } from '../services';
+import { paymentService, deliveryService, payrexxService } from '../services';
+import { stripeConfigured, devEndpointsEnabled } from '../services/stripe';
 import { success, error } from '../utils';
 import { env } from '../config';
 
 /** SIM mode: sender confirms a simulated TWINT payment. */
 export async function payWithTwint(req: Request, res: Response, next: NextFunction) {
   try {
+    // The simulated payment marks a delivery paid without any money moving.
+    // It was reachable with real Stripe configured too, so a sender could
+    // "pay" for free and the driver would later be paid out of the platform's
+    // own balance. With a real provider configured it does not exist.
+    if (stripeConfigured() || payrexxService.isConfigured()) {
+      error(res, 'Not found', 404);
+      return;
+    }
     const { deliveryRequestId, phone } = req.body as { deliveryRequestId: string; phone?: string };
     await paymentService.payWithTwint(deliveryRequestId, req.user!.userId, phone);
     const delivery = await deliveryService.getDeliveryById(deliveryRequestId);
-    success(res, delivery);
+    success(res, delivery ? deliveryService.redactForViewer(delivery, { userId: req.user!.userId }) : delivery);
   } catch (err) {
     next(err);
   }
@@ -58,7 +67,10 @@ export async function getConnectStatus(req: Request, res: Response, next: NextFu
 
 export async function devCompleteOnboarding(req: Request, res: Response, next: NextFunction) {
   try {
-    if (env.NODE_ENV !== 'development') {
+    // Same rule as dev-verify-all: only with ENABLE_DEV_ENDPOINTS=true and
+    // never with a live key. Test keys are fine — this exists to onboard test
+    // drivers against Stripe test mode.
+    if (!devEndpointsEnabled()) {
       error(res, 'Not found', 404);
       return;
     }

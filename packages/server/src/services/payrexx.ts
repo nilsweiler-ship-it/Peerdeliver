@@ -43,6 +43,21 @@ export type PayrexxStatus =
   | 'error'
   | 'initiated';
 
+/**
+ * Payrexx is switched off for the MVP; Stripe is the only payment provider.
+ *
+ * The Payrexx integration is half-built: money can arrive (gateway + webhook)
+ * but the app never opens a Payrexx payment, and there is no capture, driver
+ * payout or refund. With Stripe also configured, a Payrexx-paid delivery would
+ * be marked paid and its driver then paid out of the platform's own Stripe
+ * balance. Until those pieces exist, the endpoints answer 404 / ignore, and the
+ * server refuses to start with Payrexx keys but no Stripe (see index.ts).
+ * Decided 2026-10-30.
+ */
+export function isEnabled(): boolean {
+  return false;
+}
+
 export function isConfigured(): boolean {
   return Boolean(env.PAYREXX_INSTANCE && env.PAYREXX_API_SECRET);
 }

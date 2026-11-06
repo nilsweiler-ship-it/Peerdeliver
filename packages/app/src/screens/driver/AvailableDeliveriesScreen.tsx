@@ -22,6 +22,7 @@ import { Pill, BackChip } from '../../components/brand';
 import { colors, spacing, typography, borderRadius, shadow } from '../../theme';
 import type { DeliveryRequest } from '@peerdeliver/shared';
 import { PACKAGE_SIZES } from '@peerdeliver/shared';
+import { showApiError } from '../../utils/apiError';
 
 /**
  * Where to look, when the driver has published no route.
@@ -75,8 +76,13 @@ export function AvailableDeliveriesScreen({ navigation }: any) {
       await assignDelivery.mutateAsync(delivery.id);
       Alert.alert(t('driver.requestSuccess'));
       setSelectedDelivery(null);
-    } catch {
-      Alert.alert(t('common.error'));
+    } catch (err: any) {
+      // The server says why — not paid yet, already taken, too heavy, or
+      // the driver still needs to verify — so show that, not "Error".
+      // Close the sheet first: "Verify now" navigates away, and the open
+      // sheet would otherwise stay on top of the Verification screen.
+      setSelectedDelivery(null);
+      showApiError(err, t, navigation);
     }
   };
 

@@ -100,7 +100,8 @@ async function ensureSimulation(io: Server, deliveryId: string) {
     deliveryId,
   );
   const row = rows[0];
-  if (!row || row.status !== 'in_transit') return;
+  // Disputed on the way: the parcel is still moving, and where it is matters most.
+  if (!row || (row.status !== 'in_transit' && row.status !== 'disputed')) return;
 
   const a = JSON.parse(row.p).coordinates; // [lng, lat]
   const b = JSON.parse(row.d).coordinates;
@@ -169,7 +170,7 @@ export async function publishDriverLocation(
     select: { driverId: true, status: true },
   });
   if (!row || row.driverId !== userId) return false;
-  if (row.status !== 'accepted' && row.status !== 'in_transit') return false;
+  if (row.status !== 'accepted' && row.status !== 'in_transit' && row.status !== 'disputed') return false;
 
   realActive.add(deliveryId);
   stopSimulation(deliveryId);
