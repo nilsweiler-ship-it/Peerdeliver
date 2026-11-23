@@ -75,6 +75,12 @@ const EXACT: Record<string, T> = {
     fr: 'Cette livraison a changé entre-temps. Veuillez actualiser.',
     it: 'Questa consegna è cambiata nel frattempo. Aggiorna la pagina.',
   },
+  'Nur Lieferungen ohne abgeschlossene Zahlung können gelöscht werden.': {
+    de: 'Nur Lieferungen ohne abgeschlossene Zahlung können gelöscht werden.',
+    en: 'Only deliveries whose payment did not go through can be deleted.',
+    fr: "Seules les livraisons dont le paiement n'a pas abouti peuvent être supprimées.",
+    it: 'Si possono eliminare solo le consegne il cui pagamento non è andato a buon fine.',
+  },
   'Diese Lieferung wurde bereits abgeschlossen': {
     de: 'Diese Lieferung wurde bereits abgeschlossen.',
     en: 'This delivery has already been completed.',

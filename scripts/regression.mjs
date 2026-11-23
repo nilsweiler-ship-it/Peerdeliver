@@ -536,5 +536,37 @@ console.log('\nconsent + language');
   check('error() helper translated too (404, en)', (await nf.json()).error === 'Delivery not found.', {});
 }
 
+// ── Deleting a delivery whose payment never went through ─────────────────
+console.log('\ndelete unpaid');
+{
+  const id = await create();
+  const stranger = await call('DELETE', `/deliveries/${id}`, T.tok);
+  check('stranger cannot delete someone else\'s delivery', stranger.s === 404, { s: stranger.s });
+  const r = await call('DELETE', `/deliveries/${id}`, S.tok);
+  check('sender deletes an unpaid delivery', r.s === 200 && r.d?.deleted === true, { s: r.s, d: r.d });
+  const mine = (await call('GET', '/deliveries/mine', S.tok)).d ?? [];
+  check('…and it is gone from their list', !mine.some((d) => d.id === id), {});
+  const rec = (await call('GET', '/deliveries/mine', R.tok)).d ?? [];
+  check('…and from the recipient\'s list', !rec.some((d) => d.id === id), {});
+  const again = await call('DELETE', `/deliveries/${id}`, S.tok);
+  check('deleting twice is refused, not a 500', again.s === 409, { s: again.s });
+  const paidPay = await call('POST', '/payments/twint/pay', S.tok, { deliveryRequestId: id });
+  const row = await get(id);
+  check('a late payment for a deleted delivery is not left charged',
+    row?.status === 'cancelled' && row?.paymentStatus !== 'authorised', { s: paidPay.s, st: row?.status, pay: row?.paymentStatus });
+
+  const paid = await create();
+  await pay(paid);
+  const p = await call('DELETE', `/deliveries/${paid}`, S.tok);
+  check('a paid delivery cannot be deleted', p.s === 409, { s: p.s });
+  check('…and stays listed and paid', (await get(paid))?.paymentStatus === 'authorised', {});
+
+  const cancelled = await create();
+  await pay(cancelled);
+  await call('PATCH', `/deliveries/${cancelled}/status`, S.tok, { status: 'cancelled' });
+  const list = (await call('GET', '/deliveries/mine', S.tok)).d ?? [];
+  check('an ordinary refunded cancellation is still listed', list.some((d) => d.id === cancelled), {});
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

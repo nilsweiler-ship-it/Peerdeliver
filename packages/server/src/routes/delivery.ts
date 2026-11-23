@@ -10,6 +10,8 @@ router.post('/', validate(createDeliverySchema), deliveryController.create);
 router.get('/mine', deliveryController.getMine);
 router.get('/nearby', deliveryController.getNearby);
 router.get('/:id', deliveryController.getById);
+// Delete a delivery whose payment failed or was abandoned (sender only).
+router.delete('/:id', deliveryController.discardUnpaid);
 router.patch('/:id/status', validate(updateDeliveryStatusSchema), deliveryController.updateStatus);
 router.patch('/:id/assign', deliveryController.assign);
 // Sender-initiated matching: offer to one route, driver accepts or declines.

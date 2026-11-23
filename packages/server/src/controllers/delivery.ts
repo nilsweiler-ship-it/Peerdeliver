@@ -104,6 +104,15 @@ export async function updateStatus(req: Request<{ id: string }>, res: Response, 
   }
 }
 
+/** The sender deletes a delivery whose payment never went through. */
+export async function discardUnpaid(req: Request<{ id: string }>, res: Response, next: NextFunction) {
+  try {
+    success(res, await deliveryService.discardUnpaidDelivery(req.params.id, req.user!.userId));
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getNearby(req: Request, res: Response, next: NextFunction) {
   try {
     const lat = parseFloat(req.query.lat as string);

@@ -138,7 +138,12 @@
     "cheaperThan": "Moins cher que {{label}} (CHF {{price}})",
     "cheaperElsewhere": "{{label}} coûterait CHF {{price}} — mais nous venons chez vous.",
     "onlyOption": "La poste refuse cet objet — nous non.",
-    "searchFailed": "Échec de la recherche"
+    "searchFailed": "Échec de la recherche",
+    "unpaidTitle": "Paiement non abouti",
+    "unpaidHint": "Cette livraison n'a pas été payée, les chauffeurs ne la voient donc pas. Supprime-la et crée-la à nouveau pour réessayer. Rien n'a été débité.",
+    "deleteUnpaid": "Supprimer la livraison",
+    "deleteUnpaidConfirmTitle": "Supprimer cette livraison ?",
+    "deleteUnpaidConfirmBody": "Elle disparaîtra de ta liste. Cette action est irréversible."
   },
   "driver": {
     "publishRoute": "Publier un trajet",

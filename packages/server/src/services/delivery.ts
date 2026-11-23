@@ -227,9 +227,57 @@ export async function createDelivery(senderId: string, input: CreateDeliveryInpu
   return { ...delivery, clientSecret };
 }
 
+/**
+ * The cancelReason that marks a delivery the sender deleted because its
+ * payment never went through. Such a delivery was never paid and never shown
+ * to a driver (every driver-facing query requires paymentStatus='authorised'),
+ * so it is noise in every list: it is kept in the table for the payment trail,
+ * but left out of "my deliveries" for the sender and the recipient.
+ */
+export const DISCARDED_UNPAID = 'payment_not_completed';
+
+/** Payment states in which nothing was ever taken from the sender. */
+const NEVER_PAID = ['unpaid', 'failed', 'voided'];
+
+/**
+ * The sender deletes a delivery whose payment failed or was abandoned.
+ *
+ * Before this, a failed TWINT or card payment left the delivery sitting in
+ * "active" for good: it could not be paid again from the app, no driver could
+ * see it, and there was no button to get rid of it.
+ *
+ * Only for the sender, only while nobody has touched it ('pending'), and only
+ * while no money was taken. The row is cancelled rather than removed, so a
+ * payment that completes late still finds it: voidOnCancel cancels the open
+ * PaymentIntent, and if that payment had in fact just succeeded, refunds it.
+ */
+export async function discardUnpaidDelivery(id: string, actorId: string) {
+  const d = await prisma.deliveryRequest.findUnique({
+    where: { id },
+    select: { senderId: true, status: true, paymentStatus: true },
+  });
+  if (!d || d.senderId !== actorId) throw new AppError(404, 'Delivery not found');
+  if (d.status !== 'pending' || !NEVER_PAID.includes(d.paymentStatus)) {
+    throw new AppError(409, 'Nur Lieferungen ohne abgeschlossene Zahlung können gelöscht werden.');
+  }
+  const applied = await prisma.$executeRawUnsafe(
+    `UPDATE delivery_requests
+        SET status = 'cancelled'::"DeliveryStatus", "cancelledBy" = $1, "cancelReason" = $2, "updatedAt" = NOW()
+      WHERE id = $3 AND "senderId" = $1 AND status = 'pending'::"DeliveryStatus"
+        AND "paymentStatus"::text = ANY($4::text[])`,
+    actorId,
+    DISCARDED_UNPAID,
+    id,
+    NEVER_PAID,
+  );
+  if (applied === 0) throw new AppError(409, 'Diese Lieferung hat sich inzwischen geändert');
+  await paymentService.voidOnCancel(id);
+  return { id, deleted: true };
+}
+
 export async function getDeliveriesBySender(senderId: string) {
   const rows: RawDeliveryRow[] = await prisma.$queryRawUnsafe(
-    `SELECT ${DELIVERY_COLS} FROM delivery_requests dr WHERE dr."senderId" = $1 ORDER BY dr."createdAt" DESC`,
+    `SELECT ${DELIVERY_COLS} FROM delivery_requests dr WHERE dr."senderId" = $1 AND (dr.status <> 'cancelled'::"DeliveryStatus" OR dr."cancelReason" IS DISTINCT FROM '${DISCARDED_UNPAID}') ORDER BY dr."createdAt" DESC`,
     senderId,
   );
   return rows.map(transformDelivery);
@@ -248,7 +296,8 @@ export async function getDeliveriesByRecipient(recipientId: string, email: strin
   // creation time) or on the raw email (recipient registered after creation).
   const rows: RawDeliveryRow[] = await prisma.$queryRawUnsafe(
     `SELECT ${DELIVERY_COLS} FROM delivery_requests dr
-       WHERE dr."recipientId" = $1 OR LOWER(dr."recipientEmail") = LOWER($2)
+       WHERE (dr."recipientId" = $1 OR LOWER(dr."recipientEmail") = LOWER($2))
+        AND (dr.status <> 'cancelled'::"DeliveryStatus" OR dr."cancelReason" IS DISTINCT FROM '${DISCARDED_UNPAID}')
        ORDER BY dr."createdAt" DESC`,
     recipientId,
     email,

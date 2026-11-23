@@ -138,7 +138,12 @@
     "cheaperThan": "Günstiger als {{label}} (CHF {{price}})",
     "cheaperElsewhere": "{{label}} wäre mit CHF {{price}} günstiger — dafür holen wir bei dir ab.",
     "onlyOption": "Die Post nimmt dieses Stück nicht an — wir schon.",
-    "searchFailed": "Suche fehlgeschlagen"
+    "searchFailed": "Suche fehlgeschlagen",
+    "unpaidTitle": "Zahlung nicht abgeschlossen",
+    "unpaidHint": "Diese Lieferung wurde nicht bezahlt und ist für Fahrende nicht sichtbar. Lösche sie und erstelle sie neu, um es noch einmal zu versuchen. Es wurde nichts belastet.",
+    "deleteUnpaid": "Lieferung löschen",
+    "deleteUnpaidConfirmTitle": "Lieferung löschen?",
+    "deleteUnpaidConfirmBody": "Die Lieferung verschwindet aus deiner Liste. Das lässt sich nicht rückgängig machen."
   },
   "driver": {
     "publishRoute": "Route veröffentlichen",

@@ -9,7 +9,7 @@ import {
   useConfirmDelivery,
   useRejectDriver,
   useDriverInfo,
-  useWithdrawOffer,
+  useWithdrawOffer, useDiscardDelivery,
   useMyRating,
 } from '../../queries/delivery';
 import { DeliveryCard } from '../../components/delivery/DeliveryCard';
@@ -204,6 +204,27 @@ export function MyShipmentsScreen({ navigation }: any) {
   const confirmDelivery = useConfirmDelivery();
   const rejectDriver = useRejectDriver();
   const withdrawOffer = useWithdrawOffer();
+  const discardDelivery = useDiscardDelivery();
+
+  // Ask first: deleting cannot be undone, and the button sits where a sender
+  // might tap it while looking for "pay again".
+  const handleDiscard = (id: string) => {
+    Alert.alert(t('sender.deleteUnpaidConfirmTitle'), t('sender.deleteUnpaidConfirmBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('sender.deleteUnpaid'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await discardDelivery.mutateAsync(id);
+            setSelectedId(null);
+          } catch (err: any) {
+            Alert.alert(t('common.error'), err?.response?.data?.error ?? undefined);
+          }
+        },
+      },
+    ]);
+  };
 
   const handleWithdraw = async (id: string) => {
     try {
@@ -403,7 +424,28 @@ export function MyShipmentsScreen({ navigation }: any) {
                 This is the entry point to driver search. The screen existed and
                 was registered in the navigator, but nothing ever navigated to
                 it, so it was unreachable from the app. */}
-            {sel.status === 'pending' && (
+            {/* The payment never went through: no driver can see this
+                delivery, and it cannot be paid again from here. Before this
+                card it sat in "active" for good with nothing to do about it. */}
+            {sel.status === 'pending' && sel.paymentStatus !== 'authorised' && (
+              <View style={styles.waitCard}>
+                <View style={styles.findHead}>
+                  <Feather name="alert-circle" size={14} color={colors.signalText} />
+                  <Text style={styles.waitTitle}>{t('sender.unpaidTitle')}</Text>
+                </View>
+                <Text style={styles.waitHint}>{t('sender.unpaidHint')}</Text>
+                <Button
+                  title={t('sender.deleteUnpaid')}
+                  variant="outline"
+                  loading={discardDelivery.isPending}
+                  onPress={() => handleDiscard(sel.id)}
+                  style={styles.withdrawButton}
+                  testID="delete-unpaid"
+                />
+              </View>
+            )}
+
+            {sel.status === 'pending' && sel.paymentStatus === 'authorised' && (
               <View style={styles.findCard}>
                 <View style={styles.findHead}>
                   <Feather name="search" size={14} color={colors.primary} />
