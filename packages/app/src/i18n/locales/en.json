@@ -138,7 +138,12 @@
     "cheaperThan": "Cheaper than {{label}} (CHF {{price}})",
     "cheaperElsewhere": "{{label}} would cost CHF {{price}} — but we collect from your door.",
     "onlyOption": "The post will not take this one — we will.",
-    "searchFailed": "Search failed"
+    "searchFailed": "Search failed",
+    "unpaidTitle": "Payment not completed",
+    "unpaidHint": "This delivery was not paid, so drivers cannot see it. Delete it and create it again to try once more. Nothing was charged.",
+    "deleteUnpaid": "Delete delivery",
+    "deleteUnpaidConfirmTitle": "Delete this delivery?",
+    "deleteUnpaidConfirmBody": "It will disappear from your list. This cannot be undone."
   },
   "driver": {
     "publishRoute": "Publish Route",

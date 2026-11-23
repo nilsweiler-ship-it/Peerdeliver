@@ -40,7 +40,10 @@ function smsMessage(reason?: string, twilioCode?: number, step: 'send' | 'check'
       case 'landline':
         return 'An diese Nummer kann keine SMS zugestellt werden (Festnetz).';
       case 'unverified_trial':
-        return 'Diese Nummer ist im Twilio-Testkonto nicht freigegeben. Bitte unter „Verified Caller IDs" hinzufügen.';
+        // Twilio returns 21608 for trial accounts AND for paid accounts whose
+        // Primary Compliance Profile is not approved yet. The old text said
+        // "Testkonto", which sent us looking at the wrong thing.
+        return 'SMS an diese Nummer sind noch nicht freigeschaltet. Twilio verlangt ein genehmigtes Compliance-Profil (Trust Hub) oder die Nummer unter „Verified Caller IDs“.';
       case 'geo_blocked':
         return 'SMS in dieses Land sind im Twilio-Konto nicht freigeschaltet (Geo Permissions).';
       case 'blocked':

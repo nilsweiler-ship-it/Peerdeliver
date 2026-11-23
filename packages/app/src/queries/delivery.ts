@@ -161,6 +161,23 @@ export function useWithdrawOffer() {
   });
 }
 
+/**
+ * Sender deletes a delivery whose payment failed or was abandoned. The server
+ * refuses anything that was paid or that a driver has touched.
+ */
+export function useDiscardDelivery() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/deliveries/${id}`);
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deliveries'] });
+    },
+  });
+}
+
 /** The offered driver declines — the delivery returns to the open pool. */
 export function useDeclineOffer() {
   const queryClient = useQueryClient();
